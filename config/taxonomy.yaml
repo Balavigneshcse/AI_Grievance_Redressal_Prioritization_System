@@ -1,0 +1,81 @@
+# Department taxonomy. Edit freely; the prompt, the synthetic generator and the
+# routing rules all read this file.
+departments:
+  - id: water
+    name: Water Supply
+    examples:
+      - no water supply for days
+      - low pressure or irregular timing
+      - dirty or smelly water, contamination
+      - pipeline leak or burst
+      - water tanker request
+      - drainage water mixing with drinking water
+
+  - id: electricity
+    name: Electricity
+    examples:
+      - power cut for long hours
+      - voltage fluctuation damaging appliances
+      - exposed or hanging wire
+      - transformer sparking or burning
+      - electricity meter or bill error
+      - new connection delay
+
+  - id: roads
+    name: Roads and Infrastructure
+    examples:
+      - pothole or road caving in
+      - broken footpath or kerb
+      - street light not working
+      - damaged bridge or culvert
+      - construction debris left on road
+      - waterlogging on road after rain
+
+  - id: sanitation
+    name: Sanitation and Waste
+    examples:
+      - garbage not collected
+      - overflowing bin or dumping spot
+      - sewage overflow on street or into homes
+      - blocked drain or stormwater channel
+      - open manhole
+      - public toilet unclean or locked
+
+  - id: health
+    name: Public Health
+    examples:
+      - mosquito breeding, dengue or malaria cases
+      - stray dog attack or dog menace
+      - dead animal not removed
+      - food safety at a shop or hotel
+      - government hospital or clinic negligence
+      - fogging or spraying request
+
+  - id: safety
+    name: Fire and Safety
+    examples:
+      - gas leak or smell of gas
+      - fire or fire hazard
+      - building or wall about to collapse
+      - fallen tree blocking road or on a house
+      - flooding entering homes
+      - leaning or unsafe electric pole
+
+  - id: revenue
+    name: Revenue and Property
+    examples:
+      - property tax calculation error
+      - birth or death certificate delay
+      - encroachment of public land
+      - illegal construction
+      - land record or patta issue
+      - trade licence delay
+
+  - id: general
+    name: General / Unclassified
+    examples:
+      - suggestion or feedback
+      - appreciation
+      - information request
+      - noise or nuisance complaint
+      - issue not covered by other departments

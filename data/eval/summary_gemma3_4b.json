@@ -1,0 +1,64 @@
+{
+  "model": "gemma3:4b",
+  "n": 12,
+  "department_accuracy": 0.833,
+  "urgency_accuracy": 0.833,
+  "urgency_within_one_level": 1.0,
+  "critical_recall": 1.0,
+  "by_language_department": {
+    "en": {
+      "n": 5,
+      "accuracy": 1.0
+    },
+    "hi": {
+      "n": 1,
+      "accuracy": 1.0
+    },
+    "hi-en": {
+      "n": 2,
+      "accuracy": 0.5
+    },
+    "ta": {
+      "n": 2,
+      "accuracy": 1.0
+    },
+    "ta-en": {
+      "n": 2,
+      "accuracy": 0.5
+    }
+  },
+  "by_language_urgency": {
+    "en": {
+      "n": 5,
+      "accuracy": 1.0
+    },
+    "hi": {
+      "n": 1,
+      "accuracy": 1.0
+    },
+    "hi-en": {
+      "n": 2,
+      "accuracy": 0.5
+    },
+    "ta": {
+      "n": 2,
+      "accuracy": 0.5
+    },
+    "ta-en": {
+      "n": 2,
+      "accuracy": 1.0
+    }
+  },
+  "by_formality_urgency": {
+    "formal": {
+      "n": 6,
+      "accuracy": 0.833
+    },
+    "informal": {
+      "n": 6,
+      "accuracy": 0.833
+    }
+  },
+  "mean_seconds": 17.55,
+  "mean_gen_tokens": 150.4
+}

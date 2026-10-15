@@ -1,0 +1,34 @@
+{
+  "type": "object",
+  "properties": {
+    "language_primary": { "type": "string" },
+    "language_secondary": { "type": "string" },
+    "department": {
+      "type": "string",
+      "enum": ["water", "electricity", "roads", "sanitation", "health", "safety", "revenue", "general"]
+    },
+    "urgency": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low"]
+    },
+    "confidence": { "type": "number" },
+    "summary_en": { "type": "string" },
+    "evidence_spans": { "type": "array", "items": { "type": "string" } },
+    "entities": {
+      "type": "object",
+      "properties": {
+        "locations": { "type": "array", "items": { "type": "string" } },
+        "dates": { "type": "array", "items": { "type": "string" } },
+        "people_affected": { "type": "array", "items": { "type": "string" } },
+        "ids": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["locations", "dates", "people_affected", "ids"]
+    },
+    "image_findings": { "type": "string" },
+    "image_matches_text": { "type": "boolean" }
+  },
+  "required": [
+    "language_primary", "language_secondary", "department", "urgency", "confidence",
+    "summary_en", "evidence_spans", "entities", "image_findings", "image_matches_text"
+  ]
+}

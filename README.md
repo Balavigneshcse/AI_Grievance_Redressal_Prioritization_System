@@ -12,9 +12,14 @@ Built in 24 hours at SYNAPSE '26, V.S.B. Engineering College.
 |---|---|
 | 1. Problem understanding | [docs/01-problem-understanding.md](docs/01-problem-understanding.md) |
 | 1. Models and datasets | [docs/02-models-and-datasets.md](docs/02-models-and-datasets.md) |
-| 2. System architecture | docs/03-system-architecture.md (coming) |
+| 2. System architecture | [docs/03-system-architecture.md](docs/03-system-architecture.md) |
 | 3. Database and UI/UX design | docs/04-database-and-ui.md (coming) |
+| Training and evaluation commands | [docs/training-commands.md](docs/training-commands.md) |
+
+## Models
+
+Single model for text and photos: Gemma 3 4B served by Ollama. Embeddings: bge-m3 served by Ollama. Second opinion: softmax regression in NumPy. See the models document for measurements on the build laptop (RTX 3050, 4 GB).
 
 ## Status
 
-Phase 1 complete. Implementation starts after Phase 3.
+Phase 1 and Phase 2 complete. Pipeline scripts (`scripts/`), config (`config/`), prompts and the gold evaluation set (`data/eval/`) are in place; the web app starts in Phase 4.

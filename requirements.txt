@@ -1,0 +1,13 @@
+# SYNAPSE pipeline and training dependencies.
+# Pure-Python plus NumPy/pandas/Pillow only: Windows Application Control on the
+# build laptop blocks unsigned native DLLs (torch, scipy), so every model runs
+# inside Ollama and nothing here needs them.
+ollama
+requests
+huggingface_hub
+pyyaml
+numpy
+pandas
+pillow
+joblib
+tqdm

@@ -1,0 +1,34 @@
+# Urgency scale shared by the prompt, the rules engine and the UI.
+levels:
+  - id: critical
+    name: Critical
+    criteria: >
+      Immediate risk to life or safety; a medical dependency (oxygen, dialysis,
+      medicines needing refrigeration); a vulnerable person (child, elderly,
+      disabled, pregnant) affected right now; fire, gas leak, electrocution
+      risk, structural collapse, flooding inside homes.
+
+  - id: high
+    name: High
+    criteria: >
+      Essential service fully down (no water at all, no power for many hours,
+      sewage overflowing into homes or streets); a time-bound deadline (exam,
+      funeral, hospital visit); a repeat complaint that was already filed and
+      not fixed.
+
+  - id: medium
+    name: Medium
+    criteria: >
+      Service degraded or partial (low pressure, intermittent power, delayed
+      garbage pickup); property damage; a billing or document dispute with
+      financial impact.
+
+  - id: low
+    name: Low
+    criteria: >
+      Information request, suggestion, appreciation, cosmetic issue, general
+      feedback with no immediate impact.
+
+not_signals: >
+  Formality, message length, grammar, spelling, punctuation and the language
+  used are never urgency signals.

@@ -1,0 +1,84 @@
+# Training and evaluation commands
+
+Run everything from the project root in a normal Command Prompt or PowerShell. The system Python 3.12 is used directly (no venv: Windows Application Control blocks torch and scipy, so the scripts only need NumPy, pandas, Pillow and the Ollama client).
+
+## 0. One-time setup
+
+```bash
+pip install -r requirements.txt
+```
+
+```bash
+powershell -ExecutionPolicy Bypass -File scripts\set_ollama_gpu.ps1
+```
+
+```bash
+python scripts\download_models.py
+```
+
+Pulls `gemma3:4b` and `bge-m3` if missing, then prints an embedding check, language hints and a geocoder check.
+
+## 1. Datasets
+
+```bash
+python scripts\download_datasets.py
+```
+
+Fetches the NYC 311 sample and COMI-LINGUA files, lists Tamil-English candidates, and prints the manual-download list.
+
+## 2. Generate the synthetic training set (uses Gemma on the GPU)
+
+```bash
+python scripts\make_synthetic.py --per-combo 3
+```
+
+8 departments x 4 urgency levels x 5 language codes = 160 calls, 3 complaints each, about 480 rows. Measured: about 27 s per call on Gemma, so 75-95 minutes on the RTX 3050. Run it while the team works on other things; it is resumable, stop it any time and rerun. For a quick first pass:
+
+```bash
+python scripts\make_synthetic.py --per-combo 1 --langs en,ta-en
+```
+
+Twice as fast, using the text-only Qwen already on the laptop (fine for generating training text):
+
+```bash
+python scripts\make_synthetic.py --per-combo 3 --model qwen3:4b-instruct-2507-q4_K_M
+```
+
+## 3. Train the second-opinion classifier
+
+```bash
+python scripts\train_second_opinion.py
+```
+
+Embeds every row with bge-m3 (GPU), trains the department and urgency softmax models, prints held-out accuracy overall and per language, and saves `models/second_opinion_*.npz` plus `models/second_opinion_report.json`.
+
+## 4. Evaluate the LLM on the gold set
+
+```bash
+python scripts\run_eval.py
+```
+
+Replays `data/eval/complaints.jsonl` through Gemma and writes `data/eval/summary_gemma3_4b.json` with department accuracy, urgency accuracy, critical recall, accuracy per language and per formality, and mean latency. Compare with the text-only Qwen already on the laptop:
+
+```bash
+python scripts\run_eval.py --model qwen3:4b-instruct-2507-q4_K_M
+```
+
+## 5. One complaint by hand
+
+```bash
+python scripts\smoke_test_llm.py --text "road la periya kuzhi, bike skid aagudhu, Gandhipuram"
+```
+
+```bash
+python scripts\smoke_test_llm.py --image photo.jpg --text "see this"
+```
+
+## What is trained and what is not
+
+| Model | Trained by us? | Role |
+|---|---|---|
+| Gemma 3 4B (Ollama) | No, prompted with our taxonomy and urgency scale, JSON-schema output | text + image understanding |
+| bge-m3 (Ollama) | No | sentence embeddings |
+| Softmax regression (NumPy) | **Yes**, step 3 | second opinion on department and urgency; disagreement with Gemma sends the case to review |
+| Script-based language hint | No, rule | Tamil / Devanagari / Latin |
