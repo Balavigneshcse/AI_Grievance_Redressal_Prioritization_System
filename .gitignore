@@ -23,8 +23,10 @@ media/
 *.db
 *.sqlite
 
-# Organiser documents
+# Organiser documents, deck backup, Office lock files
 docs/*.docx
+docs/sample_original.pptx
+~$*
 
 # OS / editor
 .DS_Store
