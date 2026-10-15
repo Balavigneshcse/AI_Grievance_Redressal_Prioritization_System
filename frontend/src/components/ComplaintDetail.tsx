@@ -99,6 +99,17 @@ export function ComplaintDetail({ complaint, linkBase = "/c", children }: Props)
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm leading-relaxed whitespace-pre-wrap">{complaint.raw_text}</p>
+          {complaint.complainant_name ? (
+            <p className="text-xs text-muted-foreground">
+              {t("track.complainant")}: <span className="font-medium text-foreground">{complaint.complainant_name}</span>
+              {complaint.aadhaar_last4 ? (
+                <>
+                  {" · "}
+                  {t("track.aadhaar")}: <span className="font-mono text-foreground">XXXX XXXX {complaint.aadhaar_last4}</span>
+                </>
+              ) : null}
+            </p>
+          ) : null}
           {a?.summary_en ? (
             <>
               <Separator />

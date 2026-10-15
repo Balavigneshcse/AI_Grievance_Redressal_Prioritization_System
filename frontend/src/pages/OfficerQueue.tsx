@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { Filter, Inbox, RefreshCw } from "lucide-react"
 import { toast } from "sonner"
 import { api, ApiError } from "@/lib/api"
-import type { QueueItem } from "@/lib/types"
+import type { QueueItem, QueueView } from "@/lib/types"
+import { useAuth } from "@/lib/auth"
 import { useDepartments } from "@/lib/departments"
 import { LANGUAGE_NAMES, URGENCY_ORDER } from "@/lib/labels"
 import { formatAge } from "@/lib/format"
@@ -13,11 +14,15 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { FlagBadge, UrgencyBadge } from "@/components/Badges"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { FlagBadge, StatusBadge, UrgencyBadge } from "@/components/Badges"
 
 const ALL = "all"
 const LANG_FILTERS = ["en", "ta", "hi"]
 const DASH = "—"
+const VIEWS: QueueView[] = ["review", "active", "resolved", "all"]
+/** The queue refreshes itself so new complaints show up without a reload. */
+const REFRESH_MS = 5000
 
 interface Option {
   value: string
@@ -54,34 +59,64 @@ function FilterSelect({
 export default function OfficerQueue() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const { departments, name } = useDepartments()
+  const deptScoped = user?.role === "dept_admin"
+  const superAdmin = user?.role === "super_admin"
+  const [view, setView] = useState<QueueView>(deptScoped ? "active" : "review")
   const [department, setDepartment] = useState(ALL)
   const [urgency, setUrgency] = useState(ALL)
   const [language, setLanguage] = useState(ALL)
+  const [district, setDistrict] = useState(ALL)
+  const [districts, setDistricts] = useState<Option[]>([])
   const [items, setItems] = useState<QueueItem[] | null>(null)
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const inFlight = useRef(false)
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    const qs = new URLSearchParams()
-    if (department !== ALL) qs.set("department", department)
-    if (urgency !== ALL) qs.set("urgency", urgency)
-    if (language !== ALL) qs.set("language", language)
-    const suffix = qs.toString() ? `?${qs.toString()}` : ""
-    try {
-      const list = await api<QueueItem[]>(`/review/queue${suffix}`)
-      setItems(Array.isArray(list) ? list : [])
-    } catch (err) {
-      setItems((prev) => prev ?? [])
-      toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
-    } finally {
-      setLoading(false)
-    }
-  }, [department, urgency, language, t])
+  const load = useCallback(
+    async (silent = false) => {
+      if (inFlight.current) return
+      inFlight.current = true
+      if (silent) setRefreshing(true)
+      else setLoading(true)
+      const qs = new URLSearchParams({ view })
+      if (department !== ALL) qs.set("department", department)
+      if (urgency !== ALL) qs.set("urgency", urgency)
+      if (language !== ALL) qs.set("language", language)
+      if (district !== ALL) qs.set("district", district)
+      try {
+        const list = await api<QueueItem[]>(`/review/queue?${qs.toString()}`)
+        setItems(Array.isArray(list) ? list : [])
+      } catch (err) {
+        setItems((prev) => prev ?? [])
+        if (!silent) toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+      } finally {
+        inFlight.current = false
+        setLoading(false)
+        setRefreshing(false)
+      }
+    },
+    [view, department, urgency, language, district, t],
+  )
 
   useEffect(() => {
     void load()
   }, [load])
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      if (document.visibilityState === "visible") void load(true)
+    }, REFRESH_MS)
+    return () => window.clearInterval(id)
+  }, [load])
+
+  useEffect(() => {
+    if (!superAdmin) return
+    api<{ id: string; name: string; staff: number }[]>("/admin/districts")
+      .then((rows) => setDistricts(rows.map((d) => ({ value: d.name, label: d.name }))))
+      .catch(() => setDistricts([]))
+  }, [superAdmin])
 
   const deptItems: Option[] = [
     { value: ALL, label: t("queue.allDepartments") },
@@ -95,13 +130,22 @@ export default function OfficerQueue() {
     { value: ALL, label: t("queue.allLanguages") },
     ...LANG_FILTERS.map((l) => ({ value: l, label: LANGUAGE_NAMES[l] ?? l })),
   ]
+  const districtItems: Option[] = [{ value: ALL, label: t("queue.allDistricts") }, ...districts]
 
   const go = (id: string) => navigate(`/officer/c/${id}`)
+  const scopeLabel = deptScoped
+    ? `${name(user?.department_id ?? null, DASH)}${user?.district ? ` · ${user.district}` : ""}`
+    : user?.role === "district_admin"
+      ? user.district
+      : null
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
-        <h1 className="font-heading text-xl font-semibold">{t("queue.title")}</h1>
+        <div className="min-w-0">
+          <h1 className="font-heading text-xl font-semibold">{t(`queue.view.${view}`)}</h1>
+          {scopeLabel ? <p className="truncate text-xs text-muted-foreground">{scopeLabel}</p> : null}
+        </div>
         <Button
           variant="ghost"
           size="icon"
@@ -109,19 +153,35 @@ export default function OfficerQueue() {
           onClick={() => void load()}
           disabled={loading}
         >
-          <RefreshCw className={loading ? "animate-spin" : undefined} />
+          <RefreshCw className={loading || refreshing ? "animate-spin" : undefined} />
         </Button>
       </div>
+
+      <Tabs value={view} onValueChange={(v) => setView(v as QueueView)}>
+        <TabsList className="w-full">
+          {VIEWS.map((v) => (
+            <TabsTrigger key={v} value={v} className="flex-1">
+              {t(`queue.view.${v}`)}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       <Card size="sm">
         <CardContent className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <div className="flex items-center gap-2 sm:col-span-3">
             <Filter className="size-4 text-muted-foreground" />
             <span className="text-sm font-medium">{t("queue.filters")}</span>
+            <span className="ml-auto text-xs text-muted-foreground">{t("queue.autoRefresh")}</span>
           </div>
-          <FilterSelect value={department} onChange={setDepartment} items={deptItems} label={t("queue.department")} />
+          {!deptScoped ? (
+            <FilterSelect value={department} onChange={setDepartment} items={deptItems} label={t("queue.department")} />
+          ) : null}
           <FilterSelect value={urgency} onChange={setUrgency} items={urgencyItems} label={t("queue.urgency")} />
           <FilterSelect value={language} onChange={setLanguage} items={langItems} label={t("queue.language")} />
+          {superAdmin ? (
+            <FilterSelect value={district} onChange={setDistrict} items={districtItems} label={t("queue.district")} />
+          ) : null}
         </CardContent>
       </Card>
 
@@ -142,7 +202,9 @@ export default function OfficerQueue() {
                 <TableHead>{t("queue.urgency")}</TableHead>
                 <TableHead>{t("queue.trackingId")}</TableHead>
                 <TableHead className="min-w-56">{t("queue.summary")}</TableHead>
-                <TableHead>{t("queue.department")}</TableHead>
+                <TableHead>{t("queue.status")}</TableHead>
+                {!deptScoped ? <TableHead>{t("queue.department")}</TableHead> : null}
+                {superAdmin ? <TableHead>{t("queue.district")}</TableHead> : null}
                 <TableHead>{t("queue.language")}</TableHead>
                 <TableHead>{t("queue.flags")}</TableHead>
                 <TableHead className="text-right">{t("queue.age")}</TableHead>
@@ -166,7 +228,14 @@ export default function OfficerQueue() {
                   <TableCell>
                     <UrgencyBadge urgency={q.urgency} />
                   </TableCell>
-                  <TableCell className="font-mono font-medium">{q.tracking_id}</TableCell>
+                  <TableCell className="font-mono font-medium">
+                    {q.tracking_id}
+                    {q.complainant_name ? (
+                      <span className="block max-w-32 truncate font-sans text-xs font-normal text-muted-foreground">
+                        {q.complainant_name}
+                      </span>
+                    ) : null}
+                  </TableCell>
                   <TableCell className="max-w-72 whitespace-normal">
                     <span className="line-clamp-2 text-sm">{q.summary_en ?? DASH}</span>
                     {typeof q.confidence === "number" ? (
@@ -175,7 +244,11 @@ export default function OfficerQueue() {
                       </span>
                     ) : null}
                   </TableCell>
-                  <TableCell>{name(q.department, DASH)}</TableCell>
+                  <TableCell>
+                    <StatusBadge status={q.status} />
+                  </TableCell>
+                  {!deptScoped ? <TableCell>{name(q.department, DASH)}</TableCell> : null}
+                  {superAdmin ? <TableCell>{q.district ?? DASH}</TableCell> : null}
                   <TableCell>
                     {q.language_primary ? (LANGUAGE_NAMES[q.language_primary] ?? q.language_primary) : DASH}
                   </TableCell>

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import math
+import logging
 import time
 from pathlib import Path
 
@@ -24,6 +25,8 @@ from scripts.common import (
     MODELS, URGENCY_SLA_FACTOR, SoftmaxRegression, analysis_system_prompt, category_of_department, complaint_user_message,
     district_for, embed, language_hint_code, load_schema, nearest_place, office_for, office_hint,
 )
+
+log = logging.getLogger("synapse.pipeline")
 
 URGENCY_RANK = rules_engine.URGENCY_RANK
 OPEN_STATUSES = ("received", "analysing", "under_review", "routed", "in_progress", "awaiting_info")
@@ -64,8 +67,24 @@ def _llm_analyse(masked_text: str, image_path: str | None, language_hint: str | 
         messages=[{"role": "system", "content": analysis_system_prompt()}, user],
         format=load_schema(),
         options={"temperature": 0, "num_ctx": 2048, "num_predict": 400},
+        keep_alive=settings.LLM_KEEP_ALIVE,
     )
     return json.loads(resp.message.content), int((time.time() - t0) * 1000)
+
+
+def warm_up() -> None:
+    """Load Gemma into VRAM and bge-m3 into RAM at startup so the first complaint
+    does not pay the model load; keep_alive keeps them resident between complaints."""
+    import ollama
+
+    t0 = time.time()
+    try:
+        client = ollama.Client(host=settings.OLLAMA_HOST, timeout=settings.LLM_TIMEOUT_S)
+        client.chat(model=settings.LLM, messages=[{"role": "user", "content": "ok"}], options={"num_predict": 1}, keep_alive=settings.LLM_KEEP_ALIVE)
+        embed(["warm up"], gpu=False)
+        log.info("models warm in %.1f s (%s, %s)", time.time() - t0, settings.LLM, settings.EMBED)
+    except Exception as exc:
+        log.warning("model warm-up failed: %s", exc)
 
 
 def _set_status(db: Session, c: models.Complaint, to: str, actor_type: str = "system", actor_id=None, note: str | None = None) -> None:

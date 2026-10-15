@@ -58,6 +58,24 @@ python scripts\clean_synthetic.py
 
 Drops rows whose text is not in the script their language label promises (the LLM ignores the language instruction in roughly 7% of calls) and exact duplicates. Keeps a `.bak` copy. Rerun `make_synthetic.py` afterwards to regenerate the dropped combinations; new runs apply the same check automatically.
 
+## 2c. Round 2 and later: more training data
+
+The generator skips every department x urgency x language combination already present in its output file, so a second round goes to a new file and is merged afterwards:
+
+```bash
+python scripts\make_synthetic.py --per-combo 3 --out data\synthetic\complaints_round2.jsonl
+```
+
+```bash
+python scripts\clean_synthetic.py --file data\synthetic\complaints_round2.jsonl
+```
+
+```bash
+python -c "import shutil; shutil.copyfileobj(open('data/synthetic/complaints_round2.jsonl','rb'), open('data/synthetic/complaints.jsonl','ab'))"
+```
+
+Then step 3 (train) and step 4 (evaluate). Restart the API afterwards, or call `POST /admin/models/reload` as the super admin, so the new classifier is used. While generation runs, complaint analysis in the app is about twice as slow because both share the GPU.
+
 ## 3. Train the second-opinion classifier
 
 ```bash

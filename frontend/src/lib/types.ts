@@ -1,11 +1,35 @@
-export type Role = "citizen" | "officer" | "admin"
+export type Role = "complainant" | "dept_admin" | "district_admin" | "super_admin" | "officer" | "admin"
 
 export interface User {
   id: string
   email: string
   role: Role
   preferred_language: string
+  department_id?: string | null
+  district?: string | null
+  full_name?: string | null
+  is_active?: boolean
 }
+
+export interface StaffUser extends User {
+  mobile: string
+  department: Department | null
+  created_at: string
+  last_login_at: string | null
+}
+
+export interface StaffCreated {
+  user: StaffUser
+  password: string
+}
+
+export interface DistrictInfo {
+  id: string
+  name: string
+  staff: number
+}
+
+export type QueueView = "review" | "active" | "resolved" | "all"
 
 export interface AuthResponse {
   access_token: string
@@ -101,6 +125,11 @@ export interface Complaint {
   location_source: LocationSource | null
   manual_address: string | null
   resolved_place: string | null
+  complainant_name?: string | null
+  aadhaar_last4?: string | null
+  district?: string | null
+  office_name?: string | null
+  due_at?: string | null
   created_at: string
   media: Media[]
   analysis: Analysis | null
@@ -117,7 +146,11 @@ export interface GeoReverse {
 export interface QueueItem {
   id: string
   tracking_id: string
+  status: Status
   urgency: Urgency | null
+  district?: string | null
+  office_name?: string | null
+  complainant_name?: string | null
   department: DepartmentRef
   language_primary: string | null
   summary_en: string | null

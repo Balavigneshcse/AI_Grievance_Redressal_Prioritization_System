@@ -27,8 +27,11 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     password_version: Mapped[int] = mapped_column(Integer, default=1)
-    role: Mapped[str] = mapped_column(String(20), default="complainant")  # complainant | officer | admin
-    department_id: Mapped[str | None] = mapped_column(ForeignKey("departments.id"), nullable=True)
+    role: Mapped[str] = mapped_column(String(20), default="complainant")  # complainant | dept_admin | district_admin | super_admin
+    department_id: Mapped[str | None] = mapped_column(ForeignKey("departments.id"), nullable=True)  # dept_admin only
+    district: Mapped[str | None] = mapped_column(String(60), nullable=True, index=True)  # district_admin and dept_admin
+    full_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     preferred_language: Mapped[str] = mapped_column(String(5), default="en")
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
@@ -70,6 +73,8 @@ class Complaint(Base):
     lng: Mapped[float | None] = mapped_column(Float, nullable=True)
     location_source: Mapped[str] = mapped_column(String(20), default="none")
     manual_address: Mapped[str | None] = mapped_column(Text, nullable=True)
+    complainant_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    aadhaar_last4: Mapped[str | None] = mapped_column(String(4), nullable=True)  # identity check for the office, never shown to the model
     resolved_place: Mapped[str | None] = mapped_column(String(200), nullable=True)
     ward: Mapped[str | None] = mapped_column(String(50), nullable=True)
     district: Mapped[str | None] = mapped_column(String(60), nullable=True, index=True)
@@ -186,7 +191,7 @@ class Notification(Base):
     language: Mapped[str] = mapped_column(String(5))
     subject: Mapped[str] = mapped_column(String(200))
     body: Mapped[str] = mapped_column(Text)
-    status: Mapped[str] = mapped_column(String(10))  # sent | failed
+    status: Mapped[str] = mapped_column(String(10))  # queued | sent | failed
     sent_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 

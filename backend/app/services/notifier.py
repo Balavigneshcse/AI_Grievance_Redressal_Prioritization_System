@@ -1,14 +1,26 @@
-"""Email notifications in the complainant's language through SMTP (Mailpit in dev).
-Every send is logged in the notifications table, sent or failed."""
+"""Email notifications in the complainant's language through SMTP.
+
+A send never runs inside a request or inside the analysis worker: notify() only
+writes a 'queued' row to the notifications table and wakes the outbox thread,
+which delivers the queue through one persistent SMTP connection (Gmail or the
+local Mailpit). Every row ends as sent, or failed with the reason appended."""
 from __future__ import annotations
 
+import logging
 import smtplib
+import threading
+import time
+from datetime import datetime, timezone
 from email.message import EmailMessage
 
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from ..config import settings
+from ..db import SessionLocal
 from .. import models
+
+log = logging.getLogger("synapse.mail")
 
 TEMPLATES = {
     "otp": {
@@ -36,16 +48,47 @@ TEMPLATES = {
         "ta": ("புகார் {tracking_id}: {status}", "உங்கள் புகார் {tracking_id} நிலை: {status}. {note}"),
         "hi": ("शिकायत {tracking_id}: {status}", "आपकी शिकायत {tracking_id} की स्थिति अब {status} है। {note}"),
     },
+    "account": {
+        "en": (
+            "Your Vindex staff account",
+            "An account was created for you on the Vindex grievance portal.\nRole: {role}\nDistrict: {district}\n"
+            "Department: {department}\nLogin: {url}\nYour administrator will give you the temporary password; "
+            "change it with 'Forgot password' after the first login.",
+        ),
+        "ta": (
+            "உங்கள் Vindex பணியாளர் கணக்கு",
+            "Vindex குறைதீர்ப்பு தளத்தில் உங்களுக்காக ஒரு கணக்கு உருவாக்கப்பட்டது.\nபங்கு: {role}\nமாவட்டம்: {district}\n"
+            "துறை: {department}\nஉள்நுழைவு: {url}\nதற்காலிக கடவுச்சொல்லை உங்கள் நிர்வாகி தருவார்; முதல் உள்நுழைவுக்குப் பிறகு "
+            "'கடவுச்சொல் மறந்துவிட்டதா' மூலம் மாற்றவும்.",
+        ),
+        "hi": (
+            "आपका Vindex स्टाफ खाता",
+            "Vindex शिकायत पोर्टल पर आपके लिए एक खाता बनाया गया है।\nभूमिका: {role}\nज़िला: {district}\nविभाग: {department}\n"
+            "लॉगिन: {url}\nअस्थायी पासवर्ड आपका प्रशासक देगा; पहले लॉगिन के बाद 'पासवर्ड भूल गए' से इसे बदल लें।",
+        ),
+    },
 }
 
+MAX_ATTEMPTS = 3
+_wake = threading.Event()
+_thread: threading.Thread | None = None
+_attempts: dict[str, int] = {}
+_backoff_until = 0.0
 
-def _send(to: str, subject: str, body: str) -> None:
-    msg = EmailMessage()
-    msg["From"] = settings.SMTP_FROM
-    msg["To"] = to
-    msg["Subject"] = subject
-    msg.set_content(body)
-    with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as s:
+
+class Mailer:
+    """One SMTP connection, reopened when it sat idle too long or the server dropped it."""
+
+    IDLE_RECONNECT_S = 240
+
+    def __init__(self) -> None:
+        self.conn: smtplib.SMTP | None = None
+        self.last_used = 0.0
+
+    def connect(self) -> None:
+        self.close()
+        t0 = time.time()
+        s = smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=30)
         s.ehlo()
         # Upgrade to TLS when asked and the server offers it (Gmail does, Mailpit does not).
         if settings.SMTP_TLS and s.has_extn("STARTTLS"):
@@ -53,23 +96,117 @@ def _send(to: str, subject: str, body: str) -> None:
             s.ehlo()
         if settings.SMTP_USER:
             s.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-        s.send_message(msg)
+        self.conn = s
+        self.last_used = time.time()
+        log.info("connected to %s:%s in %.1f s", settings.SMTP_HOST, settings.SMTP_PORT, time.time() - t0)
+
+    def close(self) -> None:
+        if self.conn is not None:
+            try:
+                self.conn.quit()
+            except Exception:
+                pass
+            self.conn = None
+
+    def send(self, msg: EmailMessage) -> None:
+        if self.conn is None or time.time() - self.last_used > self.IDLE_RECONNECT_S:
+            self.connect()
+        try:
+            self.conn.send_message(msg)
+        except (smtplib.SMTPServerDisconnected, smtplib.SMTPResponseException, OSError):
+            # The server closed the idle connection: open a fresh one and retry once.
+            self.connect()
+            self.conn.send_message(msg)
+        self.last_used = time.time()
 
 
-def notify(db: Session, user: models.User, template: str, complaint_id=None, **kw) -> None:
+def build_message(to: str, subject: str, body: str) -> EmailMessage:
+    msg = EmailMessage()
+    msg["From"] = settings.SMTP_FROM
+    msg["To"] = to
+    msg["Subject"] = subject
+    msg.set_content(body)
+    return msg
+
+
+def notify(db: Session, user: models.User, template: str, complaint_id=None, **kw) -> models.Notification:
+    """Queue an email in the user's language. Delivered by the outbox thread after the caller commits."""
     lang = user.preferred_language if user.preferred_language in ("en", "ta", "hi") else "en"
     subject_t, body_t = TEMPLATES[template][lang]
     kw.setdefault("note", "")
     subject, body = subject_t.format(**kw), body_t.format(**kw)
-    status = "sent"
-    try:
-        _send(user.email, subject, body)
-    except Exception as exc:  # never let email failure break the request
-        status = "failed"
-        body = body + f"\n\n[send failed: {exc}]"
-    db.add(
-        models.Notification(
-            user_id=user.id, complaint_id=complaint_id, channel="email", template=template,
-            language=lang, subject=subject, body=body, status=status,
-        )
+    n = models.Notification(
+        user_id=user.id, complaint_id=complaint_id, channel="email", template=template,
+        language=lang, subject=subject, body=body, status="queued",
     )
+    db.add(n)
+    _wake.set()
+    return n
+
+
+def pending() -> int:
+    with SessionLocal() as db:
+        return db.execute(select(func.count()).where(models.Notification.status == "queued")).scalar_one()
+
+
+def _deliver_queued(mailer: Mailer) -> int:
+    """Send the queued rows in order. Stops at the first failure so the order is kept
+    and the next tick retries; a row is marked failed after MAX_ATTEMPTS."""
+    global _backoff_until
+    sent = 0
+    with SessionLocal() as db:
+        rows = db.execute(
+            select(models.Notification).where(models.Notification.status == "queued").order_by(models.Notification.sent_at)
+        ).scalars().all()
+        for n in rows:
+            user = db.get(models.User, n.user_id)
+            if user is None:
+                n.status = "failed"
+                db.commit()
+                continue
+            try:
+                mailer.send(build_message(user.email, n.subject, n.body))
+            except Exception as exc:
+                key = str(n.id)
+                _attempts[key] = _attempts.get(key, 0) + 1
+                log.warning("email %s to %s FAILED (attempt %d) via %s:%s: %s: %s", n.template, user.email, _attempts[key],
+                            settings.SMTP_HOST, settings.SMTP_PORT, type(exc).__name__, exc)
+                mailer.close()
+                if _attempts[key] >= MAX_ATTEMPTS:
+                    n.status = "failed"
+                    n.body = n.body + f"\n\n[send failed: {exc}]"
+                    _attempts.pop(key, None)
+                    db.commit()
+                    continue
+                _backoff_until = time.time() + 5 * _attempts[key]
+                db.commit()
+                break
+            n.status = "sent"
+            n.sent_at = datetime.now(timezone.utc)
+            _attempts.pop(str(n.id), None)
+            db.commit()
+            sent += 1
+            log.info("email %s sent to %s via %s:%s", n.template, user.email, settings.SMTP_HOST, settings.SMTP_PORT)
+    return sent
+
+
+def _loop() -> None:
+    mailer = Mailer()
+    while True:
+        _wake.wait(timeout=2.0)
+        _wake.clear()
+        if time.time() < _backoff_until:
+            continue
+        try:
+            _deliver_queued(mailer)
+        except Exception:
+            log.exception("outbox loop error")
+            mailer.close()
+            time.sleep(2)
+
+
+def start() -> None:
+    global _thread
+    if _thread is None or not _thread.is_alive():
+        _thread = threading.Thread(target=_loop, name="synapse-outbox", daemon=True)
+        _thread.start()

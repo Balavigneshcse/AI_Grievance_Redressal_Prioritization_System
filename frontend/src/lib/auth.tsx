@@ -109,6 +109,14 @@ export function useAuth(): AuthContextValue {
   return ctx
 }
 
+const STAFF_ROLES = new Set(["dept_admin", "district_admin", "super_admin", "officer", "admin"])
+
+/** Any role that works complaints: department, district or super admin. */
 export function isStaff(user: User | null): boolean {
-  return user?.role === "officer" || user?.role === "admin"
+  return !!user && STAFF_ROLES.has(user.role)
+}
+
+/** Roles that manage staff accounts: super admin (all districts) and district admin (own district). */
+export function isAdmin(user: User | null): boolean {
+  return user?.role === "super_admin" || user?.role === "district_admin"
 }

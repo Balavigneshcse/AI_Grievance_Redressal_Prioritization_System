@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import threading
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -9,8 +10,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
 from .db import init_db
-from .services import worker
-from .api import admin, auth, complaints, misc, review
+from .services import notifier, pipeline, worker
+from .api import admin, auth, complaints, misc, review, staff
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 
@@ -18,7 +19,13 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    logging.getLogger("synapse.mail").info(
+        "mail via %s:%s tls=%s auth=%s from=%s", settings.SMTP_HOST, settings.SMTP_PORT, settings.SMTP_TLS,
+        "yes" if settings.SMTP_USER else "no", settings.SMTP_FROM,
+    )
     worker.start()
+    notifier.start()  # outbox thread: requests never wait for the mail server
+    threading.Thread(target=pipeline.warm_up, name="synapse-warmup", daemon=True).start()
     yield
 
 
@@ -33,6 +40,7 @@ app.include_router(auth.router)
 app.include_router(complaints.router)
 app.include_router(review.router)
 app.include_router(admin.router)
+app.include_router(staff.router)
 app.include_router(misc.router)
 
 

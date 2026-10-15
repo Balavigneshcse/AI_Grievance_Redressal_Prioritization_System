@@ -1,9 +1,9 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom"
-import { isStaff, useAuth } from "@/lib/auth"
+import { isAdmin, isStaff, useAuth } from "@/lib/auth"
 import { Skeleton } from "@/components/ui/skeleton"
 
-/** Route guard. `staff` additionally requires an officer/admin role. */
-export function RequireAuth({ staff = false }: { staff?: boolean }) {
+/** Route guard. `staff` requires a staff role, `admin` a super or district admin. */
+export function RequireAuth({ staff = false, admin = false }: { staff?: boolean; admin?: boolean }) {
   const { token, user, ready } = useAuth()
   const location = useLocation()
 
@@ -19,6 +19,7 @@ export function RequireAuth({ staff = false }: { staff?: boolean }) {
       )
     }
     if (!isStaff(user)) return <Navigate to="/" replace />
+    if (admin && !isAdmin(user)) return <Navigate to="/officer/queue" replace />
   }
 
   return <Outlet />

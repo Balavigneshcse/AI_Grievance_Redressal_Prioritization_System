@@ -14,6 +14,7 @@ import NewComplaint from "@/pages/NewComplaint"
 import Track from "@/pages/Track"
 import OfficerQueue from "@/pages/OfficerQueue"
 import OfficerComplaint from "@/pages/OfficerComplaint"
+import Admin from "@/pages/Admin"
 
 export default function App() {
   return (
@@ -37,6 +38,10 @@ export default function App() {
               <Route element={<RequireAuth staff />}>
                 <Route path="/officer/queue" element={<OfficerQueue />} />
                 <Route path="/officer/c/:id" element={<OfficerComplaint />} />
+              </Route>
+
+              <Route element={<RequireAuth staff admin />}>
+                <Route path="/admin" element={<Admin />} />
               </Route>
 
               <Route path="*" element={<Navigate to="/" replace />} />

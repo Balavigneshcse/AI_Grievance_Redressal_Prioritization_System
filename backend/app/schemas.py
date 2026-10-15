@@ -38,9 +38,44 @@ class ResetIn(BaseModel):
 class UserOut(BaseModel):
     id: UUID
     email: str
-    role: str
+    role: str  # complainant | dept_admin | district_admin | super_admin
     preferred_language: str
     department_id: str | None = None
+    district: str | None = None
+    full_name: str | None = None
+    is_active: bool = True
+
+
+class StaffOut(UserOut):
+    mobile: str
+    department: "DepartmentOut | None" = None
+    created_at: datetime
+    last_login_at: datetime | None = None
+
+
+class StaffCreateIn(BaseModel):
+    email: str
+    mobile: str
+    full_name: str = Field(min_length=2, max_length=120)
+    role: Literal["district_admin", "dept_admin"]
+    district: str | None = None
+    department_id: str | None = None
+    preferred_language: Literal["en", "ta", "hi"] = "en"
+    password: str | None = None  # generated when omitted; returned once
+
+
+class StaffCreated(BaseModel):
+    user: StaffOut
+    password: str
+
+
+class StaffPatchIn(BaseModel):
+    is_active: bool | None = None
+    full_name: str | None = None
+    department_id: str | None = None
+    district: str | None = None
+    preferred_language: Literal["en", "ta", "hi"] | None = None
+    password: str | None = None
 
 
 class TokenOut(BaseModel):
@@ -128,6 +163,8 @@ class ComplaintDetail(BaseModel):
     location_source: str
     manual_address: str | None
     resolved_place: str | None
+    complainant_name: str | None = None
+    aadhaar_last4: str | None = None
     district: str | None = None
     office_name: str | None = None
     office_department_id: str | None = None
@@ -147,6 +184,7 @@ class GeoIn(BaseModel):
 class QueueItem(BaseModel):
     id: UUID
     tracking_id: str
+    status: str
     urgency: str | None
     department: str | None
     language_primary: str | None
@@ -157,6 +195,7 @@ class QueueItem(BaseModel):
     district: str | None = None
     office_name: str | None = None
     due_at: datetime | None = None
+    complainant_name: str | None = None
 
 
 class DecisionIn(BaseModel):

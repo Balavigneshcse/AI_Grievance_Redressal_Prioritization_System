@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { Camera, CheckCircle2, Loader2, Plus, Send, Upload, Video, X } from "lucide-react"
+import { Camera, CheckCircle2, IdCard, Loader2, Plus, Send, Upload, Video, X } from "lucide-react"
 import { toast } from "sonner"
 import { api, ApiError } from "@/lib/api"
 import { currentLang } from "@/lib/i18n"
@@ -10,10 +10,11 @@ import { reverseGeocode } from "@/lib/geo"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { CameraDialog, type CapturedPhoto } from "@/components/CameraDialog"
+import { CameraDialog, MAX_PHOTO_MB, MAX_VIDEO_MB, MAX_VIDEO_SECONDS, type CapturedMedia } from "@/components/CameraDialog"
 import { EMPTY_LOCATION, LocationCard, type LocationState } from "@/components/LocationCard"
 import { StatusBadge } from "@/components/Badges"
 
@@ -26,6 +27,7 @@ interface Attachment {
 
 const MAX_FILES = 6
 const MIN_TEXT = 10
+const NAME_KEY = "synapse_name"
 
 export default function NewComplaint() {
   const { t, i18n } = useTranslation()
@@ -33,6 +35,14 @@ export default function NewComplaint() {
   const fileInput = useRef<HTMLInputElement | null>(null)
   const textarea = useRef<HTMLTextAreaElement | null>(null)
   const [text, setText] = useState("")
+  const [fullName, setFullName] = useState(() => {
+    try {
+      return localStorage.getItem(NAME_KEY) ?? ""
+    } catch {
+      return ""
+    }
+  })
+  const [aadhaar, setAadhaar] = useState("")
   const [files, setFiles] = useState<Attachment[]>([])
   const [location, setLocation] = useState<LocationState>(EMPTY_LOCATION)
   const [cameraOpen, setCameraOpen] = useState(false)
@@ -60,7 +70,15 @@ export default function NewComplaint() {
   }, [])
 
   const addFiles = (list: File[]) => {
-    const accepted = list.filter((f) => f.type.startsWith("image/") || f.type.startsWith("video/"))
+    const typed = list.filter((f) => f.type.startsWith("image/") || f.type.startsWith("video/"))
+    const accepted = typed.filter((f) => {
+      const max = f.type.startsWith("video/") ? MAX_VIDEO_MB : MAX_PHOTO_MB
+      if (f.size > max * 1024 * 1024) {
+        toast.error(t("new.tooLarge", { name: f.name, max }))
+        return false
+      }
+      return true
+    })
     if (accepted.length === 0) return
     setFiles((prev) => {
       const room = MAX_FILES - prev.length
@@ -87,8 +105,11 @@ export default function NewComplaint() {
     })
   }
 
-  const onCapture = ({ blob, gps }: CapturedPhoto) => {
-    const file = new File([blob], `photo-${Date.now()}.jpg`, { type: "image/jpeg" })
+  const onCapture = ({ blob, gps, kind }: CapturedMedia) => {
+    const file =
+      kind === "video"
+        ? new File([blob], `video-${Date.now()}.${blob.type.includes("mp4") ? "mp4" : "webm"}`, { type: blob.type || "video/webm" })
+        : new File([blob], `photo-${Date.now()}.jpg`, { type: "image/jpeg" })
     addFiles([file])
     if (gps) {
       patchLocation({ lat: gps.lat, lng: gps.lng, source: "camera_gps" })
@@ -111,10 +132,21 @@ export default function NewComplaint() {
       textarea.current?.focus()
       return
     }
+    const name = fullName.trim().replace(/\s+/g, " ")
+    if (name.length < 2) {
+      toast.error(t("new.nameRequired"))
+      return
+    }
+    if (!/^\d{4}$/.test(aadhaar.trim())) {
+      toast.error(t("new.aadhaarInvalid"))
+      return
+    }
     setSubmitting(true)
     try {
       const fd = new FormData()
       fd.append("text", body)
+      fd.append("complainant_name", name)
+      fd.append("aadhaar_last4", aadhaar.trim())
       const hint = languageHint(body, currentLang())
       if (hint) fd.append("language_hint", hint)
       if (location.lat != null && location.lng != null) {
@@ -126,6 +158,11 @@ export default function NewComplaint() {
       files.forEach((f) => fd.append("files", f.file, f.file.name))
       const res = await api<{ id: string; tracking_id: string; status: string }>("/complaints", { body: fd })
       setResult(res)
+      try {
+        localStorage.setItem(NAME_KEY, name)
+      } catch {
+        /* ignore */
+      }
     } catch (err) {
       toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
     } finally {
@@ -161,7 +198,47 @@ export default function NewComplaint() {
 
       <Card>
         <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <IdCard className="size-4" />
+            {t("new.identity")}
+          </CardTitle>
+          <CardDescription>{t("new.identityHint")}</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="complainant-name">{t("new.name")}</Label>
+            <Input
+              id="complainant-name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder={t("new.namePlaceholder")}
+              autoComplete="name"
+              maxLength={120}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="aadhaar-last4">{t("new.aadhaar")}</Label>
+            <Input
+              id="aadhaar-last4"
+              value={aadhaar}
+              onChange={(e) => setAadhaar(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              placeholder="1234"
+              inputMode="numeric"
+              pattern="[0-9]{4}"
+              maxLength={4}
+              className="font-mono tracking-widest"
+            />
+            <p className="text-xs text-muted-foreground">{t("new.aadhaarHint")}</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>{t("new.attachments")}</CardTitle>
+          <CardDescription>
+            {t("new.limits", { photo: MAX_PHOTO_MB, video: MAX_VIDEO_MB, minutes: MAX_VIDEO_SECONDS / 60 })}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-2 gap-2">

@@ -8,12 +8,17 @@
     "account": "Account",
     "myComplaints": "My complaints",
     "logout": "Log out",
-    "login": "Log in"
+    "login": "Log in",
+    "admin": "Admin"
   },
   "role": {
     "citizen": "Citizen",
     "officer": "Officer",
-    "admin": "Admin"
+    "admin": "Admin",
+    "complainant": "Citizen",
+    "dept_admin": "Department admin",
+    "district_admin": "District admin",
+    "super_admin": "Super admin"
   },
   "common": {
     "cancel": "Cancel",
@@ -160,7 +165,7 @@
       "latin": "English / romanised"
     },
     "attachments": "Photos or video",
-    "camera": "Camera",
+    "camera": "Camera / video",
     "upload": "Upload",
     "remove": "Remove",
     "submit": "Submit complaint",
@@ -170,7 +175,17 @@
     "successTitle": "Complaint received",
     "successHint": "Save this tracking id. Analysis starts now.",
     "trackIt": "Track it",
-    "fileAnother": "File another"
+    "fileAnother": "File another",
+    "identity": "Your details",
+    "identityHint": "Used by the office to verify the complaint. Not shared with the AI model.",
+    "name": "Full name",
+    "namePlaceholder": "As on your Aadhaar",
+    "aadhaar": "Aadhaar: last 4 digits",
+    "aadhaarHint": "Only the last 4 digits, never the full number.",
+    "nameRequired": "Please enter your name.",
+    "aadhaarInvalid": "Enter exactly the last 4 digits of your Aadhaar number.",
+    "tooLarge": "{{name}} is larger than {{max}} MB.",
+    "limits": "Photos up to {{photo}} MB, videos up to {{video}} MB and {{minutes}} minutes. Videos are kept as evidence for the office."
   },
   "location": {
     "title": "Location",
@@ -198,7 +213,17 @@
     "switch": "Switch camera",
     "unsupported": "Camera is not supported in this browser.",
     "denied": "Camera permission was denied.",
-    "failed": "Could not start the camera."
+    "failed": "Could not start the camera.",
+    "videoTitle": "Record a video",
+    "videoDescription": "Up to {{minutes}} minutes and {{mb}} MB. Your location is captured with the recording.",
+    "mode": "Capture mode",
+    "photoMode": "Photo",
+    "videoMode": "Video",
+    "record": "Start recording",
+    "stop": "Stop",
+    "noAudio": "No microphone available: recording without sound.",
+    "recordUnsupported": "Video recording is not supported in this browser.",
+    "tooLarge": "The recording is larger than {{mb}} MB. Record a shorter video."
   },
   "track": {
     "title": "Track complaint",
@@ -223,7 +248,9 @@
     "duplicates": "Possible duplicates",
     "noAnalysis": "Analysis is not available yet.",
     "media": "Attachments",
-    "notFound": "Complaint not found"
+    "notFound": "Complaint not found",
+    "complainant": "Complainant",
+    "aadhaar": "Aadhaar"
   },
   "queue": {
     "title": "Review queue",
@@ -239,7 +266,17 @@
     "flags": "Flags",
     "age": "Age",
     "confidence": "{{pct}}% confidence",
-    "empty": "The queue is empty."
+    "empty": "The queue is empty.",
+    "status": "Status",
+    "district": "District",
+    "allDistricts": "All districts",
+    "autoRefresh": "Updates every 5 s",
+    "view": {
+      "review": "Needs review",
+      "active": "Active work",
+      "resolved": "Resolved",
+      "all": "All complaints"
+    }
   },
   "officer": {
     "title": "Review complaint"
@@ -259,5 +296,39 @@
     "reasonPlaceholder": "Explain the decision for the citizen and the audit log",
     "dialogHint": "Decision for {{id}}",
     "done": "Decision saved. Status: {{status}}"
+  },
+  "admin": {
+    "title": "Staff and districts",
+    "subtitle": "Super admin: all districts. District admin: departments of one district.",
+    "add": "Add account",
+    "overview": "Complaints by district",
+    "total": "total",
+    "open": "open",
+    "staff": "Staff accounts",
+    "noStaff": "No staff accounts yet.",
+    "role": "Role",
+    "district": "District",
+    "department": "Department",
+    "fullName": "Full name",
+    "email": "Email",
+    "mobile": "Mobile",
+    "language": "Preferred language",
+    "password": "Password",
+    "passwordHint": "Leave empty to generate one.",
+    "active": "Active",
+    "lastLogin": "Last login",
+    "never": "never",
+    "created": "Account created.",
+    "passwordOnce": "Share this password with {{name}}. It is shown only once.",
+    "copy": "Copy password",
+    "copied": "Password copied.",
+    "createTitle": "New staff account",
+    "createHint": "The account is active at once and receives a welcome email.",
+    "allDistricts": "All districts",
+    "districtAdminHint": "You can add department admins for {{district}}.",
+    "deactivated": "Account disabled.",
+    "activated": "Account enabled.",
+    "byDepartment": "by department",
+    "name": "Name"
   }
 }

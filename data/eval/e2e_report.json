@@ -1,6 +1,6 @@
 {
-  "passed": 61,
-  "total": 61,
+  "passed": 77,
+  "total": 77,
   "results": [
     {
       "check": "health: db and ollama up",
@@ -21,6 +21,11 @@
       "check": "complainant cannot open the review queue",
       "ok": true,
       "detail": ""
+    },
+    {
+      "check": "complaint without name and Aadhaar digits rejected",
+      "ok": true,
+      "detail": "422"
     },
     {
       "check": "weak password rejected",
@@ -65,7 +70,7 @@
     {
       "check": "case: ta script, water, child sick",
       "ok": true,
-      "detail": "SYN-2026-000014 under_review water/critical lang=ta conf=0.95 rules=['R5', 'R10'] 20s"
+      "detail": "SYN-2026-000041 under_review water/critical lang=ta conf=0.95 rules=['R5', 'R10'] 16s"
     },
     {
       "check": "  evidence spans present and quoted from text",
@@ -83,14 +88,19 @@
       "detail": "Coimbatore / Coimbatore Water Supply Office"
     },
     {
-      "check": "  second opinion populated (officer view)",
+      "check": "  second opinion populated (staff view)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "  complainant name and Aadhaar digits stored",
       "ok": true,
       "detail": ""
     },
     {
       "check": "case: hi script, power cut, oxygen",
       "ok": true,
-      "detail": "SYN-2026-000015 under_review electricity/critical lang=hi conf=0.95 rules=['R2'] 16s"
+      "detail": "SYN-2026-000042 under_review electricity/critical lang=hi conf=0.95 rules=['R2'] 16s"
     },
     {
       "check": "  evidence spans present and quoted from text",
@@ -108,14 +118,19 @@
       "detail": "Coimbatore / Coimbatore Electricity Office"
     },
     {
-      "check": "  second opinion populated (officer view)",
+      "check": "  second opinion populated (staff view)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "  complainant name and Aadhaar digits stored",
       "ok": true,
       "detail": ""
     },
     {
       "check": "case: en, suggestion, low",
       "ok": true,
-      "detail": "SYN-2026-000016 routed general/low lang=en conf=0.8 rules=[] 16s"
+      "detail": "SYN-2026-000043 routed general/low lang=en conf=0.8 rules=[] 16s"
     },
     {
       "check": "  evidence spans present and quoted from text",
@@ -125,7 +140,7 @@
     {
       "check": "  english summary present",
       "ok": true,
-      "detail": "The citizen is offering a suggestion for additional benches in a park."
+      "detail": "A citizen is suggesting the addition of more benches in a park."
     },
     {
       "check": "  district office and due time set",
@@ -133,14 +148,19 @@
       "detail": "Coimbatore / Coimbatore Municipal Administration Office"
     },
     {
-      "check": "  second opinion populated (officer view)",
+      "check": "  second opinion populated (staff view)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "  complainant name and Aadhaar digits stored",
       "ok": true,
       "detail": ""
     },
     {
       "check": "case: hi-en, gas smell",
       "ok": true,
-      "detail": "SYN-2026-000017 under_review safety/critical lang=hi conf=0.95 rules=['R1'] 20s"
+      "detail": "SYN-2026-000044 under_review safety/critical lang=hi conf=0.95 rules=['R1'] 20s"
     },
     {
       "check": "  evidence spans present and quoted from text",
@@ -158,14 +178,19 @@
       "detail": "Coimbatore / Coimbatore Fire & Rescue Office"
     },
     {
-      "check": "  second opinion populated (officer view)",
+      "check": "  second opinion populated (staff view)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "  complainant name and Aadhaar digits stored",
       "ok": true,
       "detail": ""
     },
     {
       "check": "case: ta-en, pothole accident, repeat",
       "ok": true,
-      "detail": "SYN-2026-000018 under_review roads/high lang=ta conf=0.9 rules=['R8'] 16s"
+      "detail": "SYN-2026-000045 under_review roads/high lang=ta conf=0.9 rules=['R8'] 20s"
     },
     {
       "check": "  evidence spans present and quoted from text",
@@ -175,7 +200,7 @@
     {
       "check": "  english summary present",
       "ok": true,
-      "detail": "A large pothole is blocking a vehicle, posing a risk to the driver."
+      "detail": "A dangerous pothole is blocking a vehicle, posing a risk to the driver."
     },
     {
       "check": "  district office and due time set",
@@ -183,7 +208,12 @@
       "detail": "Coimbatore / Coimbatore Roads & Highways Office"
     },
     {
-      "check": "  second opinion populated (officer view)",
+      "check": "  second opinion populated (staff view)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "  complainant name and Aadhaar digits stored",
       "ok": true,
       "detail": ""
     },
@@ -218,14 +248,24 @@
       "detail": ""
     },
     {
-      "check": "PII masked and mapped for officer",
+      "check": "PII masked and mapped for staff",
       "ok": true,
       "detail": "['[PHONE_1]', '[AADHAAR_1]']"
     },
     {
       "check": "review queue lists the flagged cases",
       "ok": true,
-      "detail": "12 items; flags of first: ['critical']"
+      "detail": "27 items; flags of first: ['critical', 'duplicate']"
+    },
+    {
+      "check": "roads admin cannot open a water complaint",
+      "ok": true,
+      "detail": "403"
+    },
+    {
+      "check": "department admin sees only its department",
+      "ok": true,
+      "detail": "13 items"
     },
     {
       "check": "merge into unknown target rejected",
@@ -273,9 +313,49 @@
       "detail": "4 items"
     },
     {
+      "check": "super admin creates a district admin",
+      "ok": true,
+      "detail": "{\"user\":{\"id\":\"c5c7aa49-50ae-452b-b8ca-0a1c636c7d81\",\"email\":\"district.madurai.2070097@synapse.local\",\"role\":\"district_a"
+    },
+    {
+      "check": "district admin cannot create another district admin",
+      "ok": true,
+      "detail": "403"
+    },
+    {
+      "check": "district admin creates a department admin in own district",
+      "ok": true,
+      "detail": "{\"user\":{\"id\":\"88984553-f131-4960-bece-9b203cd24c84\",\"email\":\"water.madurai.2070097@synapse.local\",\"role\":\"dept_admin\",\""
+    },
+    {
+      "check": "new department admin sees no Coimbatore complaints",
+      "ok": true,
+      "detail": "0 items"
+    },
+    {
+      "check": "district admin can disable its department admin",
+      "ok": true,
+      "detail": "{\"id\":\"88984553-f131-4960-bece-9b203cd24c84\",\"email\":\"water.madurai.2070097@synapse.local\",\"role\":\"d"
+    },
+    {
+      "check": "disabled account is locked out",
+      "ok": true,
+      "detail": "401"
+    },
+    {
+      "check": "department admin cannot list staff",
+      "ok": true,
+      "detail": "403"
+    },
+    {
+      "check": "38 Tamil Nadu districts listed",
+      "ok": true,
+      "detail": "38"
+    },
+    {
       "check": "metrics: totals, by status, live accuracy",
       "ok": true,
-      "detail": "{\"complaints\": 21, \"critical_open\": 5, \"review_rate\": 0.762, \"auto_closed\": 0, \"mean_latency_ms\": 17718}"
+      "detail": "{\"complaints\": 48, \"critical_open\": 14, \"review_rate\": 0.812, \"auto_closed\": 0, \"mean_latency_ms\": 15806}"
     },
     {
       "check": "metrics: auto-closed is zero",
@@ -305,17 +385,17 @@
     {
       "check": "status emails logged for the citizen in Mailpit",
       "ok": true,
-      "detail": "48 emails"
+      "detail": "58 emails"
     }
   ],
   "ids": {
-    "ta script, water, child sick": "47bf2288-cf8a-4d9a-9ca7-2b691df512c5",
-    "hi script, power cut, oxygen": "3d39782a-240e-427f-9722-c8eb7583d3ce",
-    "en, suggestion, low": "0acbd049-1e1d-4040-9995-a6427102694d",
-    "hi-en, gas smell": "6c5230a4-c642-4f3a-88cb-76b2051332f2",
-    "ta-en, pothole accident, repeat": "6d94acca-d2b3-4833-bdaf-4dd54e57fd3d",
-    "photo": "821cfa1d-f288-4e00-b0d7-d747e0dad0d3",
-    "dup": "0ec7cc42-2a96-4c47-a616-388517ec1972",
-    "pii": "0955d26a-4294-456a-949f-14a73c3a3c10"
+    "ta script, water, child sick": "9738a0c2-39f5-42a4-b7e5-ddc3df7073d0",
+    "hi script, power cut, oxygen": "398db2e2-55e4-4067-befb-23ffcd8f9992",
+    "en, suggestion, low": "92e69b27-cee2-4da5-9f6e-37216b37c462",
+    "hi-en, gas smell": "e4f7a0db-46a6-4ffb-8818-409d43062682",
+    "ta-en, pothole accident, repeat": "6ba8afaf-cf06-445e-90ab-7d5f814c069e",
+    "photo": "07571d28-95a9-441a-aac4-c4e7dbf2d93d",
+    "dup": "2046203d-401d-40e1-8d91-0d2186b31756",
+    "pii": "557bff84-d1a1-4c51-98c8-f133ad71d672"
   }
 }

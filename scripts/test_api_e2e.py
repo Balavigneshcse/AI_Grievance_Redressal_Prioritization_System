@@ -17,6 +17,7 @@ Writes data/eval/e2e_report.json. Exit code 1 if any check fails.
 from __future__ import annotations
 
 import io
+import os
 import json
 import re
 import sys
@@ -41,6 +42,10 @@ def check(name: str, ok: bool, detail: str = "") -> bool:
 
 
 def env(key: str, default: str = "") -> str:
+    # A variable set in the environment wins over .env, so the suite can run against
+    # Mailpit while .env points at Gmail (export SMTP_HOST=localhost for both API and test).
+    if key in os.environ:
+        return os.environ[key]
     for line in (ROOT / ".env").read_text(encoding="utf-8").splitlines():
         if line.startswith(key + "="):
             return line.split("=", 1)[1].strip()
@@ -53,11 +58,15 @@ def login(email: str, password: str) -> dict:
     return {"Authorization": "Bearer " + r.json()["access_token"]}
 
 
-def latest_otp(email: str) -> str:
-    for _ in range(10):
+def latest_otp(email: str, seen: int = 0) -> str:
+    """The newest OTP mail for the address, once more than `seen` mails exist for it.
+    Mail leaves through a background outbox, so a fresh code can land a second or two
+    after the request that created it."""
+    for _ in range(40):
         msgs = requests.get(f"{MAIL}/api/v1/messages?limit=50", timeout=10).json()["messages"]
-        for m in msgs:
-            if any(email == (t.get("Address") or "").lower() for t in m["To"]):
+        mine = [m for m in msgs if any(email == (t.get("Address") or "").lower() for t in m["To"])]
+        if len(mine) > seen:
+            for m in mine:  # Mailpit lists newest first
                 text = requests.get(f"{MAIL}/api/v1/message/{m['ID']}", timeout=10).json()["Text"]
                 found = re.search(r"\b(\d{6})\b", text)
                 if found:
@@ -73,7 +82,9 @@ def mail_count(email: str) -> int:
 
 def submit(H: dict, text: str, **fields) -> dict:
     files = fields.pop("files", None)
-    r = requests.post(f"{API}/complaints", headers=H, data={"text": text, **fields}, files=files, timeout=60)
+    fields.setdefault("complainant_name", "Demo Citizen")
+    fields.setdefault("aadhaar_last4", "4321")
+    r = requests.post(f"{API}/complaints", headers=H, data={"text": text, **fields}, files=files, timeout=120)
     if r.status_code != 202:
         raise RuntimeError(f"submit failed {r.status_code}: {r.text[:200]}")
     return r.json()
@@ -124,6 +135,8 @@ def main() -> int:
     HA = login("admin@synapse.local", seed_pw)
     r = requests.get(f"{API}/review/queue", headers=HC, timeout=30)
     check("complainant cannot open the review queue", r.status_code == 403)
+    r = requests.post(f"{API}/complaints", headers=HC, data={"text": "water not coming since morning in our street"}, timeout=60)
+    check("complaint without name and Aadhaar digits rejected", r.status_code in (400, 422), str(r.status_code))
 
     mail_ok = env("SMTP_HOST", "localhost") == "localhost"
     stamp = int(time.time())
@@ -142,8 +155,9 @@ def main() -> int:
         r = requests.post(f"{API}/auth/verify-otp", json={"email": new_email, "code": code}, timeout=30)
         check("correct OTP verifies and logs in", r.status_code == 200)
         H_new = {"Authorization": "Bearer " + r.json()["access_token"]}
+        seen = mail_count(new_email)
         requests.post(f"{API}/auth/forgot", json={"email": new_email}, timeout=60)
-        code2 = latest_otp(new_email)
+        code2 = latest_otp(new_email, seen)
         r = requests.post(f"{API}/auth/reset", json={"email": new_email, "code": code2, "new_password": "Changed@12345"}, timeout=30)
         check("password reset with OTP", r.status_code == 200)
         r = requests.get(f"{API}/auth/me", headers=H_new, timeout=30)
@@ -192,7 +206,8 @@ def main() -> int:
         check(f"  evidence spans present and quoted from text", bool(a.get("evidence_spans")) and all(s[:12].lower() in text.lower() or s.lower() in text.lower() for s in a["evidence_spans"][:1]), str(a.get("evidence_spans", [])[:2])[:120])
         check(f"  english summary present", bool(a.get("summary_en")), (a.get("summary_en") or "")[:80])
         check(f"  district office and due time set", bool(d.get("office_name")) and bool(d.get("due_at")), f"{d.get('district')} / {d.get('office_name')}")
-        check(f"  second opinion populated (officer view)", requests.get(f"{API}/review/{acc['id']}", headers=HO_roads, timeout=30).json()["analysis"].get("second_opinion_department") is not None)
+        check(f"  second opinion populated (staff view)", requests.get(f"{API}/review/{acc['id']}", headers=HA, timeout=30).json()["analysis"].get("second_opinion_department") is not None)
+        check(f"  complainant name and Aadhaar digits stored", d.get("complainant_name") == "Demo Citizen" and d.get("aadhaar_last4") == "4321")
 
     print("\n== photo with EXIF GPS ==")
     img = test_image_with_gps()
@@ -217,26 +232,30 @@ def main() -> int:
     acc = submit(HC, pii_text, lat=11.03, lng=76.945, location_source="browser")
     d = wait_analysed(HC, acc["id"])
     ids["pii"] = acc["id"]
-    off = requests.get(f"{API}/review/{acc['id']}", headers=HO_water, timeout=30).json()["analysis"]
+    off = requests.get(f"{API}/review/{acc['id']}", headers=HA, timeout=30).json()["analysis"]
     check("PII hidden from complainant", d["analysis"].get("pii_map") in (None, {}))
-    check("PII masked and mapped for officer", off.get("pii_map") and any(k.startswith("[PHONE") for k in off["pii_map"]) and any(k.startswith("[AADHAAR") for k in off["pii_map"]) and "9876501234" not in (off.get("masked_text") or ""), str(list((off.get("pii_map") or {}).keys())))
+    check("PII masked and mapped for staff", off.get("pii_map") and any(k.startswith("[PHONE") for k in off["pii_map"]) and any(k.startswith("[AADHAAR") for k in off["pii_map"]) and "9876501234" not in (off.get("masked_text") or ""), str(list((off.get("pii_map") or {}).keys())))
 
     print("\n== officer decisions ==")
-    q = requests.get(f"{API}/review/queue", headers=HO_roads, timeout=30).json()
-    check("review queue lists the flagged cases", len(q) >= 3 and all("flags" in i for i in q), f"{len(q)} items; flags of first: {q[0]['flags'] if q else None}")
+    q = requests.get(f"{API}/review/queue?view=review", headers=HA, timeout=30).json()
+    check("review queue lists the flagged cases", len(q) >= 3 and all("flags" in i and "status" in i for i in q), f"{len(q)} items; flags of first: {q[0]['flags'] if q else None}")
+    r = requests.get(f"{API}/review/{ids[cases[0][0]]}", headers=HO_roads, timeout=30)
+    check("roads admin cannot open a water complaint", r.status_code == 403, str(r.status_code))
+    dq_roads = requests.get(f"{API}/review/queue?view=all", headers=HO_roads, timeout=30).json()
+    check("department admin sees only its department", all(i["department"] == "roads" for i in dq_roads), f"{len(dq_roads)} items")
     r = requests.post(f"{API}/review/{ids['dup']}/decision", headers=HO_water, json={"action": "merge", "merged_into": "SYN-0", "reason": "looks like a duplicate"}, timeout=30)
     check("merge into unknown target rejected", r.status_code == 400, str(r.status_code))
     first_tid = requests.get(f"{API}/complaints/{ids[cases[0][0]]}", headers=HC, timeout=30).json()["tracking_id"]
     r = requests.post(f"{API}/review/{ids['dup']}/decision", headers=HO_water, json={"action": "merge", "merged_into": first_tid, "reason": "same street, same outage"}, timeout=30)
     check("merge duplicate into original", r.status_code == 200 and r.json()["status"] == "merged")
-    r = requests.post(f"{API}/review/{ids[cases[1][0]]}/decision", headers=HO_water, json={"action": "request_info", "reason": "please share the exact door number"}, timeout=30)
+    r = requests.post(f"{API}/review/{ids[cases[1][0]]}/decision", headers=HA, json={"action": "request_info", "reason": "please share the exact door number"}, timeout=30)
     check("request info -> awaiting_info", r.status_code == 200 and r.json()["status"] == "awaiting_info")
     r = requests.post(f"{API}/review/{ids[cases[0][0]]}/decision", headers=HO_water, json={"action": "reassign", "department": "water", "urgency": "high", "reason": "tanker sent, no longer life risk"}, timeout=30)
     check("reassign urgency -> routed", r.status_code == 200 and r.json()["status"] == "routed")
-    r = requests.post(f"{API}/review/{ids[cases[2][0]]}/decision", headers=HO_roads, json={"action": "close", "reason": "closing without resolving"}, timeout=30)
+    r = requests.post(f"{API}/review/{ids[cases[2][0]]}/decision", headers=HA, json={"action": "close", "reason": "closing without resolving"}, timeout=30)
     check("close before resolve rejected", r.status_code == 409, str(r.status_code))
-    r = requests.post(f"{API}/review/{ids[cases[2][0]]}/decision", headers=HO_roads, json={"action": "resolve", "reason": "benches approved"}, timeout=30)
-    r2 = requests.post(f"{API}/review/{ids[cases[2][0]]}/decision", headers=HO_roads, json={"action": "close", "reason": "citizen informed"}, timeout=30)
+    r = requests.post(f"{API}/review/{ids[cases[2][0]]}/decision", headers=HA, json={"action": "resolve", "reason": "benches approved"}, timeout=30)
+    r2 = requests.post(f"{API}/review/{ids[cases[2][0]]}/decision", headers=HA, json={"action": "close", "reason": "citizen informed"}, timeout=30)
     check("resolve then close", r.status_code == 200 and r2.status_code == 200 and r2.json()["status"] == "closed")
     r = requests.post(f"{API}/review/{ids['pii']}/decision", headers=HO_water, json={"action": "reassign", "department": "water", "reason": ""}, timeout=30)
     check("decision without reason rejected", r.status_code == 422)
@@ -244,6 +263,29 @@ def main() -> int:
     check("timeline records every transition", [e["to_status"] for e in tl] == ["received", "analysing", "routed", "resolved", "closed"], str([e["to_status"] for e in tl]))
     dq = requests.get(f"{API}/departments/water/queue", headers=HO_water, timeout=30).json()
     check("department queue shows routed water complaints", any(i["id"] == ids[cases[0][0]] for i in dq), f"{len(dq)} items")
+
+    print("\n== staff accounts and districts ==")
+    stamp2 = str(int(time.time()))[-7:]
+    r = requests.post(f"{API}/admin/users", headers=HA, json={"role": "district_admin", "district": "Madurai", "full_name": "Madurai Admin", "email": f"district.madurai.{stamp2}@synapse.local", "mobile": "8" + stamp2 + "01", "preferred_language": "ta"}, timeout=30)
+    check("super admin creates a district admin", r.status_code == 201 and r.json()["user"]["role"] == "district_admin" and bool(r.json()["password"]), r.text[:120])
+    HD = login(f"district.madurai.{stamp2}@synapse.local", r.json()["password"]) if r.status_code == 201 else HA
+    r = requests.post(f"{API}/admin/users", headers=HD, json={"role": "district_admin", "district": "Chennai", "full_name": "Chennai Admin", "email": "x@synapse.local", "mobile": "9000000099"}, timeout=30)
+    check("district admin cannot create another district admin", r.status_code == 403, str(r.status_code))
+    r = requests.post(f"{API}/admin/users", headers=HD, json={"role": "dept_admin", "department_id": "water", "full_name": "Madurai Water Admin", "email": f"water.madurai.{stamp2}@synapse.local", "mobile": "8" + stamp2 + "02"}, timeout=30)
+    check("district admin creates a department admin in own district", r.status_code == 201 and r.json()["user"]["district"] == "Madurai" and r.json()["user"]["department_id"] == "water", r.text[:120])
+    if r.status_code == 201:
+        new_id = r.json()["user"]["id"]
+        HW = login(f"water.madurai.{stamp2}@synapse.local", r.json()["password"])
+        mq = requests.get(f"{API}/review/queue?view=all", headers=HW, timeout=30).json()
+        check("new department admin sees no Coimbatore complaints", mq == [], f"{len(mq)} items")
+        r = requests.patch(f"{API}/admin/users/{new_id}", headers=HD, json={"is_active": False}, timeout=30)
+        check("district admin can disable its department admin", r.status_code == 200 and r.json()["is_active"] is False, r.text[:100])
+        r = requests.get(f"{API}/review/queue", headers=HW, timeout=30)
+        check("disabled account is locked out", r.status_code in (401, 403), str(r.status_code))
+    r = requests.get(f"{API}/admin/users", headers=HO_roads, timeout=30)
+    check("department admin cannot list staff", r.status_code == 403, str(r.status_code))
+    ds = requests.get(f"{API}/admin/districts", headers=HA, timeout=30).json()
+    check("38 Tamil Nadu districts listed", len(ds) == 38, str(len(ds)))
 
     print("\n== admin ==")
     m = requests.get(f"{API}/admin/metrics", headers=HA, timeout=30).json()

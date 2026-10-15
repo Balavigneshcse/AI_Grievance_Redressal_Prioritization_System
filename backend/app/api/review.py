@@ -9,7 +9,7 @@ from .. import models, schemas
 from ..services.notifier import notify
 from ..services.pipeline import _set_status
 from .complaints import complaint_detail
-from .deps import as_uuid, require_role
+from .deps import STAFF_ROLES, as_uuid, can_access, require_role, scope_complaints
 
 router = APIRouter(tags=["review"])
 
@@ -18,6 +18,14 @@ STATUS_LABEL = {
     "routed": "sent to department", "in_progress": "in progress", "resolved": "resolved", "closed": "closed",
     "merged": "merged with an earlier complaint", "awaiting_info": "waiting for your reply", "under_review": "under review",
 }
+# Queue views: what a staff member is looking at.
+VIEWS = {
+    "review": ("under_review",),
+    "active": ("routed", "in_progress", "awaiting_info"),
+    "resolved": ("resolved", "closed", "merged"),
+    "all": None,
+}
+ROLE_LABEL = {"super_admin": "super admin", "district_admin": "district admin", "dept_admin": "department admin"}
 
 
 def _flags(c: models.Complaint) -> list[str]:
@@ -46,24 +54,44 @@ def _flags(c: models.Complaint) -> list[str]:
 def _item(c: models.Complaint) -> schemas.QueueItem:
     a = c.analyses[-1] if c.analyses else None
     return schemas.QueueItem(
-        id=c.id, tracking_id=c.tracking_id, urgency=c.urgency, department=c.department_id,
+        id=c.id, tracking_id=c.tracking_id, status=c.status, urgency=c.urgency, department=c.department_id,
         language_primary=a.language_primary if a else c.language_hint, summary_en=a.summary_en if a else None,
         flags=_flags(c), confidence=a.confidence if a else None, created_at=c.created_at,
-        district=c.district, office_name=c.office_name, due_at=c.due_at,
+        district=c.district, office_name=c.office_name, due_at=c.due_at, complainant_name=c.complainant_name,
     )
+
+
+def _load(db: Session, complaint_id: str, user: models.User) -> models.Complaint:
+    c = db.get(models.Complaint, as_uuid(complaint_id))
+    if c is None:
+        raise HTTPException(404, "Complaint not found")
+    if not can_access(c, user):
+        raise HTTPException(403, "Outside your district or department")
+    return c
 
 
 @router.get("/review/queue", response_model=list[schemas.QueueItem])
 def review_queue(
+    view: str | None = Query(None, description="review | active | resolved | all"),
     department: str | None = Query(None), urgency: str | None = Query(None), language: str | None = Query(None),
-    user: models.User = Depends(require_role("officer", "admin")), db: Session = Depends(get_db),
+    district: str | None = Query(None),
+    user: models.User = Depends(require_role(*STAFF_ROLES)), db: Session = Depends(get_db),
 ):
-    q = select(models.Complaint).where(models.Complaint.status == "under_review")
+    """Complaints the caller may work on. Department admins default to their active work,
+    district and super admins to the cases waiting for a human decision."""
+    if view not in VIEWS:
+        view = "active" if user.role == "dept_admin" else "review"
+    q = scope_complaints(select(models.Complaint), user)
+    statuses = VIEWS[view]
+    if statuses:
+        q = q.where(models.Complaint.status.in_(statuses))
     if department:
         q = q.where(models.Complaint.department_id == department)
     if urgency:
         q = q.where(models.Complaint.urgency == urgency)
-    rows = db.execute(q.order_by(URGENCY_ORDER, models.Complaint.created_at)).scalars().all()
+    if district and user.role == "super_admin":
+        q = q.where(models.Complaint.district == district)
+    rows = db.execute(q.order_by(URGENCY_ORDER, models.Complaint.created_at.desc()).limit(300)).scalars().all()
     items = [_item(c) for c in rows]
     if language:
         items = [i for i in items if (i.language_primary or "").startswith(language)]
@@ -71,38 +99,38 @@ def review_queue(
 
 
 @router.get("/departments/{dept}/queue", response_model=list[schemas.QueueItem])
-def department_queue(dept: str, user: models.User = Depends(require_role("officer", "admin")), db: Session = Depends(get_db)):
-    rows = db.execute(
-        select(models.Complaint).where(models.Complaint.department_id == dept, models.Complaint.status.in_(("routed", "in_progress")))
-        .order_by(URGENCY_ORDER, models.Complaint.created_at)
-    ).scalars().all()
+def department_queue(dept: str, user: models.User = Depends(require_role(*STAFF_ROLES)), db: Session = Depends(get_db)):
+    if user.role == "dept_admin" and user.department_id != dept:
+        raise HTTPException(403, "Not your department")
+    q = scope_complaints(select(models.Complaint), user).where(
+        models.Complaint.department_id == dept, models.Complaint.status.in_(("routed", "in_progress", "awaiting_info"))
+    )
+    rows = db.execute(q.order_by(URGENCY_ORDER, models.Complaint.created_at)).scalars().all()
     return [_item(c) for c in rows]
 
 
 @router.get("/review/{complaint_id}", response_model=schemas.ComplaintDetail)
-def review_detail(complaint_id: str, user: models.User = Depends(require_role("officer", "admin")), db: Session = Depends(get_db)):
-    c = db.get(models.Complaint, as_uuid(complaint_id))
-    if c is None:
-        raise HTTPException(404, "Complaint not found")
-    return complaint_detail(db, c, user)
+def review_detail(complaint_id: str, user: models.User = Depends(require_role(*STAFF_ROLES)), db: Session = Depends(get_db)):
+    return complaint_detail(db, _load(db, complaint_id, user), user)
 
 
 @router.post("/review/{complaint_id}/decision")
-def decide(complaint_id: str, body: schemas.DecisionIn, user: models.User = Depends(require_role("officer", "admin")), db: Session = Depends(get_db)):
-    c = db.get(models.Complaint, as_uuid(complaint_id))
-    if c is None:
-        raise HTTPException(404, "Complaint not found")
+def decide(complaint_id: str, body: schemas.DecisionIn, user: models.User = Depends(require_role(*STAFF_ROLES)), db: Session = Depends(get_db)):
+    c = _load(db, complaint_id, user)
     owner = db.get(models.User, c.user_id)
     ov = models.Override(
         complaint_id=c.id, officer_id=user.id, action=body.action, from_department=c.department_id, to_department=c.department_id,
         from_urgency=c.urgency, to_urgency=c.urgency, reason=body.reason,
     )
-    note = f"{body.action} by officer: {body.reason}"
+    note = f"{body.action} by {ROLE_LABEL.get(user.role, 'officer')}: {body.reason}"
 
     if body.action == "accept":
         if c.status not in ("under_review", "routed"):
             raise HTTPException(409, f"Cannot accept from status {c.status}")
-        _set_status(db, c, "routed", "officer", user.id, note)
+        # A department admin accepting its own routed case starts the work; a reviewer accepting
+        # a flagged case confirms the routing.
+        target = "in_progress" if (user.role == "dept_admin" and c.status == "routed") else "routed"
+        _set_status(db, c, target, "officer", user.id, note)
     elif body.action == "reassign":
         if not body.department and not body.urgency:
             raise HTTPException(400, "reassign needs a department or an urgency")

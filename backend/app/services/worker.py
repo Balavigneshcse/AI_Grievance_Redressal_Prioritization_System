@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import queue
 import threading
+import time
 import uuid
 
 from ..db import SessionLocal
@@ -34,9 +35,11 @@ def _loop() -> None:
                     continue
                 _set_status(db, c, "analysing", note="worker picked up")
                 db.commit()
-                run_analysis(db, cid)
+                t0 = time.perf_counter()
+                analysis = run_analysis(db, cid)
                 db.commit()
-                log.info("analysed %s -> %s", c.tracking_id, c.status)
+                log.info("analysed %s -> %s in %.1f s (model %.1f s, queue depth %d)", c.tracking_id, c.status,
+                         time.perf_counter() - t0, (analysis.latency_ms or 0) / 1000, _q.qsize())
             except Exception as exc:
                 db.rollback()
                 log.exception("analysis failed for %s", cid)

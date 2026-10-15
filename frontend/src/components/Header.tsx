@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { ClipboardList, ListChecks, LogIn, LogOut, User } from "lucide-react"
+import { ClipboardList, ListChecks, LogIn, LogOut, ShieldCheck, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
-import { isStaff, useAuth } from "@/lib/auth"
+import { isAdmin, isStaff, useAuth } from "@/lib/auth"
 import { cn } from "@/lib/utils"
 
 export function Header() {
@@ -21,6 +21,7 @@ export function Header() {
   const { user, token, logout } = useAuth()
   const navigate = useNavigate()
   const staff = isStaff(user)
+  const admin = isAdmin(user)
   const initial = (user?.email?.[0] ?? "?").toUpperCase()
 
   return (
@@ -48,6 +49,21 @@ export function Header() {
             >
               <ListChecks className="size-4" />
               <span className="hidden sm:inline">{t("header.queue")}</span>
+            </NavLink>
+          ) : null}
+
+          {token && admin ? (
+            <NavLink
+              to="/admin"
+              className={({ isActive }) =>
+                cn(
+                  "inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium transition-colors hover:bg-muted",
+                  isActive && "bg-muted",
+                )
+              }
+            >
+              <ShieldCheck className="size-4" />
+              <span className="hidden sm:inline">{t("header.admin")}</span>
             </NavLink>
           ) : null}
 
@@ -86,6 +102,12 @@ export function Header() {
                     <DropdownMenuItem onClick={() => navigate("/officer/queue")}>
                       <ListChecks />
                       {t("header.queue")}
+                    </DropdownMenuItem>
+                  ) : null}
+                  {admin ? (
+                    <DropdownMenuItem onClick={() => navigate("/admin")}>
+                      <ShieldCheck />
+                      {t("header.admin")}
                     </DropdownMenuItem>
                   ) : null}
                   <DropdownMenuSeparator />

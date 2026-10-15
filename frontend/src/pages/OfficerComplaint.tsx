@@ -22,7 +22,7 @@ export default function OfficerComplaint() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" render={<Link to="/officer/queue" aria-label={t("common.back")} />}>
+        <Button variant="ghost" size="icon" nativeButton={false} render={<Link to="/officer/queue" aria-label={t("common.back")} />}>
           <ArrowLeft />
         </Button>
         <h1 className="font-heading text-xl font-semibold">{t("officer.title")}</h1>

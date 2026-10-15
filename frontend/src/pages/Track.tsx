@@ -21,7 +21,7 @@ export default function Track() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" render={<Link to="/" aria-label={t("common.back")} />}>
+        <Button variant="ghost" size="icon" nativeButton={false} render={<Link to="/" aria-label={t("common.back")} />}>
           <ArrowLeft />
         </Button>
         <h1 className="font-heading text-xl font-semibold">{t("track.title")}</h1>

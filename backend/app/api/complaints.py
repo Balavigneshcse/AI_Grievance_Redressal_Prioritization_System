@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -14,7 +15,7 @@ from ..db import get_db
 from .. import models, schemas
 from ..services.notifier import notify
 from ..services.worker import enqueue
-from .deps import as_uuid, current_user, dept_out
+from .deps import STAFF_ROLES, as_uuid, can_access, current_user, dept_out
 
 router = APIRouter(tags=["complaints"])
 
@@ -53,6 +54,8 @@ def departments(db: Session = Depends(get_db)):
 @router.post("/complaints", status_code=202, response_model=schemas.ComplaintAccepted)
 async def create_complaint(
     text: str = Form(...),
+    complainant_name: str = Form(...),
+    aadhaar_last4: str = Form(...),
     language_hint: str | None = Form(None),
     lat: float | None = Form(None),
     lng: float | None = Form(None),
@@ -67,9 +70,16 @@ async def create_complaint(
         raise HTTPException(400, "Please describe the problem in at least a few words")
     if location_source not in ("camera_gps", "exif", "browser", "manual", "none"):
         location_source = "none"
+    complainant_name = " ".join((complainant_name or "").split())
+    if not 2 <= len(complainant_name) <= 120:
+        raise HTTPException(400, "Please enter your name")
+    aadhaar_last4 = (aadhaar_last4 or "").strip()
+    if not re.fullmatch(r"\d{4}", aadhaar_last4):
+        raise HTTPException(400, "Enter the last 4 digits of your Aadhaar number")
 
     c = models.Complaint(
         tracking_id=_tracking_id(db), user_id=user.id, raw_text=text, language_hint=language_hint,
+        complainant_name=complainant_name, aadhaar_last4=aadhaar_last4,
         lat=lat, lng=lng, location_source=location_source if (lat is not None or manual_address) else "none",
         manual_address=manual_address, contact_incomplete=not (user.mobile and user.email),
     )
@@ -83,18 +93,26 @@ async def create_complaint(
         mime = f.content_type or ""
         if not (mime.startswith("image/") or mime.startswith("video/")):
             raise HTTPException(400, f"Unsupported file type {mime}")
-        data = await f.read()
-        if len(data) > settings.MAX_UPLOAD_MB * 1024 * 1024:
-            raise HTTPException(413, f"{f.filename} is larger than {settings.MAX_UPLOAD_MB} MB")
-        folder.mkdir(parents=True, exist_ok=True)
-        ext = Path(f.filename).suffix.lower() or (".jpg" if mime.startswith("image/") else ".mp4")
-        path = folder / f"{uuid.uuid4().hex}{ext}"
-        path.write_bytes(data)
         kind = "photo" if mime.startswith("image/") else "video"
+        limit_mb = settings.MAX_PHOTO_MB if kind == "photo" else settings.MAX_VIDEO_MB
+        folder.mkdir(parents=True, exist_ok=True)
+        ext = Path(f.filename).suffix.lower() or (".jpg" if kind == "photo" else (".webm" if "webm" in mime else ".mp4"))
+        path = folder / f"{uuid.uuid4().hex}{ext}"
+        # Stream to disk in 1 MB pieces: a 100 MB video never sits in memory.
+        size = 0
+        with path.open("wb") as fh:
+            while chunk := await f.read(1024 * 1024):
+                size += len(chunk)
+                if size > limit_mb * 1024 * 1024:
+                    fh.close()
+                    path.unlink(missing_ok=True)
+                    raise HTTPException(413, f"{f.filename} is larger than {limit_mb} MB ({kind} limit)")
+                fh.write(chunk)
+        data = b""
         exif_lat, exif_lng = _exif_gps(path) if kind == "photo" else (None, None)
         db.add(
             models.Media(
-                complaint_id=c.id, kind=kind, file_path=str(path), mime=mime, size_bytes=len(data),
+                complaint_id=c.id, kind=kind, file_path=str(path), mime=mime, size_bytes=size,
                 exif_lat=exif_lat, exif_lng=exif_lng, captured_in_app=(location_source == "camera_gps"),
             )
         )
@@ -123,7 +141,7 @@ def my_complaints(user: models.User = Depends(current_user), db: Session = Depen
 
 
 def complaint_detail(db: Session, c: models.Complaint, viewer: models.User) -> schemas.ComplaintDetail:
-    staff = viewer.role in ("officer", "admin")
+    staff = viewer.role in STAFF_ROLES
     a = c.analyses[-1] if c.analyses else None
     d = c.decisions[-1] if c.decisions else None
     analysis = None
@@ -140,6 +158,7 @@ def complaint_detail(db: Session, c: models.Complaint, viewer: models.User) -> s
         id=c.id, tracking_id=c.tracking_id, status=c.status, raw_text=c.raw_text, language_hint=c.language_hint,
         department=dept_out(db.get(models.Department, c.department_id)) if c.department_id else None, urgency=c.urgency,
         lat=c.lat, lng=c.lng, location_source=c.location_source, manual_address=c.manual_address, resolved_place=c.resolved_place,
+        complainant_name=c.complainant_name, aadhaar_last4=c.aadhaar_last4,
         district=c.district, office_name=c.office_name, office_department_id=c.office_department_id, due_at=c.due_at,
         created_at=c.created_at,
         media=[schemas.MediaOut(id=m.id, kind=m.kind, url=f"/media/{m.id}") for m in c.media],
@@ -155,6 +174,8 @@ def _load_for(db: Session, complaint_id: str, user: models.User) -> models.Compl
         raise HTTPException(404, "Complaint not found")
     if user.role == "complainant" and c.user_id != user.id:
         raise HTTPException(403, "Not your complaint")
+    if user.role in STAFF_ROLES and not can_access(c, user):
+        raise HTTPException(403, "Outside your district or department")
     return c
 
 

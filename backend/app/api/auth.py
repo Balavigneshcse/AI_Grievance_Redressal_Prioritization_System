@@ -11,7 +11,7 @@ from ..db import get_db
 from .. import models, schemas
 from ..security import EMAIL_RE, MOBILE_RE, create_token, hash_otp, hash_password, new_otp, otp_matches, password_problems, verify_password
 from ..services.notifier import notify
-from .deps import current_user
+from .deps import current_user, user_out
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -48,7 +48,7 @@ def _check_otp(db: Session, user: models.User, purpose: str, code: str) -> None:
 def _token(user: models.User) -> schemas.TokenOut:
     return schemas.TokenOut(
         access_token=create_token(str(user.id), user.role, user.password_version),
-        user=schemas.UserOut(id=user.id, email=user.email, role=user.role, preferred_language=user.preferred_language, department_id=user.department_id),
+        user=user_out(user),
     )
 
 
@@ -110,6 +110,8 @@ def login(body: schemas.LoginIn, db: Session = Depends(get_db)):
         raise HTTPException(401, "Incorrect email or password")
     if not user.is_verified:
         raise HTTPException(403, "Account not verified")
+    if not user.is_active:
+        raise HTTPException(403, "Account disabled")
     user.last_login_at = datetime.now(timezone.utc)
     db.commit()
     return _token(user)
@@ -142,4 +144,4 @@ def reset(body: schemas.ResetIn, db: Session = Depends(get_db)):
 
 @router.get("/me", response_model=schemas.UserOut)
 def me(user: models.User = Depends(current_user)):
-    return schemas.UserOut(id=user.id, email=user.email, role=user.role, preferred_language=user.preferred_language, department_id=user.department_id)
+    return user_out(user)

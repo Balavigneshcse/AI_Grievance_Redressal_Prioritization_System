@@ -10,24 +10,27 @@ from app import models
 from app.security import hash_password
 
 ACCOUNTS = [
-    ("admin@synapse.local", "9000000001", "admin", None, "en"),
-    ("officer.water@synapse.local", "9000000002", "officer", "water", "ta"),
-    ("officer.roads@synapse.local", "9000000003", "officer", "roads", "en"),
-    ("citizen@synapse.local", "9000000004", "complainant", None, "ta"),
+    # email, mobile, role, department, language, district, full name
+    ("admin@synapse.local", "9000000001", "super_admin", None, "en", None, "Super Admin"),
+    ("district.coimbatore@synapse.local", "9000000005", "district_admin", None, "ta", "Coimbatore", "Coimbatore District Admin"),
+    ("officer.water@synapse.local", "9000000002", "dept_admin", "water", "ta", "Coimbatore", "Water Supply Admin, Coimbatore"),
+    ("officer.roads@synapse.local", "9000000003", "dept_admin", "roads", "en", "Coimbatore", "Roads Admin, Coimbatore"),
+    ("citizen@synapse.local", "9000000004", "complainant", None, "ta", None, "Demo Citizen"),
 ]
 
 
 def main() -> None:
     init_db()
     with SessionLocal() as db:
-        for email, mobile, role, dept, lang in ACCOUNTS:
+        for email, mobile, role, dept, lang, district, name in ACCOUNTS:
             u = db.execute(select(models.User).where(models.User.email == email)).scalar_one_or_none()
             if u is None:
-                u = models.User(email=email, mobile=mobile, password_hash=hash_password(settings.SEED_PASSWORD), role=role, department_id=dept, preferred_language=lang, is_verified=True)
+                u = models.User(email=email, mobile=mobile, password_hash=hash_password(settings.SEED_PASSWORD), role=role, department_id=dept,
+                                preferred_language=lang, district=district, full_name=name, is_verified=True, is_active=True)
                 db.add(u)
                 print("created", role, email)
             else:
-                u.role, u.department_id, u.is_verified = role, dept, True
+                u.role, u.department_id, u.district, u.full_name, u.is_verified, u.is_active = role, dept, district, name, True, True
                 print("exists ", role, email)
         db.commit()
     print("Password for all seed accounts: the SEED_PASSWORD value in .env")

@@ -12,18 +12,18 @@ from ..db import get_db
 from .. import models, schemas
 from ..services import rules as rules_engine
 from ..services.pipeline import reload_second_opinion
-from .deps import require_role
+from .deps import STAFF_ROLES, require_role
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
 @router.get("/rules")
-def get_rules(user: models.User = Depends(require_role("admin", "officer"))):
+def get_rules(user: models.User = Depends(require_role(*STAFF_ROLES))):
     return {"yaml": rules_engine.rules_yaml_text(), "rules": rules_engine.load_rules()}
 
 
 @router.put("/rules")
-def put_rules(body: schemas.RulesIn, user: models.User = Depends(require_role("admin")), db: Session = Depends(get_db)):
+def put_rules(body: schemas.RulesIn, user: models.User = Depends(require_role("super_admin")), db: Session = Depends(get_db)):
     try:
         rules_engine.validate_rules_yaml(body.yaml)
     except Exception as exc:
@@ -36,19 +36,19 @@ def put_rules(body: schemas.RulesIn, user: models.User = Depends(require_role("a
 
 
 @router.post("/rules/test")
-def test_rules(body: dict, user: models.User = Depends(require_role("admin", "officer"))):
+def test_rules(body: dict, user: models.User = Depends(require_role(*STAFF_ROLES))):
     r = rules_engine.evaluate(body.get("text", ""), body.get("language"), body.get("ward"))
     return {"matched": r.matched_ids, "department": r.department, "urgency_floor": r.urgency_floor, "force_review": r.force_review, "notes": r.notes}
 
 
 @router.post("/models/reload")
-def reload_models(user: models.User = Depends(require_role("admin"))):
+def reload_models(user: models.User = Depends(require_role("super_admin"))):
     reload_second_opinion()
     return {"ok": True}
 
 
 @router.get("/metrics")
-def metrics(user: models.User = Depends(require_role("admin", "officer")), db: Session = Depends(get_db)):
+def metrics(user: models.User = Depends(require_role(*STAFF_ROLES)), db: Session = Depends(get_db)):
     by_status = {str(k): v for k, v in db.execute(select(models.Complaint.status, func.count()).group_by(models.Complaint.status)).all()}
     by_dept = {str(k): v for k, v in db.execute(select(models.Complaint.department_id, func.count()).group_by(models.Complaint.department_id)).all()}
     open_statuses = ("received", "analysing", "under_review", "routed", "in_progress", "awaiting_info")

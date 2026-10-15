@@ -38,3 +38,18 @@ Single model for text and photos: Gemma 3 4B served by Ollama. Embeddings: bge-m
 ## Status
 
 Phases 1 to 4 complete. Backend (FastAPI + PostgreSQL + local models) and frontend (React + shadcn/ui) both working end to end: register with email OTP, file a complaint with photo and location, local analysis, rules, district office routing, officer review, status emails.
+
+## Roles and accounts
+
+| Role | Scope | Seed account |
+|---|---|---|
+| Super admin | everything, creates district admins | `admin@synapse.local` |
+| District admin | one district: review queue, adds department admins | `district.coimbatore@synapse.local` |
+| Department admin | one department in one district: works only those complaints | `officer.water@synapse.local`, `officer.roads@synapse.local` |
+| Citizen | own complaints | `citizen@synapse.local` |
+
+Passwords come from `SEED_PASSWORD` in `.env`. Staff accounts are created from the Admin page (`/admin`); the generated password is shown once.
+
+## Evidence limits
+
+Photos up to 25 MB, videos up to 100 MB and 5 minutes (in-app recording stops automatically). Every complaint records the complainant's name and the last four digits of their Aadhaar number for the office; the model never sees them.
