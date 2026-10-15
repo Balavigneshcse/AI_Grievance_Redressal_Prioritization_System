@@ -75,6 +75,17 @@ def latest_otp(email: str, seen: int = 0) -> str:
     raise RuntimeError("no OTP email for " + email)
 
 
+def wait_mail(email: str, min_count: int, timeout: int = 120) -> int:
+    """Mail count for the address once it reaches min_count, or the count at timeout.
+    The outbox may be translating a note with the model in front of it."""
+    t0 = time.time()
+    n = mail_count(email)
+    while n < min_count and time.time() - t0 < timeout:
+        time.sleep(3)
+        n = mail_count(email)
+    return n
+
+
 def mail_count(email: str) -> int:
     msgs = requests.get(f"{MAIL}/api/v1/messages?limit=200", timeout=10).json()["messages"]
     return sum(1 for m in msgs if any(email == (t.get("Address") or "").lower() for t in m["To"]))
@@ -279,9 +290,10 @@ def main() -> int:
     r = requests.post(f"{API}/complaints/{ids[cases[0][0]]}/reply", headers=HO_roads, data={"text": "hi"}, timeout=30)
     check("only the complainant can reply", r.status_code == 403, str(r.status_code))
     if mail_ok:
-        time.sleep(4)
-        check("department admin emailed about a routed water complaint", mail_count("officer.water@synapse.local") >= 1, f"{mail_count('officer.water@synapse.local')} mails")
-        check("district admin emailed about reviews in Coimbatore", mail_count("district.coimbatore@synapse.local") >= 1, f"{mail_count('district.coimbatore@synapse.local')} mails")
+        n_w = wait_mail("officer.water@synapse.local", 1)
+        check("department admin emailed about a routed water complaint", n_w >= 1, f"{n_w} mails")
+        n_d = wait_mail("district.coimbatore@synapse.local", 1)
+        check("district admin emailed about reviews in Coimbatore", n_d >= 1, f"{n_d} mails")
     before_district = mail_count("district.coimbatore@synapse.local") if mail_ok else 0
     import psycopg
 
@@ -297,12 +309,83 @@ def main() -> int:
     d = requests.get(f"{API}/review/{ids[cases[0][0]]}", headers=HA, timeout=30).json()
     check("escalation recorded on the complaint and in the timeline", d.get("escalated_at") is not None and any((e["note"] or "").startswith("SLA breached") for e in d["timeline"]))
     if mail_ok:
-        time.sleep(4)
-        check("district admin emailed about the overdue complaint", mail_count("district.coimbatore@synapse.local") > before_district)
+        n_d = wait_mail("district.coimbatore@synapse.local", before_district + 1)
+        check("district admin emailed about the overdue complaint", n_d > before_district, f"{n_d} mails, {before_district} before")
     r = requests.post(f"{API}/admin/sla/check", headers=HA, timeout=60)
     check("escalation happens once", r.status_code == 200 and r.json()["escalated"] == 0, r.text[:80])
     h = requests.get(f"{API}/health", timeout=20).json()
     check("health reports outbox, overdue and model latency", "outbox_pending" in h and "overdue_open" in h and "model_latency_ms" in h, json.dumps({k: h.get(k) for k in ("outbox_pending", "overdue_open", "model_latency_ms")}))
+
+    print("\n== search, proof, rating, reopen, me-too, map, limits ==")
+    water_id = ids[cases[0][0]]
+    water_tid = requests.get(f"{API}/complaints/{water_id}", headers=HC, timeout=30).json()["tracking_id"]
+    sq = requests.get(f"{API}/review/queue?view=all&q={water_tid}", headers=HA, timeout=30).json()
+    check("queue search by tracking id", len(sq) == 1 and sq[0]["id"] == water_id, f"{len(sq)} items")
+    sq = requests.get(f"{API}/review/queue?view=all&q=Demo Citizen", headers=HA, timeout=30).json()
+    check("queue search by complainant name", len(sq) >= 3, f"{len(sq)} items")
+    r = requests.post(f"{API}/review/{water_id}/attachments", headers=HA, files=[("files", ("after.jpg", img, "image/jpeg"))], timeout=60)
+    check("office attaches resolution proof", r.status_code == 200 and r.json()["attachments"] == 1, r.text[:100])
+    d = requests.get(f"{API}/complaints/{water_id}", headers=HC, timeout=30).json()
+    check("citizen sees the proof photo marked as resolution", any(m.get("role") == "resolution" for m in d["media"]), str([m.get("role") for m in d["media"]]))
+    r = requests.post(f"{API}/review/{water_id}/attachments", headers=HO_roads, files=[("files", ("x.jpg", img, "image/jpeg"))], timeout=60)
+    check("proof upload outside scope rejected", r.status_code == 403, str(r.status_code))
+
+    photo_id = ids["photo"]
+    seen_citizen = mail_count("citizen@synapse.local") if mail_ok else 0
+    r = requests.post(f"{API}/review/{photo_id}/decision", headers=HA, json={"action": "resolve", "reason": "Pothole filled and the road levelled on 15 October"}, timeout=30)
+    check("resolve the photo complaint", r.status_code == 200 and r.json()["status"] == "resolved")
+    r = requests.post(f"{API}/complaints/{photo_id}/feedback", headers=HC, json={"rating": 4, "note": "Fixed, thank you"}, timeout=30)
+    check("citizen rates the resolution", r.status_code == 200 and r.json()["rating"] == 4, r.text[:100])
+    d = requests.get(f"{API}/complaints/{photo_id}", headers=HC, timeout=30).json()
+    check("rating stored with the feedback window", d.get("rating") == 4 and d.get("can_reopen_until") is not None)
+    r = requests.post(f"{API}/complaints/{photo_id}/feedback", headers=HC, json={"reopen": True, "note": "The pothole is back after the rain"}, timeout=30)
+    check("citizen reopens a resolved complaint", r.status_code == 200 and r.json()["status"] == "in_progress" and r.json()["reopen_count"] == 1, r.text[:100])
+    tl = requests.get(f"{API}/complaints/{photo_id}/timeline", headers=HC, timeout=30).json()
+    check("reopen recorded by the citizen in the timeline", any(e["actor_type"] == "complainant" and (e["note"] or "").startswith("reopened") for e in tl))
+    r = requests.post(f"{API}/complaints/{photo_id}/feedback", headers=HC, json={"rating": 5}, timeout=30)
+    check("feedback rejected while the complaint is open again", r.status_code == 409, str(r.status_code))
+    if mail_ok:
+        n_r = wait_mail("officer.roads@synapse.local", 1)
+        check("roads admin emailed about the reopen", n_r >= 1, f"{n_r} mails")
+        # The resolve reason was English; the Tamil-speaking citizen's status mail must carry it in Tamil.
+        found = None
+        for _ in range(45):
+            msgs = requests.get(f"{MAIL}/api/v1/messages?limit=60", timeout=10).json()["messages"]
+            for m in msgs:
+                if any("citizen@synapse.local" == (t.get("Address") or "").lower() for t in m["To"]) and d["tracking_id"] in (m.get("Subject") or ""):
+                    text = requests.get(f"{MAIL}/api/v1/message/{m['ID']}", timeout=10).json()["Text"]
+                    if "resolved" in (m.get("Subject") or "") and "Pothole filled" not in text and re.search(r"[\u0B80-\u0BFF]", text):
+                        found = text
+                        break
+            if found:
+                break
+            time.sleep(2)
+        check("officer note translated into Tamil in the status mail", found is not None, (found or "")[:80])
+
+    if H_new:
+        r = requests.post(f"{API}/complaints/{water_id}/support", headers=H_new, timeout=30)
+        check("another citizen supports the water complaint", r.status_code == 200 and r.json()["supporters"] == 1, r.text[:100])
+        r = requests.post(f"{API}/complaints/{water_id}/support", headers=H_new, timeout=30)
+        check("supporting twice does not double count", r.status_code == 200 and r.json()["supporters"] == 1)
+        r = requests.post(f"{API}/complaints/{water_id}/support", headers=HC, timeout=30)
+        check("the complainant cannot support their own complaint", r.status_code == 400, str(r.status_code))
+        nb = requests.get(f"{API}/complaints/nearby?lat=11.0183&lng=76.9674&limit=20", headers=H_new, timeout=30).json()
+        mine = next((i for i in nb if i["id"] == water_id), None)
+        check("nearby list shows the supported complaint without personal data", mine is not None and mine["supported"] is True and "raw_text" not in mine, f"{len(nb)} nearby")
+        sl = requests.get(f"{API}/complaints/supported", headers=H_new, timeout=30).json()
+        check("supported list for the citizen", any(i["id"] == water_id for i in sl))
+        qi = next((i for i in requests.get(f"{API}/review/queue?view=all&q={water_tid}", headers=HA, timeout=30).json() if i["id"] == water_id), None)
+        check("supporters visible in the queue", qi is not None and qi.get("supporters") == 1)
+
+    mp = requests.get(f"{API}/admin/map?view=all", headers=HA, timeout=30).json()
+    check("map lists located complaints in scope", any(pt["id"] == water_id for pt in mp) and all("lat" in pt and "lng" in pt for pt in mp), f"{len(mp)} points")
+    mp_roads = requests.get(f"{API}/admin/map?view=all", headers=HO_roads, timeout=30).json()
+    check("map scoped for a department admin", all(pt["department"] == "roads" for pt in mp_roads), f"{len(mp_roads)} points")
+    m2 = requests.get(f"{API}/admin/metrics", headers=HA, timeout=30).json()["totals"]
+    check("metrics carry rating, reopen rate and supporters", "avg_rating" in m2 and "reopen_rate" in m2 and "supporters" in m2, json.dumps({k: m2.get(k) for k in ("avg_rating", "reopen_rate", "supporters")}))
+
+    codes = [requests.post(f"{API}/auth/login", json={"email": "ratelimit.test@synapse.local", "password": "nope-Nope-1!"}, timeout=30).status_code for _ in range(12)]
+    check("login rate limit after repeated failures", 429 in codes and codes[0] == 401, str(codes))
 
     print("\n== staff accounts and districts ==")
     stamp2 = str(int(time.time()))[-7:]

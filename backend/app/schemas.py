@@ -109,12 +109,49 @@ class ComplaintSummary(BaseModel):
     district: str | None = None
     office_name: str | None = None
     due_at: datetime | None = None
+    supporters: int = 0
+    rating: int | None = None
 
 
 class MediaOut(BaseModel):
     id: UUID
     kind: str
     url: str
+    role: str = "evidence"
+
+
+class FeedbackIn(BaseModel):
+    rating: int | None = Field(default=None, ge=1, le=5)
+    note: str | None = None
+    reopen: bool = False
+
+
+class NearbyItem(BaseModel):
+    id: UUID
+    tracking_id: str
+    status: str
+    department: DepartmentOut | None
+    urgency: str | None
+    summary_en: str | None
+    supporters: int
+    supported: bool
+    distance_km: float
+    created_at: datetime
+
+
+class MapPoint(BaseModel):
+    id: UUID
+    tracking_id: str
+    lat: float
+    lng: float
+    status: str
+    urgency: str | None
+    department: str | None
+    district: str | None
+    summary_en: str | None
+    supporters: int
+    overdue: bool
+    created_at: datetime
 
 
 class AnalysisOut(BaseModel):
@@ -171,6 +208,11 @@ class ComplaintDetail(BaseModel):
     office_department_id: str | None = None
     due_at: datetime | None = None
     escalated_at: datetime | None = None
+    rating: int | None = None
+    rating_note: str | None = None
+    reopen_count: int = 0
+    supporters: int = 0
+    can_reopen_until: datetime | None = None
     created_at: datetime
     media: list[MediaOut]
     analysis: AnalysisOut | None
@@ -198,6 +240,7 @@ class QueueItem(BaseModel):
     office_name: str | None = None
     due_at: datetime | None = None
     complainant_name: str | None = None
+    supporters: int = 0
 
 
 class DecisionIn(BaseModel):

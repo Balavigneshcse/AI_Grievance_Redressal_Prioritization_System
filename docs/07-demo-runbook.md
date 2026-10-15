@@ -18,8 +18,10 @@ Five minutes of clicks, in order. Everything runs on the laptop; nothing leaves 
 | 3 | District admin | Queue, "Needs review". Open the complaint. Accept with a reason. | A human decides every uncertain or critical case. The reason is mandatory and becomes part of the audit trail. |
 | 4 | Department admin | Queue, "Active work". The complaint is there (only water, only Coimbatore). Accept (starts work), then Request info: "Please share the door number". | Each department sees only its own cases. The citizen is emailed in Tamil. |
 | 5 | Citizen | Track page shows "The office needs more information" with the question. Reply with a line and a photo. | The reply goes straight to the department and the case continues. |
-| 6 | Department admin | Resolve with a note. | Status email again; nothing is ever auto-closed. |
-| 7 | Super admin | Admin: staff per district, complaints by district. Metrics: accuracy per language, review rate, latency. Rules: paste `gas leak near school`, Test. | Config, not code: rules are hot-reloaded; the classifier reloads with one click. |
+| 6 | Department admin | Add a resolution photo, then Resolve with a note. | The citizen gets the status mail with the note translated into Tamil, and sees the proof photo on the tracking page. |
+| 6b | Citizen | Track page: rate it with stars, or press "Not fixed, reopen". | The loop closes with the citizen, not with the office. |
+| 6c | Citizen (second account) | New complaint, set the same location: the nearby list shows the case; press Support. | Duplicates become support; five supporters raise the priority. |
+| 7 | Super admin | Map: markers by urgency, red ring for overdue. Admin: staff per district. Metrics: accuracy per language, rating, reopen rate. Rules: paste `gas leak near school`, Test. | Config, not code: rules are hot-reloaded; the classifier reloads with one click. |
 | 8 | Super admin | Queue, "All complaints": point at an `Overdue` badge (one seeded complaint is past its due time) and the escalation note in its timeline. | SLA due times from the Tamil Nadu office mapping; breaches escalate to the district admin by email. |
 
 ## Numbers to have ready
@@ -34,6 +36,8 @@ Five minutes of clicks, in order. Everything runs on the laptop; nothing leaves 
 - Analysis stuck on "Analysing": `http://localhost:8000/health` shows `queue_depth`; Ollama may be loading, wait 20 s. A model error never loses a complaint: it lands in the review queue as "awaiting analysis".
 - No email: the API console prints `email ... sent` or `FAILED ... reason`. Switch to Mailpit by setting `SMTP_HOST=localhost`, `SMTP_PORT=1025`, `SMTP_TLS=false`, empty user and password, then restart the API.
 - Phone camera does not open: the page must be `https://` (use `-Https`) and the certificate warning must have been accepted for both ports.
+- Model stuck or every call takes a minute: a cancelled generator run or timed-out requests leave Ollama replaying a queue. Run `taskkill /IM llama-server.exe /F` then `taskkill /IM ollama.exe /F`; the tray app starts it again (otherwise run `ollama serve`). Never run `make_synthetic.py` during the demo: Ollama serves one request at a time and the generator takes it for 25 s per call.
+- Model slower than this afternoon: other apps are holding graphics memory (browsers, WhatsApp, widgets). Close them and reload the model; `curl localhost:11434/api/ps` shows how much of Gemma sits in VRAM (2.8 GB is the good case, 1.6 GB the slow one).
 - Port 8000 busy: `netstat -ano | findstr :8000`, then `taskkill /PID <pid> /F`.
 
 ## Questions the jury may ask

@@ -101,6 +101,9 @@ def append_jsonl(path: Path, rows: list[dict]) -> None:
 
 
 # ------------------------------------------------------------ embeddings ---
+EMBED_TIMEOUT_S = 120  # a wedged Ollama must never block the analysis worker forever
+
+
 def embed(texts: list[str], batch_size: int = 16, gpu: bool = False, progress: bool = False) -> np.ndarray:
     """bge-m3 served by Ollama. gpu=False passes num_gpu=0 so the embedding model
     runs on CPU and Gemma keeps the 4 GB card; use gpu=True for offline training.
@@ -110,7 +113,7 @@ def embed(texts: list[str], batch_size: int = 16, gpu: bool = False, progress: b
     out: list[list[float]] = []
     for i in range(0, len(texts), batch_size):
         chunk = texts[i : i + batch_size]
-        resp = ollama.embed(model=EMBED_MODEL, input=chunk, options={"num_gpu": -1 if gpu else 0})
+        resp = ollama.Client(timeout=EMBED_TIMEOUT_S).embed(model=EMBED_MODEL, input=chunk, options={"num_gpu": -1 if gpu else 0})
         out.extend(resp.embeddings)
         if progress:
             print(f"\r  embedded {min(i + batch_size, len(texts))}/{len(texts)}", end="", flush=True)

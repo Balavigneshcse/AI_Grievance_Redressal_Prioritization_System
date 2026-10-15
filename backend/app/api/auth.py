@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -11,6 +11,7 @@ from ..db import get_db
 from .. import models, schemas
 from ..security import EMAIL_RE, MOBILE_RE, create_token, hash_otp, hash_password, new_otp, otp_matches, password_problems, verify_password
 from ..services.notifier import notify
+from ..services.ratelimit import client_ip, hit
 from .deps import current_user, user_out
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -53,7 +54,8 @@ def _token(user: models.User) -> schemas.TokenOut:
 
 
 @router.post("/register", status_code=201)
-def register(body: schemas.RegisterIn, db: Session = Depends(get_db)):
+def register(body: schemas.RegisterIn, request: Request, db: Session = Depends(get_db)):
+    hit(f"register:{client_ip(request)}", 20, 600)
     email = body.email.strip().lower()
     mobile = body.mobile.strip().replace(" ", "").removeprefix("+91")
     if not MOBILE_RE.match(mobile):
@@ -83,7 +85,8 @@ def register(body: schemas.RegisterIn, db: Session = Depends(get_db)):
 
 
 @router.post("/verify-otp", response_model=schemas.TokenOut)
-def verify_otp(body: schemas.VerifyOtpIn, db: Session = Depends(get_db)):
+def verify_otp(body: schemas.VerifyOtpIn, request: Request, db: Session = Depends(get_db)):
+    hit(f"verify:{body.email.strip().lower()}", 10, 600)
     user = db.execute(select(models.User).where(models.User.email == body.email.strip().lower())).scalar_one_or_none()
     if user is None:
         raise HTTPException(404, "No account for this email")
@@ -95,7 +98,9 @@ def verify_otp(body: schemas.VerifyOtpIn, db: Session = Depends(get_db)):
 
 
 @router.post("/resend-otp")
-def resend_otp(body: schemas.ForgotIn, db: Session = Depends(get_db)):
+def resend_otp(body: schemas.ForgotIn, request: Request, db: Session = Depends(get_db)):
+    hit(f"otp:{body.email.strip().lower()}", 3, 600)
+    hit(f"otp:{client_ip(request)}", 10, 600)
     user = db.execute(select(models.User).where(models.User.email == body.email.strip().lower())).scalar_one_or_none()
     if user and not user.is_verified:
         _issue_otp(db, user, "register")
@@ -104,7 +109,9 @@ def resend_otp(body: schemas.ForgotIn, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=schemas.TokenOut)
-def login(body: schemas.LoginIn, db: Session = Depends(get_db)):
+def login(body: schemas.LoginIn, request: Request, db: Session = Depends(get_db)):
+    hit(f"login:{client_ip(request)}", 30, 60)
+    hit(f"login:{body.email.strip().lower()}", 10, 60)
     user = db.execute(select(models.User).where(models.User.email == body.email.strip().lower())).scalar_one_or_none()
     if user is None or not verify_password(body.password, user.password_hash):
         raise HTTPException(401, "Incorrect email or password")
@@ -118,7 +125,9 @@ def login(body: schemas.LoginIn, db: Session = Depends(get_db)):
 
 
 @router.post("/forgot")
-def forgot(body: schemas.ForgotIn, db: Session = Depends(get_db)):
+def forgot(body: schemas.ForgotIn, request: Request, db: Session = Depends(get_db)):
+    hit(f"otp:{body.email.strip().lower()}", 3, 600)
+    hit(f"otp:{client_ip(request)}", 10, 600)
     user = db.execute(select(models.User).where(models.User.email == body.email.strip().lower())).scalar_one_or_none()
     if user:
         _issue_otp(db, user, "reset")

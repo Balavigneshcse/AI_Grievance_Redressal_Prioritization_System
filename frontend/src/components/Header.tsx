@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { ClipboardList, ListChecks, LogIn, LogOut, ShieldCheck, User } from "lucide-react"
+import { ClipboardList, ListChecks, LogIn, LogOut, MapPinned, ShieldCheck, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
@@ -49,6 +49,21 @@ export function Header() {
             >
               <ListChecks className="size-4" />
               <span className="hidden sm:inline">{t("header.queue")}</span>
+            </NavLink>
+          ) : null}
+
+          {token && staff ? (
+            <NavLink
+              to="/admin/map"
+              className={({ isActive }) =>
+                cn(
+                  "inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium transition-colors hover:bg-muted",
+                  isActive && "bg-muted",
+                )
+              }
+            >
+              <MapPinned className="size-4" />
+              <span className="hidden sm:inline">{t("header.map")}</span>
             </NavLink>
           ) : null}
 
@@ -102,6 +117,12 @@ export function Header() {
                     <DropdownMenuItem onClick={() => navigate("/officer/queue")}>
                       <ListChecks />
                       {t("header.queue")}
+                    </DropdownMenuItem>
+                  ) : null}
+                  {staff ? (
+                    <DropdownMenuItem onClick={() => navigate("/admin/map")}>
+                      <MapPinned />
+                      {t("header.map")}
                     </DropdownMenuItem>
                   ) : null}
                   {admin ? (

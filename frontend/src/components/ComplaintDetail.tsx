@@ -1,7 +1,7 @@
 import { Fragment, type ReactNode } from "react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { AlarmClock, Building2, Check, Copy, Image as ImageIcon, Loader2, MapPin, Sparkles, X } from "lucide-react"
+import { AlarmClock, Building2, Check, Copy, Image as ImageIcon, Loader2, MapPin, Sparkles, Star, Users, X } from "lucide-react"
 import { toast } from "sonner"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -91,6 +91,18 @@ export function ComplaintDetail({ complaint, linkBase = "/c", children }: Props)
             ) : null}
             {a?.language_primary ? (
               <Badge variant="secondary">{LANGUAGE_NAMES[a.language_primary] ?? a.language_primary}</Badge>
+            ) : null}
+            {complaint.supporters ? (
+              <Badge variant="outline">
+                <Users />
+                {t("track.supporters", { count: complaint.supporters })}
+              </Badge>
+            ) : null}
+            {complaint.rating ? (
+              <Badge variant="outline">
+                <Star className="fill-amber-400 text-amber-500" />
+                {complaint.rating}/5
+              </Badge>
             ) : null}
           </div>
           <p className="text-xs text-muted-foreground">
@@ -253,18 +265,29 @@ export function ComplaintDetail({ complaint, linkBase = "/c", children }: Props)
       </Card>
 
       {complaint.media?.length ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("track.media")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-2">
-              {complaint.media.map((m) => (
-                <MediaThumb key={m.id} media={m} />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <>
+          {(["evidence", "resolution"] as const).map((role) => {
+            const files = complaint.media.filter((m) => (m.role ?? "evidence") === role)
+            if (files.length === 0) return null
+            return (
+              <Card key={role} className={role === "resolution" ? "border-emerald-400/60" : undefined}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    {role === "resolution" ? <Check className="size-4 text-emerald-600" /> : <ImageIcon className="size-4" />}
+                    {role === "resolution" ? t("track.proof") : t("track.media")}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-2">
+                    {files.map((m) => (
+                      <MediaThumb key={m.id} media={m} />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </>
       ) : null}
 
       {placeText || hasCoords ? (

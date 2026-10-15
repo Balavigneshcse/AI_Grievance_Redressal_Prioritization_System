@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timezone
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import UniqueConstraint, Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -84,6 +84,11 @@ class Complaint(Base):
     escalated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)  # SLA breach handled once
     duplicate_of: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("complaints.id"), nullable=True)
     contact_incomplete: Mapped[bool] = mapped_column(Boolean, default=False)
+    rating: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 1-5 from the complainant after resolution
+    rating_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    rated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    reopen_count: Mapped[int] = mapped_column(Integer, default=0)
+    supporters: Mapped[int] = mapped_column(Integer, default=0)  # "me too" from other citizens
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
 
@@ -98,6 +103,8 @@ class Media(Base):
     id: Mapped[uuid.UUID] = uuid_pk()
     complaint_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("complaints.id"), index=True)
     kind: Mapped[str] = mapped_column(String(10))  # photo | video
+    role: Mapped[str] = mapped_column(String(12), default="evidence")  # evidence (citizen) | resolution (office)
+    uploaded_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     file_path: Mapped[str] = mapped_column(String(500))
     mime: Mapped[str] = mapped_column(String(100))
     size_bytes: Mapped[int] = mapped_column(Integer)
@@ -194,6 +201,17 @@ class Notification(Base):
     body: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(10))  # queued | sent | failed | skipped
     sent_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    note_en: Mapped[str | None] = mapped_column(Text, nullable=True)  # officer note to translate before sending
+
+
+class Support(Base):
+    """A citizen backing an existing complaint instead of filing a duplicate."""
+    __tablename__ = "supports"
+    __table_args__ = (UniqueConstraint("complaint_id", "user_id", name="uq_support"),)
+    id: Mapped[uuid.UUID] = uuid_pk()
+    complaint_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("complaints.id"), index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 
 class RuleChange(Base):

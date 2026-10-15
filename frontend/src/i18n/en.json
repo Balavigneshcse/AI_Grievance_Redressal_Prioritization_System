@@ -9,7 +9,8 @@
     "myComplaints": "My complaints",
     "logout": "Log out",
     "login": "Log in",
-    "admin": "Admin"
+    "admin": "Admin",
+    "map": "Map"
   },
   "role": {
     "citizen": "Citizen",
@@ -73,7 +74,8 @@
     "disagreement": "Disagreement",
     "awaiting_analysis": "Awaiting analysis",
     "contact_incomplete": "Contact incomplete",
-    "photo_mismatch": "Photo mismatch"
+    "photo_mismatch": "Photo mismatch",
+    "popular": "Popular"
   },
   "actor": {
     "system": "System",
@@ -158,7 +160,8 @@
     "title": "My complaints",
     "emptyTitle": "No complaints yet",
     "emptyHint": "File your first complaint in any language, with a photo and location.",
-    "new": "New complaint"
+    "new": "New complaint",
+    "supportedTitle": "Complaints you support"
   },
   "new": {
     "title": "New complaint",
@@ -268,7 +271,30 @@
     "replySent": "Reply sent.",
     "replyEmpty": "Write a reply or attach a file.",
     "escalatedTitle": "Overdue",
-    "escalatedHint": "This complaint passed its due time and was escalated to the district admin on {{date}}."
+    "escalatedHint": "This complaint passed its due time and was escalated to the district admin on {{date}}.",
+    "feedbackTitle": "Was it fixed?",
+    "feedbackHint": "Until {{date}}: confirm with a rating, or reopen if it is not fixed.",
+    "feedbackClosed": "The feedback window has closed.",
+    "ratedTitle": "Thank you for your feedback",
+    "ratedHint": "You rated this resolution {{rating}} out of 5. You can still reopen it if the problem comes back.",
+    "rating": "Rating",
+    "stars": {
+      "1": "Very poor",
+      "2": "Poor",
+      "3": "Okay",
+      "4": "Good",
+      "5": "Excellent"
+    },
+    "notePlaceholder": "Anything to add (optional)",
+    "reopenPlaceholder": "What is still not fixed?",
+    "confirmFixed": "Confirm it is fixed",
+    "notFixed": "Not fixed, reopen",
+    "reopenNow": "Reopen complaint",
+    "pickRating": "Pick a rating first.",
+    "reopened": "Reopened and sent back to the department.",
+    "thanksRating": "Thank you, your rating was saved.",
+    "supporters": "{{count}} supporters",
+    "proof": "Resolution proof from the office"
   },
   "queue": {
     "title": "Review queue",
@@ -294,10 +320,16 @@
       "active": "Active work",
       "resolved": "Resolved",
       "all": "All complaints"
-    }
+    },
+    "search": "Search tracking ID, name or words from the complaint"
   },
   "officer": {
-    "title": "Review complaint"
+    "title": "Review complaint",
+    "proofTitle": "Resolution proof",
+    "proofHint": "Add a photo or video of the completed work; the citizen sees it on the tracking page.",
+    "proofCount": "{{count}} proof file(s) attached",
+    "addProof": "Add photo",
+    "proofAdded": "{{count}} file(s) attached."
   },
   "decision": {
     "accept": "Accept",
@@ -403,5 +435,22 @@
     "minutes": "{{count}} min",
     "hours": "{{count}} h",
     "days": "{{count}} d"
+  },
+  "nearby": {
+    "title": "{{count}} open complaints nearby",
+    "hint": "If one of these is your problem, support it instead of filing again. Supporters raise its priority.",
+    "distance": "{{km}} km away",
+    "supporters": "{{count}} supporters",
+    "support": "Support",
+    "supportedShort": "Supported",
+    "supported": "You now support {{id}} ({{count}} supporters)."
+  },
+  "map": {
+    "title": "Complaint map",
+    "hint": "Every located complaint in your scope. Marker size grows with supporters; a red ring means overdue.",
+    "open": "Open",
+    "all": "All",
+    "openCase": "Open case",
+    "count": "{{count}} complaints on the map"
   }
 }

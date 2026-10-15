@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { Building2, ChevronRight, Inbox, Plus, RefreshCw } from "lucide-react"
+import { Building2, ChevronRight, Inbox, Plus, RefreshCw, Users } from "lucide-react"
 import { toast } from "sonner"
 import { api, ApiError } from "@/lib/api"
 import type { ComplaintSummary } from "@/lib/types"
@@ -18,12 +18,16 @@ export default function MyComplaints() {
   const { name } = useDepartments()
   const [items, setItems] = useState<ComplaintSummary[] | null>(null)
   const [loading, setLoading] = useState(true)
+  const [supported, setSupported] = useState<ComplaintSummary[]>([])
 
   const load = async () => {
     setLoading(true)
     try {
       const list = await api<ComplaintSummary[]>("/complaints/mine")
       setItems(Array.isArray(list) ? list : [])
+      api<ComplaintSummary[]>("/complaints/supported")
+        .then((s) => setSupported(Array.isArray(s) ? s : []))
+        .catch(() => setSupported([]))
     } catch (err) {
       setItems((prev) => prev ?? [])
       toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
@@ -105,6 +109,26 @@ export default function MyComplaints() {
           })}
         </ul>
       )}
+
+      {supported.length > 0 ? (
+        <section className="space-y-2">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+            <Users className="size-4" />
+            {t("home.supportedTitle")}
+          </h2>
+          <ul className="space-y-2">
+            {supported.map((c) => (
+              <li key={c.id} className="flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 text-sm">
+                <span className="font-mono font-semibold">{c.tracking_id}</span>
+                <StatusBadge status={c.status} />
+                <UrgencyBadge urgency={c.urgency} />
+                <span className="text-xs text-muted-foreground">{t("nearby.supporters", { count: c.supporters ?? 0 })}</span>
+                {c.summary_en ? <span className="w-full truncate text-xs text-muted-foreground">{c.summary_en}</span> : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <Button
         size="lg"

@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { CameraDialog, MAX_PHOTO_MB, MAX_VIDEO_MB, MAX_VIDEO_SECONDS, type CapturedMedia } from "@/components/CameraDialog"
 import { EMPTY_LOCATION, LocationCard, type LocationState } from "@/components/LocationCard"
+import { NearbyCard } from "@/components/NearbyCard"
 import { StatusBadge } from "@/components/Badges"
 
 interface Attachment {
@@ -294,6 +295,8 @@ export default function NewComplaint() {
       </Card>
 
       <LocationCard value={location} onChange={patchLocation} />
+
+      {location.lat != null && location.lng != null ? <NearbyCard lat={location.lat} lng={location.lng} /> : null}
 
       <div className="space-y-1.5">
         <Button type="button" className="h-11 w-full text-base" onClick={() => void submit()} disabled={submitting}>

@@ -62,7 +62,7 @@ Open `http://localhost:8000/docs` for the API, `http://localhost:8025` for the m
 | GET | `/complaints/{id}`, `/complaints/track/{tracking_id}`, `/complaints/{id}/timeline` | owner or staff | detail with analysis, decision, timeline; PII and second opinion only for staff |
 | GET | `/media/{id}` | owner or staff | photo or video file |
 | POST | `/geo/reverse` | public | lat/lng to nearest locality |
-| GET | `/review/queue` | staff | complaints in the caller's scope; `view=review|active|resolved|all`, filters by department, urgency, language, district |
+| GET | `/review/queue` | staff | complaints in the caller's scope; `view=review|active|resolved|all`, filters by department, urgency, language, district, `q` text search; sorted by urgency then supporters |
 | GET | `/departments/{dept}/queue` | staff (own department for department admins) | routed, in-progress and awaiting-info complaints |
 | GET | `/review/{id}` | staff, inside scope | full detail including masked text, PII map, complainant name and Aadhaar last 4 |
 | POST | `/review/{id}/decision` | staff, inside scope | accept, reassign, merge, request_info, resolve, close, reopen; reason required |
@@ -72,6 +72,12 @@ Open `http://localhost:8000/docs` for the API, `http://localhost:8025` for the m
 | GET | `/admin/overview` | super admin, district admin | complaint counts per district and department |
 | POST | `/complaints/{id}/reply` | complainant (owner) | answer a request for information or add details, with photos or videos; an awaiting-info case resumes; the office is emailed |
 | POST | `/admin/sla/check` | super admin | escalate overdue complaints now (the worker does it every minute) |
+| POST | `/complaints/{id}/feedback` | complainant | after resolution: rating 1-5 with a note, or reopen (back to in progress, department emailed); allowed for `REOPEN_WINDOW_DAYS` |
+| POST | `/complaints/{id}/support` | any citizen but the owner | "me too" on an open complaint; `SUPPORT_BOOST_AT` supporters raise urgency one level |
+| GET | `/complaints/nearby?lat&lng` | citizen | open complaints within `NEARBY_KM`, nearest first, no personal data |
+| GET | `/complaints/supported` | citizen | complaints the caller supports |
+| POST | `/review/{id}/attachments` | staff, inside scope | resolution proof photos or videos (media role `resolution`) |
+| GET | `/admin/map?view=open|all` | staff | located complaints in scope for the map |
 | GET, PUT | `/admin/rules` | super admin (read: all staff) | YAML rules with change log |
 | POST | `/admin/rules/test` | staff | run the rules against a text |
 | POST | `/admin/models/reload` | super admin | pick up a newly trained second-opinion model |
@@ -177,3 +183,21 @@ Google Fonts were removed (the hackathon network closes those connections); the 
 ### Demo addresses and real mail servers (22:50)
 
 The seeded staff accounts live on `synapse.local`, a domain that does not exist, so Gmail accepted their mails and bounced them back into the sender's inbox. The outbox now checks the recipient before every send: when the SMTP host is a real server (anything but the local Mailpit), addresses on `.local`, `.test`, `.invalid`, `.localhost`, `.example` and the `example.*` domains are marked `skipped` with a note instead of being sent. With Mailpit nothing is skipped, so the test suite still sees every mail. For a demo with real inboxes, `PATCH /admin/users/{id}` accepts a new `email`, and the Admin page has a "Change email" action next to each staff address.
+
+---
+
+## 8. Night additions (15-16 Oct 2026, 23:30-01:00)
+
+| Feature | What exists now |
+|---|---|
+| Rating and reopen | After resolve or close the Track page asks "Was it fixed?": a 1-5 star rating with a note, or "Not fixed, reopen" which puts the case back in progress, writes a citizen timeline event and emails the department (`staff_reopen`). Both allowed for seven days (`REOPEN_WINDOW_DAYS`). Metrics show the average rating and the reopen rate |
+| Resolution proof | Staff attach photos or videos of the completed work (`/review/{id}/attachments`, media role `resolution`); the Track page shows them under "Resolution proof from the office" and the resolve mail says a photo is on the tracking page |
+| Me too | When a citizen sets a location on the new-complaint form, open complaints within 2 km are listed with a Support button; supporting adds a `supports` row and raises the counter, five supporters raise urgency one level (once), the queue sorts by supporters after urgency and shows `+N`, a `popular` flag appears at three; "Complaints you support" is listed on the home page |
+| District map | `/admin/map` for every staff role, scoped like the queue: circle markers coloured by urgency, size growing with supporters, a red ring for overdue, popups with a link to the case, open/all toggle, refresh every 15 s |
+| Translated officer notes | A `status` mail to a Tamil or Hindi citizen that carries an English officer note stores the note (`notifications.note_en`); the outbox translates it with Gemma 3 (`services/translate.py`, script-checked, cached) before sending and falls back to English on any failure (`TRANSLATE_NOTES` to disable) |
+| Queue search | `q` matches tracking ID, complainant name, complaint text, address or resolved place; the queue page has a debounced search box |
+| Rate limiting | In-memory limiter (`services/ratelimit.py`): login 30 per minute per IP and 10 per minute per email, register 20 per 10 minutes per IP, OTP resend and forgot-password 3 per 10 minutes per email and 10 per IP, OTP verify 10 per 10 minutes per email; 429 with Retry-After |
+
+### Operating note: one model server, one request at a time
+
+Ollama on the 4 GB card runs with `OLLAMA_NUM_PARALLEL=1`, so the analysis worker, the outbox translation, the generator and the training scripts share one queue. A generator run in parallel with the app makes every complaint wait behind 25-second calls, and requests that time out on the client keep running on the server, which can wedge it for minutes. Every model call in the API now carries a timeout (chat 180 s, embedding 120 s, translation 45 s); a stuck server is cleared by restarting `ollama.exe`. Do not run `make_synthetic.py` or `train_second_opinion.py` while the app is being used.

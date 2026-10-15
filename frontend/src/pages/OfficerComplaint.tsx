@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { ComplaintDetail } from "@/components/ComplaintDetail"
 import { DecisionBar } from "@/components/DecisionBar"
+import { ResolutionUpload } from "@/components/ResolutionUpload"
 
 export default function OfficerComplaint() {
   const { id } = useParams<{ id: string }>()
@@ -44,6 +45,7 @@ export default function OfficerComplaint() {
         </div>
       ) : complaint ? (
         <ComplaintDetail complaint={complaint} linkBase="/officer/c">
+          <ResolutionUpload complaint={complaint} onDone={() => void reload()} />
           <DecisionBar complaint={complaint} onDecided={() => void reload()} />
         </ComplaintDetail>
       ) : (

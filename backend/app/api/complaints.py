@@ -7,6 +7,8 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
+from datetime import timedelta
+
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -52,7 +54,8 @@ def departments(db: Session = Depends(get_db)):
     return [dept_out(d) for d in db.execute(select(models.Department).where(models.Department.is_active)).scalars()]
 
 
-async def _save_uploads(db: Session, c: models.Complaint, files: list[UploadFile] | None, captured_in_app: bool) -> int:
+async def _save_uploads(db: Session, c: models.Complaint, files: list[UploadFile] | None, captured_in_app: bool,
+                        role: str = "evidence", uploaded_by=None) -> int:
     """Validate and stream photos and videos to disk, one Media row each. Returns how many were saved."""
     folder = settings.MEDIA_DIR / str(c.id)
     saved = 0
@@ -81,7 +84,7 @@ async def _save_uploads(db: Session, c: models.Complaint, files: list[UploadFile
         db.add(
             models.Media(
                 complaint_id=c.id, kind=kind, file_path=str(path), mime=mime, size_bytes=size,
-                exif_lat=exif_lat, exif_lng=exif_lng, captured_in_app=captured_in_app,
+                exif_lat=exif_lat, exif_lng=exif_lng, captured_in_app=captured_in_app, role=role, uploaded_by=uploaded_by,
             )
         )
         saved += 1
@@ -142,7 +145,7 @@ def my_complaints(user: models.User = Depends(current_user), db: Session = Depen
             schemas.ComplaintSummary(
                 id=c.id, tracking_id=c.tracking_id, status=c.status, department=dept_out(db.get(models.Department, c.department_id)) if c.department_id else None,
                 urgency=c.urgency, created_at=c.created_at, summary_en=a.summary_en if a else None,
-                district=c.district, office_name=c.office_name, due_at=c.due_at,
+                district=c.district, office_name=c.office_name, due_at=c.due_at, supporters=c.supporters or 0, rating=c.rating,
             )
         )
     return out
@@ -169,12 +172,29 @@ def complaint_detail(db: Session, c: models.Complaint, viewer: models.User) -> s
         complainant_name=c.complainant_name, aadhaar_last4=c.aadhaar_last4,
         district=c.district, office_name=c.office_name, office_department_id=c.office_department_id, due_at=c.due_at,
         escalated_at=c.escalated_at,
+        rating=c.rating, rating_note=c.rating_note, reopen_count=c.reopen_count or 0, supporters=c.supporters or 0,
+        can_reopen_until=_reopen_deadline(c),
         created_at=c.created_at,
-        media=[schemas.MediaOut(id=m.id, kind=m.kind, url=f"/media/{m.id}") for m in c.media],
+        media=[schemas.MediaOut(id=m.id, kind=m.kind, url=f"/media/{m.id}", role=m.role or "evidence") for m in c.media],
         analysis=analysis,
         decision=schemas.DecisionOut(queue=d.queue, reasons=d.reasons or []) if d else None,
         timeline=[schemas.TimelineOut(from_status=e.from_status, to_status=e.to_status, actor_type=e.actor_type, note=e.note, created_at=e.created_at) for e in c.events],
     )
+
+
+def _reopen_deadline(c: models.Complaint):
+    """Until when the complainant may rate or reopen: REOPEN_WINDOW_DAYS after the last resolve/close."""
+    if c.status not in ("resolved", "closed"):
+        return None
+    last = next((e.created_at for e in reversed(c.events) if e.to_status in ("resolved", "closed")), None)
+    return (last + timedelta(days=settings.REOPEN_WINDOW_DAYS)) if last else None
+
+
+def _haversine_km(lat1, lng1, lat2, lng2) -> float:
+    from math import asin, cos, radians, sin, sqrt
+
+    a = sin(radians(lat2 - lat1) / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(radians(lng2 - lng1) / 2) ** 2
+    return 6371 * 2 * asin(sqrt(a))
 
 
 def _load_for(db: Session, complaint_id: str, user: models.User) -> models.Complaint:
@@ -186,6 +206,52 @@ def _load_for(db: Session, complaint_id: str, user: models.User) -> models.Compl
     if user.role in STAFF_ROLES and not can_access(c, user):
         raise HTTPException(403, "Outside your district or department")
     return c
+
+
+@router.get("/complaints/nearby", response_model=list[schemas.NearbyItem])
+def nearby(lat: float, lng: float, km: float | None = None, limit: int = 5, user: models.User = Depends(current_user), db: Session = Depends(get_db)):
+    """Open complaints with coordinates within km of a point, nearest first, without any personal data."""
+    radius = km or settings.NEARBY_KM
+    span = radius / 100.0  # rough degree box; the haversine below does the real filtering
+    rows = db.execute(
+        select(models.Complaint).where(
+            models.Complaint.status.in_(OPEN_FOR_SUPPORT), models.Complaint.lat.is_not(None), models.Complaint.lng.is_not(None),
+            models.Complaint.lat.between(lat - span, lat + span), models.Complaint.lng.between(lng - span, lng + span),
+            models.Complaint.user_id != user.id,
+        )
+    ).scalars().all()
+    mine = {s.complaint_id for s in db.execute(select(models.Support).where(models.Support.user_id == user.id)).scalars()}
+    out = []
+    for c in rows:
+        d = _haversine_km(lat, lng, c.lat, c.lng)
+        if d > radius:
+            continue
+        a = c.analyses[-1] if c.analyses else None
+        out.append(schemas.NearbyItem(
+            id=c.id, tracking_id=c.tracking_id, status=c.status, department=dept_out(db.get(models.Department, c.department_id)) if c.department_id else None,
+            urgency=c.urgency, summary_en=a.summary_en if a else None, supporters=c.supporters or 0, supported=c.id in mine,
+            distance_km=round(d, 2), created_at=c.created_at,
+        ))
+    # nearest first; at the same spot the most supported, then the newest
+    out.sort(key=lambda i: (i.distance_km, -i.supporters, -i.created_at.timestamp()))
+    return out[:max(1, min(limit, 20))]
+
+
+@router.get("/complaints/supported", response_model=list[schemas.ComplaintSummary])
+def supported(user: models.User = Depends(current_user), db: Session = Depends(get_db)):
+    rows = db.execute(
+        select(models.Complaint).join(models.Support, models.Support.complaint_id == models.Complaint.id)
+        .where(models.Support.user_id == user.id).order_by(models.Support.created_at.desc())
+    ).scalars().all()
+    out = []
+    for c in rows:
+        a = c.analyses[-1] if c.analyses else None
+        out.append(schemas.ComplaintSummary(
+            id=c.id, tracking_id=c.tracking_id, status=c.status, department=dept_out(db.get(models.Department, c.department_id)) if c.department_id else None,
+            urgency=c.urgency, created_at=c.created_at, summary_en=a.summary_en if a else None, district=c.district, office_name=c.office_name,
+            due_at=c.due_at, supporters=c.supporters or 0, rating=c.rating,
+        ))
+    return out
 
 
 @router.get("/complaints/track/{tracking_id}", response_model=schemas.ComplaintDetail)
@@ -247,3 +313,60 @@ async def reply(
     notify(db, user, "status", complaint_id=c.id, tracking_id=c.tracking_id, status=STATUS_LABEL.get(c.status, c.status), note="Thank you, your reply was received.")
     db.commit()
     return {"ok": True, "status": c.status, "attachments": saved}
+
+
+OPEN_FOR_SUPPORT = ("received", "analysing", "under_review", "routed", "in_progress", "awaiting_info")
+
+
+@router.post("/complaints/{complaint_id}/feedback")
+def feedback(complaint_id: str, body: schemas.FeedbackIn, user: models.User = Depends(current_user), db: Session = Depends(get_db)):
+    """After a resolution the complainant either confirms it with a rating, or reopens it.
+    Both are allowed for REOPEN_WINDOW_DAYS after the resolve/close event."""
+    c = _load_for(db, complaint_id, user)
+    if c.user_id != user.id:
+        raise HTTPException(403, "Only the complainant can give feedback")
+    deadline = _reopen_deadline(c)
+    if deadline is None:
+        raise HTTPException(409, "Feedback is possible once the complaint is resolved")
+    if datetime.now(timezone.utc) > deadline:
+        raise HTTPException(409, "The feedback window has closed")
+    note = " ".join((body.note or "").split())[:500]
+    if body.reopen:
+        c.reopen_count = (c.reopen_count or 0) + 1
+        _set_status(db, c, "in_progress", "complainant", user.id, ("reopened: " + note) if note else "reopened: not fixed")
+        notify_staff(db, c, "department", "staff_reopen", text=note or "not fixed")
+        notify(db, user, "status", complaint_id=c.id, tracking_id=c.tracking_id, status=STATUS_LABEL.get(c.status, c.status),
+               note="Your complaint was reopened and sent back to the department.")
+    else:
+        if body.rating is None:
+            raise HTTPException(400, "Give a rating from 1 to 5, or reopen the complaint")
+        c.rating, c.rating_note, c.rated_at = body.rating, note or None, datetime.now(timezone.utc)
+        db.add(models.StatusEvent(complaint_id=c.id, from_status=c.status, to_status=c.status, actor_type="complainant", actor_id=user.id,
+                                  note=f"rated {body.rating}/5" + (f": {note}" if note else "")))
+    db.commit()
+    return {"ok": True, "status": c.status, "rating": c.rating, "reopen_count": c.reopen_count}
+
+
+@router.post("/complaints/{complaint_id}/support")
+def support(complaint_id: str, user: models.User = Depends(current_user), db: Session = Depends(get_db)):
+    """'Me too': back an existing open complaint instead of filing a duplicate. Enough supporters raise its urgency one level."""
+    c = db.get(models.Complaint, as_uuid(complaint_id))
+    if c is None:
+        raise HTTPException(404, "Complaint not found")
+    if c.user_id == user.id:
+        raise HTTPException(400, "You filed this complaint")
+    if c.status not in OPEN_FOR_SUPPORT:
+        raise HTTPException(409, "This complaint is no longer open")
+    exists = db.execute(select(models.Support).where(models.Support.complaint_id == c.id, models.Support.user_id == user.id)).scalar_one_or_none()
+    if exists is None:
+        db.add(models.Support(complaint_id=c.id, user_id=user.id))
+        c.supporters = (c.supporters or 0) + 1
+        db.add(models.StatusEvent(complaint_id=c.id, from_status=c.status, to_status=c.status, actor_type="system",
+                                  note=f"supported by another citizen ({c.supporters} supporter{'s' if c.supporters != 1 else ''})"))
+        order = ["low", "medium", "high", "critical"]
+        if c.supporters == settings.SUPPORT_BOOST_AT and c.urgency in ("low", "medium"):
+            c.urgency = order[order.index(c.urgency) + 1]
+            db.add(models.StatusEvent(complaint_id=c.id, from_status=c.status, to_status=c.status, actor_type="system",
+                                      note=f"urgency raised to {c.urgency}: {c.supporters} citizens support this complaint"))
+        db.commit()
+    return {"ok": True, "supporters": c.supporters, "supported": True, "urgency": c.urgency}

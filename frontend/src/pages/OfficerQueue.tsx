@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { Filter, Inbox, RefreshCw } from "lucide-react"
+import { Filter, Inbox, RefreshCw, Search } from "lucide-react"
 import { toast } from "sonner"
 import { api, ApiError } from "@/lib/api"
 import type { QueueItem, QueueView } from "@/lib/types"
@@ -10,7 +10,9 @@ import { useDepartments } from "@/lib/departments"
 import { LANGUAGE_NAMES, URGENCY_ORDER } from "@/lib/labels"
 import { formatAge, formatDue } from "@/lib/format"
 import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -69,6 +71,8 @@ export default function OfficerQueue() {
   const [urgency, setUrgency] = useState(ALL)
   const [language, setLanguage] = useState(ALL)
   const [district, setDistrict] = useState(ALL)
+  const [search, setSearch] = useState("")
+  const [query, setQuery] = useState("")
   const [districts, setDistricts] = useState<Option[]>([])
   const [items, setItems] = useState<QueueItem[] | null>(null)
   const [loading, setLoading] = useState(true)
@@ -86,6 +90,7 @@ export default function OfficerQueue() {
       if (urgency !== ALL) qs.set("urgency", urgency)
       if (language !== ALL) qs.set("language", language)
       if (district !== ALL) qs.set("district", district)
+      if (query) qs.set("q", query)
       try {
         const list = await api<QueueItem[]>(`/review/queue?${qs.toString()}`)
         setItems(Array.isArray(list) ? list : [])
@@ -98,12 +103,17 @@ export default function OfficerQueue() {
         setRefreshing(false)
       }
     },
-    [view, department, urgency, language, district, t],
+    [view, department, urgency, language, district, query, t],
   )
 
   useEffect(() => {
     void load()
   }, [load])
+
+  useEffect(() => {
+    const id = window.setTimeout(() => setQuery(search.trim()), 300)
+    return () => window.clearTimeout(id)
+  }, [search])
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -175,6 +185,10 @@ export default function OfficerQueue() {
             <span className="text-sm font-medium">{t("queue.filters")}</span>
             <span className="ml-auto text-xs text-muted-foreground">{t("queue.autoRefresh")}</span>
           </div>
+          <div className="relative sm:col-span-3">
+            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("queue.search")} className="pl-8" aria-label={t("queue.search")} />
+          </div>
           {!deptScoped ? (
             <FilterSelect value={department} onChange={setDepartment} items={deptItems} label={t("queue.department")} />
           ) : null}
@@ -233,6 +247,11 @@ export default function OfficerQueue() {
                   </TableCell>
                   <TableCell className="font-mono font-medium">
                     {q.tracking_id}
+                    {q.supporters ? (
+                      <Badge variant="secondary" className="ml-1 font-sans">
+                        +{q.supporters}
+                      </Badge>
+                    ) : null}
                     {q.complainant_name ? (
                       <span className="block max-w-32 truncate font-sans text-xs font-normal text-muted-foreground">
                         {q.complainant_name}

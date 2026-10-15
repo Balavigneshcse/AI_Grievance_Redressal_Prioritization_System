@@ -35,10 +35,15 @@ def init_db() -> None:
     with engine.begin() as conn:
         # Columns added after the first deployment (create_all does not alter existing tables).
         for col, typ in [("district", "VARCHAR(60)"), ("office_department_id", "VARCHAR(10)"), ("office_name", "VARCHAR(200)"), ("due_at", "TIMESTAMPTZ"),
-                         ("complainant_name", "VARCHAR(120)"), ("aadhaar_last4", "VARCHAR(4)"), ("escalated_at", "TIMESTAMPTZ")]:
+                         ("complainant_name", "VARCHAR(120)"), ("aadhaar_last4", "VARCHAR(4)"), ("escalated_at", "TIMESTAMPTZ"),
+                         ("rating", "INTEGER"), ("rating_note", "TEXT"), ("rated_at", "TIMESTAMPTZ"),
+                         ("reopen_count", "INTEGER NOT NULL DEFAULT 0"), ("supporters", "INTEGER NOT NULL DEFAULT 0")]:
             conn.execute(text(f"ALTER TABLE complaints ADD COLUMN IF NOT EXISTS {col} {typ}"))
         for col, typ in [("district", "VARCHAR(60)"), ("full_name", "VARCHAR(120)"), ("is_active", "BOOLEAN NOT NULL DEFAULT TRUE")]:
             conn.execute(text(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {col} {typ}"))
+        conn.execute(text("ALTER TABLE media ADD COLUMN IF NOT EXISTS role VARCHAR(12) NOT NULL DEFAULT 'evidence'"))
+        conn.execute(text("ALTER TABLE media ADD COLUMN IF NOT EXISTS uploaded_by UUID"))
+        conn.execute(text("ALTER TABLE notifications ADD COLUMN IF NOT EXISTS note_en TEXT"))
         # Role hierarchy introduced on day 1 evening: admin -> super_admin, officer -> dept_admin.
         conn.execute(text("UPDATE users SET role = 'super_admin' WHERE role = 'admin'"))
         conn.execute(text("UPDATE users SET role = 'dept_admin' WHERE role = 'officer'"))

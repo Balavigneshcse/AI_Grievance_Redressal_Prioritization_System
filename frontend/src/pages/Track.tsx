@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { ComplaintDetail } from "@/components/ComplaintDetail"
 import { ReplyCard } from "@/components/ReplyCard"
+import { FeedbackCard } from "@/components/FeedbackCard"
 
 export default function Track() {
   const { id } = useParams<{ id: string }>()
@@ -38,6 +39,7 @@ export default function Track() {
         </div>
       ) : complaint ? (
         <ComplaintDetail complaint={complaint}>
+          <FeedbackCard complaint={complaint} onSent={() => void reload()} />
           <ReplyCard complaint={complaint} onSent={() => void reload()} />
         </ComplaintDetail>
       ) : (

@@ -48,6 +48,10 @@ class Settings:
     MAX_VIDEO_SECONDS = int(os.getenv("MAX_VIDEO_SECONDS", "300"))
     LLM_KEEP_ALIVE = os.getenv("LLM_KEEP_ALIVE", "2h")  # keep Gemma loaded between complaints
     APP_URL = os.getenv("APP_URL", "http://localhost:5173")
+    REOPEN_WINDOW_DAYS = int(os.getenv("REOPEN_WINDOW_DAYS", "7"))  # citizen may reopen or rate within this
+    SUPPORT_BOOST_AT = int(os.getenv("SUPPORT_BOOST_AT", "5"))  # supporters that raise urgency one level
+    NEARBY_KM = float(os.getenv("NEARBY_KM", "2.0"))
+    TRANSLATE_NOTES = _bool(os.getenv("TRANSLATE_NOTES"), True)  # officer notes translated in citizen mails
 
     CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")]
     SEED_PASSWORD = os.getenv("SEED_PASSWORD", "Synapse@123")

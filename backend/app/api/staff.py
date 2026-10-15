@@ -19,7 +19,7 @@ from ..db import get_db
 from .. import models, schemas
 from ..security import EMAIL_RE, MOBILE_RE, hash_password, password_problems
 from ..services.notifier import notify
-from .deps import ADMIN_ROLES, STAFF_ROLES, as_uuid, dept_out, require_role
+from .deps import ADMIN_ROLES, STAFF_ROLES, as_uuid, dept_out, require_role, scope_complaints
 from scripts.common import load_tn_mapping
 
 router = APIRouter(prefix="/admin", tags=["staff"])
@@ -180,3 +180,23 @@ def overview(user: models.User = Depends(require_role(*ADMIN_ROLES)), db: Sessio
             d["open"] += n
         d["by_department"][dept or "unassigned"] = d["by_department"].get(dept or "unassigned", 0) + n
     return {"generated_at": datetime.now(timezone.utc), "districts": out}
+
+
+@router.get("/map", response_model=list[schemas.MapPoint])
+def complaint_map(view: str = "open", user: models.User = Depends(require_role(*STAFF_ROLES)), db: Session = Depends(get_db)):
+    """Complaints with coordinates in the caller's scope, for the district map."""
+    q = scope_complaints(select(models.Complaint), user).where(models.Complaint.lat.is_not(None), models.Complaint.lng.is_not(None))
+    open_statuses = ("received", "analysing", "under_review", "routed", "in_progress", "awaiting_info")
+    if view != "all":
+        q = q.where(models.Complaint.status.in_(open_statuses))
+    rows = db.execute(q.order_by(models.Complaint.created_at.desc()).limit(500)).scalars().all()
+    now = datetime.now(timezone.utc)
+    out = []
+    for c in rows:
+        a = c.analyses[-1] if c.analyses else None
+        out.append(schemas.MapPoint(
+            id=c.id, tracking_id=c.tracking_id, lat=c.lat, lng=c.lng, status=c.status, urgency=c.urgency, department=c.department_id,
+            district=c.district, summary_en=a.summary_en if a else None, supporters=c.supporters or 0,
+            overdue=bool(c.due_at and c.status in open_statuses and c.due_at < now), created_at=c.created_at,
+        ))
+    return out

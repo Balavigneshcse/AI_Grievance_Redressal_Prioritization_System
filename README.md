@@ -71,3 +71,7 @@ Wipes complaints and test accounts, adds district admins for Chennai and Madurai
 ## What happens after filing
 
 The citizen can answer a request for information or add photos and videos from the Track page; the department holding the case is emailed, and so is the district admin whenever a case needs a human decision. Open complaints past their due time are escalated once to the district admin and carry an overdue flag in the queue.
+
+## Closing the loop with the citizen
+
+After a resolution the citizen rates it or reopens it within seven days; the office can attach proof photos of the completed work. A citizen who finds an open complaint nearby can support it instead of filing a duplicate, and enough supporters raise its priority. Staff see every located complaint on a district map, search the queue by ID, name or words, and officer notes reach Tamil and Hindi citizens translated by the local model. Login, registration and OTP endpoints are rate limited.

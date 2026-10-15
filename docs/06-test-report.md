@@ -131,3 +131,13 @@ A second generation run added 477 complaints (160 department x urgency x languag
 | Mean model latency on the gold set | 12.7 s | 11.5 s |
 
 Reading: the larger held-out split is a harder, more varied set, so the department number moved from 0.87 to 0.85 while urgency improved from 0.48 to 0.55; the general catch-all remains the weak class (0.53) and Tamil-script department accuracy dropped on a 37-row split. The classifier is a second opinion only: department decisions on the gold set are 100% once rules apply, and every disagreement goes to a human. The running API picked up the new files through `POST /admin/models/reload`.
+
+---
+
+## 10. Night run (16 Oct 2026, 00:40): rating and reopen, proof, me-too, map, translation, search, limits
+
+Suite grown to 114 checks, run against a Mailpit-backed API instance.
+
+**Result: 114 of 114 checks passed.** New checks: queue search by tracking ID and by complainant name; the office attaches a resolution photo, the citizen sees it marked as proof, and an upload outside the admin's scope is refused; the citizen rates a resolved complaint (stored with its feedback window), reopens it with a note (back to in progress, reopen count 1, citizen event in the timeline, roads admin emailed), and cannot rate while it is open again; the English resolve note reaches the Tamil-speaking citizen translated into Tamil script in the status mail; another citizen supports the water complaint (counted once, the owner cannot support their own), the nearby list shows it as supported without any personal data, the supported list and the queue carry the count; the map lists located complaints and is scoped for a department admin; metrics carry the average rating, reopen rate and supporters; twelve failed logins for one address end in 429.
+
+Three runs were needed. The first two stalled because the round-3 generator was still running (its process survived a Ctrl+C) and Ollama, serving one request at a time, replayed a queue of timed-out requests; the fix was to stop the generator, restart the Ollama server, and give the embedding call a timeout so a wedged model can never block the worker again. The remaining defects were ours: the static routes `/complaints/nearby` and `/complaints/supported` were registered after `/complaints/{id}` and were swallowed by it; the outbox translated a mail before sending the staff mails behind it (plain mails now go first and the suite waits for mail instead of sleeping); and the nearby list cut a supported complaint off at five results when older test complaints sat at the same coordinates (ties now break by supporters and recency).

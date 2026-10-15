@@ -70,12 +70,43 @@ export interface ComplaintSummary {
   urgency: Urgency | null
   created_at: string
   summary_en: string | null
+  supporters?: number
+  rating?: number | null
 }
 
 export interface Media {
   id: string
   kind: string
   url: string
+  role?: "evidence" | "resolution"
+}
+
+export interface NearbyItem {
+  id: string
+  tracking_id: string
+  status: Status
+  department: Department | null
+  urgency: Urgency | null
+  summary_en: string | null
+  supporters: number
+  supported: boolean
+  distance_km: number
+  created_at: string
+}
+
+export interface MapPoint {
+  id: string
+  tracking_id: string
+  lat: number
+  lng: number
+  status: Status
+  urgency: Urgency | null
+  department: string | null
+  district: string | null
+  summary_en: string | null
+  supporters: number
+  overdue: boolean
+  created_at: string
 }
 
 export interface Analysis {
@@ -131,6 +162,11 @@ export interface Complaint {
   office_name?: string | null
   due_at?: string | null
   escalated_at?: string | null
+  rating?: number | null
+  rating_note?: string | null
+  reopen_count?: number
+  supporters?: number
+  can_reopen_until?: string | null
   created_at: string
   media: Media[]
   analysis: Analysis | null
@@ -152,6 +188,7 @@ export interface QueueItem {
   district?: string | null
   office_name?: string | null
   due_at?: string | null
+  supporters?: number
   complainant_name?: string | null
   department: DepartmentRef
   language_primary: string | null

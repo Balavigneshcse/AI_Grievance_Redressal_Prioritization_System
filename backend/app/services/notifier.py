@@ -122,6 +122,11 @@ TEMPLATES = {
             "शिकायतकर्ता ने {tracking_id} में जानकारी जोड़ी:\n\"{text}\"\nखोलें: {url}",
         ),
     },
+    "staff_reopen": {
+        "en": ("Citizen reopened {tracking_id}", "The complainant says {tracking_id} is not fixed:\n\"{text}\"\nIt is back in your active work.\nOpen: {url}"),
+        "ta": ("{tracking_id}: குடிமகன் மீண்டும் திறந்தார்", "புகார்தாரர் {tracking_id} சரிசெய்யப்படவில்லை என்கிறார்:\n\"{text}\"\nஇது மீண்டும் உங்கள் நடப்பு பணிகளில் உள்ளது.\nதிறக்க: {url}"),
+        "hi": ("{tracking_id}: नागरिक ने फिर खोला", "शिकायतकर्ता का कहना है कि {tracking_id} ठीक नहीं हुआ:\n\"{text}\"\nयह फिर से आपके सक्रिय काम में है।\nखोलें: {url}"),
+    },
     "overdue": {
         "en": (
             "Overdue: {tracking_id} ({department}, {urgency})",
@@ -207,9 +212,11 @@ def notify(db: Session, user: models.User, template: str, complaint_id=None, **k
     subject_t, body_t = TEMPLATES[template][lang]
     kw.setdefault("note", "")
     subject, body = subject_t.format(**kw), body_t.format(**kw)
+    # An English officer note inside a Tamil or Hindi mail is translated by the outbox before sending.
+    note_en = kw.get("note") if (template == "status" and lang != "en" and settings.TRANSLATE_NOTES and kw.get("note")) else None
     n = models.Notification(
         user_id=user.id, complaint_id=complaint_id, channel="email", template=template,
-        language=lang, subject=subject, body=body, status="queued",
+        language=lang, subject=subject, body=body, status="queued", note_en=note_en,
     )
     db.add(n)
     _wake.set()
@@ -274,6 +281,8 @@ def _deliver_queued(mailer: Mailer) -> int:
         rows = db.execute(
             select(models.Notification).where(models.Notification.status == "queued").order_by(models.Notification.sent_at)
         ).scalars().all()
+        # Mails that need a model translation go last, so staff and OTP mails are never held up by Gemma.
+        rows = sorted(rows, key=lambda n: 1 if n.note_en else 0)
         for n in rows:
             user = db.get(models.User, n.user_id)
             if user is None:
@@ -286,6 +295,13 @@ def _deliver_queued(mailer: Mailer) -> int:
                 db.commit()
                 log.info("email %s to %s skipped: demo address on a real mail server", n.template, user.email)
                 continue
+            if n.note_en and n.note_en in n.body:
+                from .translate import translate
+
+                translated = translate(n.note_en, n.language)
+                if translated:
+                    n.body = n.body.replace(n.note_en, translated)
+                n.note_en = None
             try:
                 mailer.send(build_message(user.email, n.subject, n.body))
             except Exception as exc:

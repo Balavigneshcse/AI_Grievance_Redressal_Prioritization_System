@@ -65,6 +65,11 @@ def metrics(user: models.User = Depends(require_role(*STAFF_ROLES)), db: Session
     reviewed = db.execute(select(func.count()).where(models.Decision.queue == "review")).scalar_one()
     decisions = db.execute(select(func.count(models.Decision.id))).scalar_one()
     latency = db.execute(select(func.avg(models.Analysis.latency_ms))).scalar_one()
+    avg_rating = db.execute(select(func.avg(models.Complaint.rating))).scalar_one()
+    rated = db.execute(select(func.count()).where(models.Complaint.rating.is_not(None))).scalar_one()
+    finished = db.execute(select(func.count()).where(models.Complaint.status.in_(("resolved", "closed")))).scalar_one()
+    reopened = db.execute(select(func.count()).where(models.Complaint.reopen_count > 0)).scalar_one()
+    supporters = db.execute(select(func.coalesce(func.sum(models.Complaint.supporters), 0))).scalar_one()
 
     # Live accuracy: officer corrections are ground truth for the analysis they corrected.
     corrections = db.execute(select(models.Override).where(models.Override.action == "reassign")).scalars().all()
@@ -90,7 +95,10 @@ def metrics(user: models.User = Depends(require_role(*STAFF_ROLES)), db: Session
 
     return {
         "totals": {"complaints": total, "critical_open": critical_open, "review_rate": round(reviewed / decisions, 3) if decisions else None, "auto_closed": 0,
-                   "mean_latency_ms": int(latency) if latency else None},
+                   "mean_latency_ms": int(latency) if latency else None,
+                   "avg_rating": round(float(avg_rating), 2) if avg_rating else None, "rated": rated,
+                   "reopen_rate": round(reopened / (finished + reopened), 3) if (finished + reopened) else None, "reopened": reopened,
+                   "supporters": int(supporters)},
         "by_status": by_status, "by_department": by_dept, "live_accuracy_by_language": live,
         "eval_runs": evals, "second_opinion": second,
     }

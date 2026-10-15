@@ -17,6 +17,7 @@ import OfficerComplaint from "@/pages/OfficerComplaint"
 import Admin from "@/pages/Admin"
 import AdminRules from "@/pages/AdminRules"
 import AdminMetrics from "@/pages/AdminMetrics"
+import AdminMap from "@/pages/AdminMap"
 
 export default function App() {
   return (
@@ -40,6 +41,7 @@ export default function App() {
               <Route element={<RequireAuth staff />}>
                 <Route path="/officer/queue" element={<OfficerQueue />} />
                 <Route path="/officer/c/:id" element={<OfficerComplaint />} />
+                <Route path="/admin/map" element={<AdminMap />} />
               </Route>
 
               <Route element={<RequireAuth staff admin />}>

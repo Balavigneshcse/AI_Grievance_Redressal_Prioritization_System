@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import case, select
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from sqlalchemy import case, or_, select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
 from .. import models, schemas
 from ..services.notifier import STATUS_LABEL, notify, notify_staff
 from ..services.pipeline import _set_status
-from .complaints import complaint_detail
+from .complaints import _save_uploads, complaint_detail
 from .deps import STAFF_ROLES, as_uuid, can_access, require_role, scope_complaints
 
 router = APIRouter(tags=["review"])
@@ -49,6 +49,8 @@ def _flags(c: models.Complaint) -> list[str]:
         flags.append("contact_incomplete")
     if c.due_at and c.status in OPEN_FOR_SLA and c.due_at < datetime.now(timezone.utc):
         flags.append("overdue")
+    if (c.supporters or 0) >= 3:
+        flags.append("popular")
     return sorted(set(flags))
 
 
@@ -58,7 +60,7 @@ def _item(c: models.Complaint) -> schemas.QueueItem:
         id=c.id, tracking_id=c.tracking_id, status=c.status, urgency=c.urgency, department=c.department_id,
         language_primary=a.language_primary if a else c.language_hint, summary_en=a.summary_en if a else None,
         flags=_flags(c), confidence=a.confidence if a else None, created_at=c.created_at,
-        district=c.district, office_name=c.office_name, due_at=c.due_at, complainant_name=c.complainant_name,
+        district=c.district, office_name=c.office_name, due_at=c.due_at, complainant_name=c.complainant_name, supporters=c.supporters or 0,
     )
 
 
@@ -75,7 +77,7 @@ def _load(db: Session, complaint_id: str, user: models.User) -> models.Complaint
 def review_queue(
     view: str | None = Query(None, description="review | active | resolved | all"),
     department: str | None = Query(None), urgency: str | None = Query(None), language: str | None = Query(None),
-    district: str | None = Query(None),
+    district: str | None = Query(None), q_search: str | None = Query(None, alias="q", description="tracking id, name or words from the complaint"),
     user: models.User = Depends(require_role(*STAFF_ROLES)), db: Session = Depends(get_db),
 ):
     """Complaints the caller may work on. Department admins default to their active work,
@@ -92,7 +94,11 @@ def review_queue(
         q = q.where(models.Complaint.urgency == urgency)
     if district and user.role == "super_admin":
         q = q.where(models.Complaint.district == district)
-    rows = db.execute(q.order_by(URGENCY_ORDER, models.Complaint.created_at.desc()).limit(300)).scalars().all()
+    if q_text := (q_search or "").strip():
+        like = f"%{q_text}%"
+        q = q.where(or_(models.Complaint.tracking_id.ilike(like), models.Complaint.complainant_name.ilike(like), models.Complaint.raw_text.ilike(like),
+                        models.Complaint.manual_address.ilike(like), models.Complaint.resolved_place.ilike(like)))
+    rows = db.execute(q.order_by(URGENCY_ORDER, models.Complaint.supporters.desc(), models.Complaint.created_at.desc()).limit(300)).scalars().all()
     items = [_item(c) for c in rows]
     if language:
         items = [i for i in items if (i.language_primary or "").startswith(language)]
@@ -184,6 +190,26 @@ def decide(complaint_id: str, body: schemas.DecisionIn, user: models.User = Depe
     if c.status == "routed":
         notify(db, owner, "routed", complaint_id=c.id, tracking_id=c.tracking_id, department=dept_name, urgency=c.urgency)
     else:
-        notify(db, owner, "status", complaint_id=c.id, tracking_id=c.tracking_id, status=STATUS_LABEL.get(c.status, c.status), note=body.reason if body.action == "request_info" else "")
+        proof = any(m.role == "resolution" for m in c.media) if body.action == "resolve" else False
+        note = body.reason if body.action in ("request_info", "resolve") else ""
+        if proof:
+            note = (note + " " if note else "") + "A photo of the completed work is on your tracking page."
+        notify(db, owner, "status", complaint_id=c.id, tracking_id=c.tracking_id, status=STATUS_LABEL.get(c.status, c.status), note=note)
     db.commit()
     return {"ok": True, "status": c.status}
+
+
+@router.post("/review/{complaint_id}/attachments")
+async def add_attachments(
+    complaint_id: str, files: list[UploadFile] = File(default=[]),
+    user: models.User = Depends(require_role(*STAFF_ROLES)), db: Session = Depends(get_db),
+):
+    """Resolution proof from the office: photos or videos shown to the citizen on the tracking page."""
+    c = _load(db, complaint_id, user)
+    saved = await _save_uploads(db, c, files, captured_in_app=False, role="resolution", uploaded_by=user.id)
+    if not saved:
+        raise HTTPException(400, "Attach at least one photo or video")
+    db.add(models.StatusEvent(complaint_id=c.id, from_status=c.status, to_status=c.status, actor_type="officer", actor_id=user.id,
+                              note=f"resolution proof added ({saved} file{'s' if saved != 1 else ''})"))
+    db.commit()
+    return {"ok": True, "attachments": saved, "media": [{"id": str(m.id), "kind": m.kind, "url": f"/media/{m.id}", "role": m.role} for m in c.media if m.role == "resolution"]}
