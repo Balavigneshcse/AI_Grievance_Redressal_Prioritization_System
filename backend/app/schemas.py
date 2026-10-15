@@ -71,6 +71,7 @@ class StaffCreated(BaseModel):
 
 class StaffPatchIn(BaseModel):
     is_active: bool | None = None
+    email: str | None = None  # a real address for the demo, for example
     full_name: str | None = None
     department_id: str | None = None
     district: str | None = None

@@ -135,6 +135,14 @@ def update_staff(user_id: str, body: schemas.StaffPatchIn, user: models.User = D
         target.is_active = body.is_active
         if not body.is_active:
             target.password_version += 1  # ends every open session
+    if body.email is not None:
+        email = body.email.strip().lower()
+        if not EMAIL_RE.match(email):
+            raise HTTPException(400, "Invalid email address")
+        clash = db.execute(select(models.User).where(models.User.email == email, models.User.id != target.id)).scalar_one_or_none()
+        if clash is not None:
+            raise HTTPException(409, "An account with this email already exists")
+        target.email = email
     if body.full_name is not None:
         target.full_name = body.full_name.strip() or None
     if body.department_id is not None:

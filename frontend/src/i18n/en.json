@@ -391,7 +391,11 @@
     "health": "Live health",
     "outbox": "Mails waiting",
     "overdueOpen": "Overdue open",
-    "lastLatency": "Last model call"
+    "lastLatency": "Last model call",
+    "editEmail": "Change email",
+    "editEmailHint": "A real address for {{name}}, so routing, review and overdue mails reach a real inbox.",
+    "newEmail": "New email address",
+    "emailUpdated": "Email updated."
   },
   "due": {
     "in": "due in {{time}}",

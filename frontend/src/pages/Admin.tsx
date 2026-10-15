@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { BarChart3, Building2, Copy, FileCog, KeyRound, Loader2, MapPinned, RefreshCw, UserPlus, Users } from "lucide-react"
+import { BarChart3, Building2, Copy, FileCog, KeyRound, Loader2, MailPlus, MapPinned, RefreshCw, UserPlus, Users } from "lucide-react"
 import { toast } from "sonner"
 import { api, ApiError } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
@@ -86,6 +86,9 @@ export default function Admin() {
   const [open, setOpen] = useState(false)
   const [created, setCreated] = useState<StaffCreated | null>(null)
   const [busy, setBusy] = useState(false)
+  const [emailTarget, setEmailTarget] = useState<StaffUser | null>(null)
+  const [newEmail, setNewEmail] = useState("")
+  const [emailBusy, setEmailBusy] = useState(false)
 
   const [role, setRole] = useState<StaffRole>(superAdmin ? "district_admin" : "dept_admin")
   const [district, setDistrict] = useState(user?.district ?? "")
@@ -166,6 +169,21 @@ export default function Admin() {
       toast.success(active ? t("admin.activated") : t("admin.deactivated"))
     } catch (err) {
       toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+    }
+  }
+
+  const saveEmail = async () => {
+    if (!emailTarget) return
+    setEmailBusy(true)
+    try {
+      const updated = await api<StaffUser>(`/admin/users/${emailTarget.id}`, { method: "PATCH", body: { email: newEmail.trim() } })
+      setStaff((prev) => (prev ?? []).map((s) => (s.id === updated.id ? updated : s)))
+      toast.success(t("admin.emailUpdated"))
+      setEmailTarget(null)
+    } catch (err) {
+      toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+    } finally {
+      setEmailBusy(false)
     }
   }
 
@@ -324,7 +342,22 @@ export default function Admin() {
                 <TableRow key={u.id}>
                   <TableCell>
                     <span className="block font-medium">{u.full_name ?? DASH}</span>
-                    <span className="block text-xs text-muted-foreground">{u.email}</span>
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <span className="truncate">{u.email}</span>
+                      {u.role !== "super_admin" || u.id === user?.id ? (
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          aria-label={t("admin.editEmail")}
+                          onClick={() => {
+                            setEmailTarget(u)
+                            setNewEmail(u.email)
+                          }}
+                        >
+                          <MailPlus />
+                        </Button>
+                      ) : null}
+                    </span>
                   </TableCell>
                   <TableCell>
                     <Badge variant={u.role === "super_admin" ? "default" : "secondary"}>{t(`role.${u.role}`)}</Badge>
@@ -357,6 +390,28 @@ export default function Admin() {
           </Table>
         )}
       </Card>
+
+      <Dialog open={emailTarget !== null} onOpenChange={(o) => !o && setEmailTarget(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("admin.editEmail")}</DialogTitle>
+            <DialogDescription>{t("admin.editEmailHint", { name: emailTarget?.full_name ?? emailTarget?.email ?? "" })}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label htmlFor="staff-new-email">{t("admin.newEmail")}</Label>
+            <Input id="staff-new-email" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} autoFocus />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setEmailTarget(null)} disabled={emailBusy}>
+              {t("common.cancel")}
+            </Button>
+            <Button type="button" onClick={() => void saveEmail()} disabled={emailBusy || !newEmail.includes("@")}>
+              {emailBusy ? <Loader2 className="animate-spin" /> : <MailPlus />}
+              {t("common.confirm")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-lg">

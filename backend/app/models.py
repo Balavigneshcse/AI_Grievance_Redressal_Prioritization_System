@@ -192,7 +192,7 @@ class Notification(Base):
     language: Mapped[str] = mapped_column(String(5))
     subject: Mapped[str] = mapped_column(String(200))
     body: Mapped[str] = mapped_column(Text)
-    status: Mapped[str] = mapped_column(String(10))  # queued | sent | failed
+    status: Mapped[str] = mapped_column(String(10))  # queued | sent | failed | skipped
     sent_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 

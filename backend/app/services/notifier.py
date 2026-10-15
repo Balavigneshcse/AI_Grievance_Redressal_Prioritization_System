@@ -246,6 +246,20 @@ def notify_staff(db: Session, c: models.Complaint, kind: str, template: str, **k
     return len(users)
 
 
+DEMO_DOMAIN_SUFFIXES = (".local", ".test", ".invalid", ".localhost", ".example")
+DEMO_DOMAINS = ("example.com", "example.org", "example.net")
+LOCAL_SMTP = ("localhost", "127.0.0.1", "::1", "mailpit")
+
+
+def undeliverable(email: str) -> bool:
+    """True when a real mail server (not the local Mailpit) would bounce the address:
+    the seeded demo accounts live on synapse.local, which does not exist."""
+    if settings.SMTP_HOST.lower() in LOCAL_SMTP:
+        return False
+    domain = email.rsplit("@", 1)[-1].lower()
+    return domain.endswith(DEMO_DOMAIN_SUFFIXES) or domain in DEMO_DOMAINS
+
+
 def pending() -> int:
     with SessionLocal() as db:
         return db.execute(select(func.count()).where(models.Notification.status == "queued")).scalar_one()
@@ -265,6 +279,12 @@ def _deliver_queued(mailer: Mailer) -> int:
             if user is None:
                 n.status = "failed"
                 db.commit()
+                continue
+            if undeliverable(user.email):
+                n.status = "skipped"
+                n.body = n.body + "\n\n[not sent: demo address, the mail server would bounce it]"
+                db.commit()
+                log.info("email %s to %s skipped: demo address on a real mail server", n.template, user.email)
                 continue
             try:
                 mailer.send(build_message(user.email, n.subject, n.body))
