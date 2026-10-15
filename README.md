@@ -14,7 +14,18 @@ Built in 24 hours at SYNAPSE '26, V.S.B. Engineering College.
 | 1. Models and datasets | [docs/02-models-and-datasets.md](docs/02-models-and-datasets.md) |
 | 2. System architecture | [docs/03-system-architecture.md](docs/03-system-architecture.md) |
 | 3. Database and UI/UX design, tech stack | [docs/04-database-and-ui.md](docs/04-database-and-ui.md) |
+| 4. Technical implementation | [docs/05-implementation.md](docs/05-implementation.md) |
 | Training and evaluation commands | [docs/training-commands.md](docs/training-commands.md) |
+
+## Run
+
+```bash
+docker compose up -d
+cd backend && python seed.py && python -m uvicorn app.main:app --port 8000
+cd frontend && npm run dev
+```
+
+API docs at http://localhost:8000/docs, mail inbox at http://localhost:8025, app at http://localhost:5173.
 
 ## Stack
 
@@ -26,4 +37,4 @@ Single model for text and photos: Gemma 3 4B served by Ollama. Embeddings: bge-m
 
 ## Status
 
-Phase 1 and Phase 2 complete. Pipeline scripts (`scripts/`), config (`config/`), prompts and the gold evaluation set (`data/eval/`) are in place; the web app starts in Phase 4.
+Phases 1 to 3 complete. Backend (FastAPI + PostgreSQL + local models) complete and tested end to end; frontend (shadcn/ui) in progress.

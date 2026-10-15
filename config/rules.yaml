@@ -1,0 +1,96 @@
+# Routing rules. Rules win over the model: a matched department overrides the
+# LLM's department, urgency_floor raises (never lowers) urgency, and
+# force_review sends the complaint to a human regardless of confidence.
+# Keywords are matched case-insensitively against the original text, so include
+# Tamil script, Devanagari and romanised spellings. Hot-reloaded on save.
+
+rules:
+  - id: R1
+    name: Gas leak
+    enabled: true
+    match:
+      keywords: ["gas leak", "gas leaking", "smell of gas", "gas smell", "கேஸ் லீக்", "எரிவாயு கசிவு", "gas ki badbu", "gas leak ho raha", "गैस लीक", "गैस की बदबू", "gas kasivu"]
+    action:
+      department: safety
+      urgency_floor: critical
+      force_review: true
+
+  - id: R2
+    name: Medical dependency on power
+    enabled: true
+    match:
+      keywords: ["oxygen", "ஆக்ஸிஜன்", "ऑक्सीजन", "dialysis", "டயாலிசிஸ்", "डायलिसिस", "ventilator", "வென்டிலேட்டர்", "वेंटिलेटर", "insulin"]
+    action:
+      urgency_floor: critical
+      force_review: true
+
+  - id: R3
+    name: Exposed or hanging electric wire
+    enabled: true
+    match:
+      keywords: ["hanging wire", "exposed wire", "live wire", "wire hanging", "wires hanging", "கம்பி தொங்க", "கம்பிகள் தொங்க", "மின் கம்பி", "tar latak", "तार लटक", "नंगा तार", "khula tar", "electric pole leaning", "மின்கம்பம் சாய்ந்து", "खंभा झुक"]
+    action:
+      department: safety
+      urgency_floor: critical
+      force_review: true
+
+  - id: R4
+    name: Fire or collapse
+    enabled: true
+    match:
+      keywords: ["fire", "on fire", "தீ", "தீப்பிடித்த", "आग", "aag lag", "collapse", "collapsing", "இடிந்து", "गिरने वाला", "building crack", "wall falling"]
+    action:
+      department: safety
+      urgency_floor: critical
+      force_review: true
+
+  - id: R5
+    name: Water supply keywords
+    enabled: true
+    match:
+      keywords: ["thanni", "thanneer", "தண்ணீர்", "குடிநீர்", "paani", "pani nahi", "पानी", "water supply", "no water", "water not coming", "water nahi"]
+    action:
+      department: water
+
+  - id: R6
+    name: Sewage overflow into homes
+    enabled: true
+    match:
+      keywords: ["sewage inside", "sewage entering", "drainage water inside", "கழிவுநீர் வீட்டுக்குள்", "कीचड़ घर में", "नाली का पानी घर में", "sewage overflow"]
+    action:
+      department: sanitation
+      urgency_floor: high
+
+  - id: R7
+    name: Dengue or disease cluster
+    enabled: true
+    match:
+      keywords: ["dengue", "டெங்கு", "डेंगू", "malaria", "மலேரியா", "मलेरिया", "cholera", "typhoid", "many people sick", "fever cases"]
+    action:
+      department: health
+      urgency_floor: high
+
+  - id: R8
+    name: Repeat complaint
+    enabled: true
+    match:
+      keywords: ["already complained", "complained before", "second time", "third time", "no action taken", "ஏற்கனவே புகார்", "पहले भी शिकायत", "pehle bhi complaint", "already call pannen", "already raised"]
+    action:
+      urgency_floor: high
+
+  - id: R9
+    name: Property tax and certificates
+    enabled: true
+    match:
+      keywords: ["property tax", "சொத்து வரி", "संपत्ति कर", "birth certificate", "death certificate", "பிறப்பு சான்றிதழ்", "जन्म प्रमाण", "patta", "பட்டா"]
+    action:
+      department: revenue
+
+  - id: R10
+    name: Child or elderly at risk
+    enabled: true
+    match:
+      keywords: ["kids are sick", "children sick", "child fell", "குழந்தை", "குழந்தைகள்", "बच्चे बीमार", "बच्चा गिर", "elderly", "old age", "முதியவர்", "बुजुर्ग", "pregnant", "கர்ப்பிணி", "गर्भवती"]
+    action:
+      urgency_floor: high
+      force_review: true
