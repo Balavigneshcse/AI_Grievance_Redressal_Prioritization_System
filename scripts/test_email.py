@@ -34,8 +34,12 @@ def main() -> None:
 
     print(f"connecting to {host}:{port} tls={tls} user={'set' if user else 'none'}")
     with smtplib.SMTP(host, port, timeout=20) as s:
-        if tls:
+        s.ehlo()
+        if tls and s.has_extn("STARTTLS"):
             s.starttls()
+            s.ehlo()
+        elif tls:
+            print("note: server does not offer STARTTLS, continuing without it")
         if user:
             s.login(user, password)
         s.send_message(msg)

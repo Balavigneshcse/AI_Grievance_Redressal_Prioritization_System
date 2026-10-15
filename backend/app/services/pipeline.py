@@ -21,8 +21,8 @@ from .pii import mask_pii
 from datetime import datetime, timedelta, timezone
 
 from scripts.common import (
-    MODELS, URGENCY_SLA_FACTOR, SoftmaxRegression, analysis_system_prompt, category_of_department, detect_language,
-    district_for, embed, load_schema, nearest_place, office_for, office_hint,
+    MODELS, URGENCY_SLA_FACTOR, SoftmaxRegression, analysis_system_prompt, category_of_department, complaint_user_message,
+    district_for, embed, language_hint_code, load_schema, nearest_place, office_for, office_hint,
 )
 
 URGENCY_RANK = rules_engine.URGENCY_RANK
@@ -51,14 +51,13 @@ def _haversine_km(lat1, lng1, lat2, lng2) -> float:
     return 2 * 6371 * math.asin(math.sqrt(a))
 
 
-def _llm_analyse(masked_text: str, image_path: str | None) -> tuple[dict, int]:
+def _llm_analyse(masked_text: str, image_path: str | None, language_hint: str | None = None) -> tuple[dict, int]:
     import ollama
 
     client = ollama.Client(host=settings.OLLAMA_HOST, timeout=settings.LLM_TIMEOUT_S)
-    user = {"role": "user", "content": "Complaint:\n" + masked_text}
+    user = {"role": "user", "content": complaint_user_message(masked_text, language_hint, has_photo=bool(image_path))}
     if image_path:
         user["images"] = [image_path]
-        user["content"] += "\n\nA photo is attached."
     t0 = time.time()
     resp = client.chat(
         model=settings.LLM,
@@ -80,8 +79,8 @@ def run_analysis(db: Session, complaint_id) -> models.Analysis:
     analysis = models.Analysis(complaint_id=c.id, model_text=settings.LLM, model_embed=settings.EMBED)
     reasons: list[str] = []
 
-    # 1. language hint
-    hint, _ = detect_language(c.raw_text)
+    # 1. language hint: script, plus a function-word guess for Latin-script text
+    hint = language_hint_code(c.raw_text)
     c.language_hint = hint
 
     # 2. PII mask
@@ -105,7 +104,7 @@ def run_analysis(db: Session, complaint_id) -> models.Analysis:
     image_path = next((m.file_path for m in c.media if m.kind == "photo"), None)
     llm: dict | None = None
     try:
-        llm, analysis.latency_ms = _llm_analyse(masked, image_path)
+        llm, analysis.latency_ms = _llm_analyse(masked, image_path, hint)
     except Exception as exc:
         analysis.error = f"LLM failed: {exc}"[:500]
 
@@ -183,10 +182,11 @@ def run_analysis(db: Session, complaint_id) -> models.Analysis:
     if rr.department and llm and rr.department != analysis.department_id:
         reasons.append(f"rule department {rr.department} overrides model department {analysis.department_id}")
 
-    # Spreadsheet keyword hint pointing at another category is a disagreement too.
+    # Spreadsheet keyword hint pointing at another specific category is a disagreement too
+    # ("general" is the catch-all, so a hint into it is not evidence against the model).
     hint = office_hint(c.raw_text)
     hint_category = category_of_department(hint["department_id"]) if hint else None
-    if hint_category and hint_category != department:
+    if hint_category and hint_category not in ("general", department):
         reasons.append(f"keyword rule {hint['rule_id']} suggests {hint_category}, routing says {department}")
 
     review = False

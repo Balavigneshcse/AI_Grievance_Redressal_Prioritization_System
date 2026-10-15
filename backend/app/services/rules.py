@@ -8,6 +8,7 @@ from pathlib import Path
 import yaml
 
 from ..config import settings
+from scripts.common import keyword_in
 
 RULES_PATH: Path = settings.ROOT / "config" / "rules.yaml"
 URGENCY_RANK = {"low": 0, "medium": 1, "high": 2, "critical": 3}
@@ -58,7 +59,7 @@ def evaluate(text: str, language: str | None = None, ward: str | None = None) ->
     for r in load_rules():
         m = r.get("match", {})
         hit = False
-        if any(k.lower() in low for k in m.get("keywords", [])):
+        if any(keyword_in(k, low) for k in m.get("keywords", [])):
             hit = True
         if not hit and m.get("regex"):
             try:

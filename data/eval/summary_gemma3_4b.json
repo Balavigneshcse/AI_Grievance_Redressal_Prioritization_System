@@ -1,10 +1,14 @@
 {
   "model": "gemma3:4b",
   "n": 12,
-  "department_accuracy": 0.833,
-  "urgency_accuracy": 0.833,
+  "department_accuracy": 0.75,
+  "urgency_accuracy": 0.75,
   "urgency_within_one_level": 1.0,
-  "critical_recall": 1.0,
+  "critical_recall": 0.75,
+  "system_department_accuracy": 1.0,
+  "system_urgency_accuracy": 0.833,
+  "system_critical_recall": 1.0,
+  "language_id_accuracy": 0.917,
   "by_language_department": {
     "en": {
       "n": 5,
@@ -20,7 +24,7 @@
     },
     "ta": {
       "n": 2,
-      "accuracy": 1.0
+      "accuracy": 0.5
     },
     "ta-en": {
       "n": 2,
@@ -46,6 +50,28 @@
     },
     "ta-en": {
       "n": 2,
+      "accuracy": 0.5
+    }
+  },
+  "by_language_system_department": {
+    "en": {
+      "n": 5,
+      "accuracy": 1.0
+    },
+    "hi": {
+      "n": 1,
+      "accuracy": 1.0
+    },
+    "hi-en": {
+      "n": 2,
+      "accuracy": 1.0
+    },
+    "ta": {
+      "n": 2,
+      "accuracy": 1.0
+    },
+    "ta-en": {
+      "n": 2,
       "accuracy": 1.0
     }
   },
@@ -56,9 +82,9 @@
     },
     "informal": {
       "n": 6,
-      "accuracy": 0.833
+      "accuracy": 0.667
     }
   },
-  "mean_seconds": 17.55,
-  "mean_gen_tokens": 150.4
+  "mean_seconds": 12.7,
+  "mean_gen_tokens": 172.1
 }

@@ -13,7 +13,7 @@ import time
 
 import ollama
 
-from common import DEFAULT_LLM, analysis_system_prompt, detect_language, load_schema
+from common import DEFAULT_LLM, analysis_system_prompt, complaint_user_message, detect_language, language_hint_code, load_schema
 
 DEFAULT_TEXT = (
     "thanni 3 days ah varala sir. veetla 2 kids irukanga, rendu perum vomiting and fever. "
@@ -29,11 +29,11 @@ def main() -> None:
     ap.add_argument("--num-ctx", type=int, default=2048, help="context window; 2048 fits the prompt and keeps more layers on the GPU")
     args = ap.parse_args()
 
-    print("language hint (lingua):", detect_language(args.text))
-    user = {"role": "user", "content": "Complaint:\n" + args.text}
+    hint = language_hint_code(args.text)
+    print("language hint:", detect_language(args.text), "->", hint)
+    user = {"role": "user", "content": complaint_user_message(args.text, hint, has_photo=bool(args.image))}
     if args.image:
         user["images"] = [args.image]
-        user["content"] += "\n\nA photo is attached."
 
     t0 = time.time()
     resp = ollama.chat(

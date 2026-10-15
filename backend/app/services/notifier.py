@@ -45,9 +45,12 @@ def _send(to: str, subject: str, body: str) -> None:
     msg["To"] = to
     msg["Subject"] = subject
     msg.set_content(body)
-    with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as s:
-        if settings.SMTP_TLS:
+    with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as s:
+        s.ehlo()
+        # Upgrade to TLS when asked and the server offers it (Gmail does, Mailpit does not).
+        if settings.SMTP_TLS and s.has_extn("STARTTLS"):
             s.starttls()
+            s.ehlo()
         if settings.SMTP_USER:
             s.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
         s.send_message(msg)

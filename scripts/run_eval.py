@@ -15,19 +15,39 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import sys
 import time
 from collections import defaultdict
 
 import ollama
 
-from common import DATA, DEFAULT_LLM, analysis_system_prompt, load_schema, read_jsonl
+from common import DATA, DEFAULT_LLM, ROOT, analysis_system_prompt, complaint_user_message, language_hint_code, load_schema, read_jsonl
+
+# The rules layer is part of the system: report accuracy with and without it.
+sys.path.insert(0, str(ROOT / "backend"))
+try:
+    from app.services.rules import URGENCY_RANK, evaluate as evaluate_rules
+except Exception:  # backend deps missing: raw-model numbers only
+    evaluate_rules = None
+    URGENCY_RANK = {"low": 0, "medium": 1, "high": 2, "critical": 3}
+
+
+def apply_rules(text: str, dept: str | None, urg: str | None) -> tuple[str | None, str | None, list[str]]:
+    if evaluate_rules is None:
+        return dept, urg, []
+    r = evaluate_rules(text)
+    out_dept = r.department or dept
+    out_urg = urg
+    if r.urgency_floor and URGENCY_RANK[r.urgency_floor] > URGENCY_RANK.get(urg or "low", 0):
+        out_urg = r.urgency_floor
+    return out_dept, out_urg, r.matched_ids
 
 
 def analyse(model: str, text: str, system: str, schema: dict) -> tuple[dict, float, int]:
     t0 = time.time()
     resp = ollama.chat(
         model=model,
-        messages=[{"role": "system", "content": system}, {"role": "user", "content": "Complaint:\n" + text}],
+        messages=[{"role": "system", "content": system}, {"role": "user", "content": complaint_user_message(text, language_hint_code(text))}],
         format=schema,
         options={"temperature": 0, "num_ctx": 2048, "num_predict": 400},
     )
@@ -70,6 +90,7 @@ def main() -> None:
         except Exception as exc:
             print(f"[{i}] {g['id']} FAILED: {exc}")
             continue
+        sys_dept, sys_urg, rule_ids = apply_rules(g["text"], pred.get("department"), pred.get("urgency"))
         row = {
             "id": g["id"],
             "language": g["language"],
@@ -78,6 +99,9 @@ def main() -> None:
             "pred_department": pred.get("department"),
             "true_urgency": g["urgency"],
             "pred_urgency": pred.get("urgency"),
+            "system_department": sys_dept,
+            "system_urgency": sys_urg,
+            "matched_rules": rule_ids,
             "confidence": pred.get("confidence"),
             "pred_language": pred.get("language_primary"),
             "evidence_spans": pred.get("evidence_spans", []),
@@ -88,7 +112,9 @@ def main() -> None:
         results.append(row)
         ok_d = "ok " if row["pred_department"] == row["true_department"] else "DEP"
         ok_u = "ok " if row["pred_urgency"] == row["true_urgency"] else "URG"
-        print(f"[{i}/{len(gold)}] {g['id']} {g['language']:5s} {ok_d} {ok_u}  {row['pred_department']:11s} {row['pred_urgency']:8s} conf={row['confidence']}  {dt:4.1f}s")
+        sys_d = "ok " if row["system_department"] == row["true_department"] else "DEP"
+        sys_u = "ok " if row["system_urgency"] == row["true_urgency"] else "URG"
+        print(f"[{i}/{len(gold)}] {g['id']} {g['language']:5s} model {ok_d} {ok_u}  system {sys_d} {sys_u}  {row['pred_department']:11s} {row['pred_urgency']:8s} -> {row['system_department']}/{row['system_urgency']} rules={rule_ids} conf={row['confidence']}  {dt:4.1f}s")
 
     if not results:
         raise SystemExit("no results")
@@ -115,8 +141,20 @@ def main() -> None:
                 3,
             )
         ),
+        "system_department_accuracy": round(sum(r["system_department"] == r["true_department"] for r in results) / n, 3),
+        "system_urgency_accuracy": round(sum(r["system_urgency"] == r["true_urgency"] for r in results) / n, 3),
+        "system_critical_recall": round(
+            sum(r["system_urgency"] == "critical" for r in results if r["true_urgency"] == "critical")
+            / max(1, sum(r["true_urgency"] == "critical" for r in results)),
+            3,
+        ),
+        "language_id_accuracy": round(sum((r["pred_language"] or "")[:2] == r["language"][:2] for r in results) / n, 3),
         "by_language_department": group_acc(results, "language", "department"),
         "by_language_urgency": group_acc(results, "language", "urgency"),
+        "by_language_system_department": group_acc(
+            [{**r, "pred_system_department": r["system_department"], "true_system_department": r["true_department"]} for r in results],
+            "language", "system_department",
+        ),
         "by_formality_urgency": group_acc(results, "formality", "urgency"),
         "mean_seconds": round(sum(r["seconds"] for r in results) / n, 2),
         "mean_gen_tokens": round(sum(r["gen_tokens"] for r in results) / n, 1),

@@ -1,0 +1,321 @@
+{
+  "passed": 61,
+  "total": 61,
+  "results": [
+    {
+      "check": "health: db and ollama up",
+      "ok": true,
+      "detail": "{\"gemma3:4b\": true, \"bge-m3\": true, \"second_opinion\": true}"
+    },
+    {
+      "check": "health: second-opinion model present",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "wrong password rejected",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "complainant cannot open the review queue",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "weak password rejected",
+      "ok": true,
+      "detail": "Password needs at least 8 characters, a digit, a symbol"
+    },
+    {
+      "check": "register accepted",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "login blocked until verified",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "wrong OTP rejected",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "correct OTP verifies and logs in",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "password reset with OTP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "old token invalid after reset",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "login with new password",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "case: ta script, water, child sick",
+      "ok": true,
+      "detail": "SYN-2026-000014 under_review water/critical lang=ta conf=0.95 rules=['R5', 'R10'] 20s"
+    },
+    {
+      "check": "  evidence spans present and quoted from text",
+      "ok": true,
+      "detail": "['எங்கள் தெருவில் மூன்று நாட்களாக குடிநீர் வரவில்லை', 'வீட்டில் இரண்டு குழந்தைகள் வாந்தி மற்றும் காய்ச்சலால் அவதிப்படுகி"
+    },
+    {
+      "check": "  english summary present",
+      "ok": true,
+      "detail": "A resident reports a lack of water supply for three days and their children are "
+    },
+    {
+      "check": "  district office and due time set",
+      "ok": true,
+      "detail": "Coimbatore / Coimbatore Water Supply Office"
+    },
+    {
+      "check": "  second opinion populated (officer view)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "case: hi script, power cut, oxygen",
+      "ok": true,
+      "detail": "SYN-2026-000015 under_review electricity/critical lang=hi conf=0.95 rules=['R2'] 16s"
+    },
+    {
+      "check": "  evidence spans present and quoted from text",
+      "ok": true,
+      "detail": "['सुबह छह बजे से बिजली नहीं है', 'मेरे पिता ऑक्सीजन मशीन पर हैं']"
+    },
+    {
+      "check": "  english summary present",
+      "ok": true,
+      "detail": "A resident is experiencing a prolonged power outage impacting a patient dependen"
+    },
+    {
+      "check": "  district office and due time set",
+      "ok": true,
+      "detail": "Coimbatore / Coimbatore Electricity Office"
+    },
+    {
+      "check": "  second opinion populated (officer view)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "case: en, suggestion, low",
+      "ok": true,
+      "detail": "SYN-2026-000016 routed general/low lang=en conf=0.8 rules=[] 16s"
+    },
+    {
+      "check": "  evidence spans present and quoted from text",
+      "ok": true,
+      "detail": "['park near Race Course', 'a few more benches']"
+    },
+    {
+      "check": "  english summary present",
+      "ok": true,
+      "detail": "The citizen is offering a suggestion for additional benches in a park."
+    },
+    {
+      "check": "  district office and due time set",
+      "ok": true,
+      "detail": "Coimbatore / Coimbatore Municipal Administration Office"
+    },
+    {
+      "check": "  second opinion populated (officer view)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "case: hi-en, gas smell",
+      "ok": true,
+      "detail": "SYN-2026-000017 under_review safety/critical lang=hi conf=0.95 rules=['R1'] 20s"
+    },
+    {
+      "check": "  evidence spans present and quoted from text",
+      "ok": true,
+      "detail": "['gas ki badbu aa rahi hai', 'kal raat se']"
+    },
+    {
+      "check": "  english summary present",
+      "ok": true,
+      "detail": "A resident reports a gas leak originating from a shop below their building, posi"
+    },
+    {
+      "check": "  district office and due time set",
+      "ok": true,
+      "detail": "Coimbatore / Coimbatore Fire & Rescue Office"
+    },
+    {
+      "check": "  second opinion populated (officer view)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "case: ta-en, pothole accident, repeat",
+      "ok": true,
+      "detail": "SYN-2026-000018 under_review roads/high lang=ta conf=0.9 rules=['R8'] 16s"
+    },
+    {
+      "check": "  evidence spans present and quoted from text",
+      "ok": true,
+      "detail": "['pothole romba periya', 'nethu oru auto thirumbi vizhunduchu']"
+    },
+    {
+      "check": "  english summary present",
+      "ok": true,
+      "detail": "A large pothole is blocking a vehicle, posing a risk to the driver."
+    },
+    {
+      "check": "  district office and due time set",
+      "ok": true,
+      "detail": "Coimbatore / Coimbatore Roads & Highways Office"
+    },
+    {
+      "check": "  second opinion populated (officer view)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "photo: EXIF GPS used for location",
+      "ok": true,
+      "detail": "exif Gandhipuram, Coimbatore"
+    },
+    {
+      "check": "photo: image findings from the vision model",
+      "ok": true,
+      "detail": "The image shows a large pothole in the center of the road."
+    },
+    {
+      "check": "photo: media served to owner",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "photo: media hidden from another complainant",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "duplicate of the Tamil water complaint flagged",
+      "ok": true,
+      "detail": "possible duplicate of SYN-2026-000005 (similarity 1.00)"
+    },
+    {
+      "check": "PII hidden from complainant",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "PII masked and mapped for officer",
+      "ok": true,
+      "detail": "['[PHONE_1]', '[AADHAAR_1]']"
+    },
+    {
+      "check": "review queue lists the flagged cases",
+      "ok": true,
+      "detail": "12 items; flags of first: ['critical']"
+    },
+    {
+      "check": "merge into unknown target rejected",
+      "ok": true,
+      "detail": "400"
+    },
+    {
+      "check": "merge duplicate into original",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "request info -> awaiting_info",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "reassign urgency -> routed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "close before resolve rejected",
+      "ok": true,
+      "detail": "409"
+    },
+    {
+      "check": "resolve then close",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "decision without reason rejected",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "timeline records every transition",
+      "ok": true,
+      "detail": "['received', 'analysing', 'routed', 'resolved', 'closed']"
+    },
+    {
+      "check": "department queue shows routed water complaints",
+      "ok": true,
+      "detail": "4 items"
+    },
+    {
+      "check": "metrics: totals, by status, live accuracy",
+      "ok": true,
+      "detail": "{\"complaints\": 21, \"critical_open\": 5, \"review_rate\": 0.762, \"auto_closed\": 0, \"mean_latency_ms\": 17718}"
+    },
+    {
+      "check": "metrics: auto-closed is zero",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "rules test endpoint matches R1 and R5b",
+      "ok": true,
+      "detail": "['R1', 'R5b']"
+    },
+    {
+      "check": "invalid rules YAML rejected",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "officer cannot edit rules",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "model reload endpoint",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "status emails logged for the citizen in Mailpit",
+      "ok": true,
+      "detail": "48 emails"
+    }
+  ],
+  "ids": {
+    "ta script, water, child sick": "47bf2288-cf8a-4d9a-9ca7-2b691df512c5",
+    "hi script, power cut, oxygen": "3d39782a-240e-427f-9722-c8eb7583d3ce",
+    "en, suggestion, low": "0acbd049-1e1d-4040-9995-a6427102694d",
+    "hi-en, gas smell": "6c5230a4-c642-4f3a-88cb-76b2051332f2",
+    "ta-en, pothole accident, repeat": "6d94acca-d2b3-4833-bdaf-4dd54e57fd3d",
+    "photo": "821cfa1d-f288-4e00-b0d7-d747e0dad0d3",
+    "dup": "0ec7cc42-2a96-4c47-a616-388517ec1972",
+    "pii": "0955d26a-4294-456a-949f-14a73c3a3c10"
+  }
+}

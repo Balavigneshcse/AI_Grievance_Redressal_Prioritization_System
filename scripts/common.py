@@ -10,6 +10,7 @@ import csv
 import json
 import math
 import os
+import re
 from pathlib import Path
 
 import numpy as np
@@ -137,6 +138,61 @@ def detect_language(text: str) -> tuple[str, float]:
     return "latin", round(latin / total, 2)
 
 
+# Common function words of romanised Hindi and romanised Tamil. For Latin-script
+# text this separates Hinglish from Tanglish far better than a 4B model guesses.
+_HI_ROMAN = {"hai", "hain", "nahi", "nahin", "ka", "ki", "ke", "ko", "se", "mein", "me", "raha", "rahi", "rahe", "kar", "karo", "kya", "aur",
+             "bhi", "par", "hum", "humari", "humare", "hamara", "kal", "aaj", "paani", "pani", "bijli", "jaldi", "bahut", "bhejo", "din", "ghar",
+             "wala", "wali", "ke paas", "sadak", "kachra", "band", "lagta", "lagti", "hota", "hoti", "kripya", "karein", "toh", "abhi", "subah", "raat"}
+_TA_ROMAN = {"illa", "illai", "irukku", "iruku", "irukkanga", "irukanga", "pannen", "panna", "pannunga", "enga", "inga", "romba", "vara", "varala",
+             "varalai", "aagudhu", "aguthu", "kuzhi", "thanni", "thanneer", "sir", "nalla", "seri", "ungal", "enga", "veetla", "veedu", "theru",
+             "pakkam", "naal", "naala", "ah", "la", "ku", "nu", "da", "dhaan", "thaan", "podunga", "seiyunga", "venum", "vendum", "mudiyala",
+             "nethu", "innaiku", "innum", "oru", "rendu", "moonu", "periya", "chinna", "kaayam", "vizhundhuchu", "odudhu", "varudhu"}
+
+
+def romanised_language_guess(text: str) -> str | None:
+    """For Latin-script text: 'hi' if it reads like Hinglish, 'ta' if Tanglish, 'en' if
+    neither set of function words appears, None if the text is not Latin script."""
+    if detect_language(text)[0] != "latin":
+        return None
+    words = re.findall(r"[a-z]+", (text or "").lower())
+    hi = sum(w in _HI_ROMAN for w in words)
+    ta = sum(w in _TA_ROMAN for w in words)
+    if hi == 0 and ta == 0:
+        return "en"
+    if hi >= 2 and hi > ta:
+        return "hi"
+    if ta >= 2 and ta > hi:
+        return "ta"
+    return "hi" if hi > ta else ("ta" if ta > hi else "en")
+
+
+LANGUAGE_HINT_TEXT = {
+    "ta": "Script analysis: Tamil script.",
+    "hi": "Script analysis: Devanagari script (Hindi).",
+    "latin-hi": "Script analysis: Latin letters; the function words (hai, nahi, ke, se, mein ...) read as Hinglish, Hindi written in English letters. language_primary should be hi.",
+    "latin-ta": "Script analysis: Latin letters; the function words (illa, irukku, pannen, romba ...) read as Tanglish, Tamil written in English letters. language_primary should be ta.",
+    "latin-en": "Script analysis: Latin letters with no Hindi or Tamil function words; most likely English.",
+}
+
+
+def language_hint_code(text: str) -> str:
+    """'ta', 'hi', 'latin-hi', 'latin-ta', 'latin-en' or 'unknown'."""
+    code, _ = detect_language(text)
+    if code == "latin":
+        return "latin-" + (romanised_language_guess(text) or "en")
+    return code
+
+
+def complaint_user_message(masked_text: str, hint_code: str | None = None, has_photo: bool = False) -> str:
+    """The user turn sent to the LLM: complaint text, script hint, photo note."""
+    msg = "Complaint:\n" + masked_text
+    if hint_code in LANGUAGE_HINT_TEXT:
+        msg += "\n\n" + LANGUAGE_HINT_TEXT[hint_code]
+    if has_photo:
+        msg += "\n\nA photo is attached."
+    return msg
+
+
 # ---------------------------------------------------------- geocoding ---
 _places: list[dict] | None = None
 
@@ -190,11 +246,24 @@ def district_for(text: str | None) -> str | None:
     return None
 
 
+def keyword_in(keyword: str, text_lower: str) -> bool:
+    """Whole-word match for ASCII keywords ('bus' must not match 'bus stand'
+    ... it still does as a word, but 'land' must not match 'landmark', 'fire'
+    not 'fired'); plain substring for Tamil / Devanagari keywords, where word
+    boundaries are unreliable because of suffixes."""
+    k = (keyword or "").strip().lower()
+    if not k:
+        return False
+    if k.isascii():
+        return re.search(r"(?<![a-z0-9])" + re.escape(k) + r"(?![a-z0-9])", text_lower) is not None
+    return k in text_lower
+
+
 def office_hint(text: str) -> dict | None:
     """First spreadsheet keyword rule that matches the complaint text -> {department_id, priority, rule_id}."""
     low = (text or "").lower()
     for r in load_tn_mapping().get("keyword_rules", []):
-        if r["keyword"] and r["keyword"] in low:
+        if keyword_in(r["keyword"], low):
             return {"department_id": r["department_id"], "priority": r["priority"], "rule_id": r["id"]}
     return None
 
