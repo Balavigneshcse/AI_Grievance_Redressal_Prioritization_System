@@ -210,7 +210,7 @@ ollama run gemma3:4b "Classify this complaint into one of: water, electricity, r
 | Second opinion | NumPy softmax regression on bge-m3 embeddings, trained on synthetic data |
 | PII | Regex + LLM entities |
 | Location | Browser Geolocation, EXIF, offline nearest locality from `places_tn.csv`, Leaflet map; Nominatim behind a flag |
-| Email | Mailpit locally for the demo; real SMTP by env var |
+| Email | The only channel: Mailpit locally for the demo; real SMTP by env var. No SMS. WhatsApp is a roadmap item, not implemented |
 | Auth | argon2 hashing, 6-digit email OTP, 10-minute expiry |
 | Evaluation data | 60-complaint gold set by the team; 300-500 synthetic; public sets for realism and LID tests |
 | Cloud AI APIs | None |

@@ -110,7 +110,7 @@ Browser (React)                 API server (FastAPI)              Analysis worke
 | **Analysis worker** | Run the pipeline stages in order, write analysis and decision, never block the request thread, retry once on model timeout then fall back to review queue | analyses | Ollama, models in memory, DB, Notifier |
 | **Rules engine** | Load YAML rules, evaluate keyword / regex / ward / language conditions, return forced department, urgency floor, force-review flag; hot-reload on file change | rules.yaml, taxonomy.yaml | Worker, Admin |
 | **Review service** | Department and review queues, officer decisions, override log with who / when / why, merge duplicates, status transitions | decisions, overrides | DB, Notifier |
-| **Notifier** | Acknowledgement, routed, under-review, resolved emails in the complainant's language; OTP emails; log every send | notifications | SMTP (Mailpit) |
+| **Notifier** | Email only: OTP, acknowledgement, under review, routed, resolved and other status mails in the complainant's language; every send logged. No SMS. WhatsApp is a roadmap item | notifications | SMTP (Mailpit) |
 | **Metrics service** | Compare analyses against eval labels and officer corrections; accuracy per language, category, urgency, formality; review-queue rate; model latency | nothing (reads) | DB |
 | **Ollama runtime** | Serve Gemma 3 with JSON-schema output and image input | model weights | Worker |
 | **Storage** | PostgreSQL 16 with pgvector (Docker Compose) through SQLAlchemy; media folder; YAML config | everything | all services |

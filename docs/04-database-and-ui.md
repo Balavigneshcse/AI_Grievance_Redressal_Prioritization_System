@@ -170,7 +170,7 @@ erDiagram
         uuid id PK
         uuid user_id FK
         uuid complaint_id FK
-        string channel "email | sms_log"
+        string channel "email (whatsapp reserved for the roadmap)"
         string template "otp | ack | routed | under_review | status | resolved"
         string language
         string subject

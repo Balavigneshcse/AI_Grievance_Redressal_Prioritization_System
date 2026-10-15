@@ -207,7 +207,7 @@ Water Supply, Electricity, Roads and Infrastructure, Sanitation and Waste, Publi
 | F5 | Human review queue | Low-confidence, Critical, disagreement and duplicate cases land here first | MVP |
 | F6 | Override and correction log | Officer can reassign category, department, urgency; correction stored with reason | MVP |
 | F7 | Duplicate detection | Similar complaints linked; officer confirms merge | MVP |
-| F8 | Complainant tracking | Tracking ID, status page, acknowledgement and updates in their language (mocked SMS/email log) | MVP |
+| F8 | Complainant tracking | Tracking ID, status page, acknowledgement and status updates by email in their language | MVP |
 | F9 | Fairness and performance dashboard | Accuracy per language and category on the eval set; review-queue load; backlog by department | MVP |
 | F10 | PII masking | Phone, ID numbers, addresses masked before model call and in logs | MVP |
 | F11 | Audit trail | Every automated and manual decision timestamped with actor and reason | MVP |
@@ -219,13 +219,14 @@ Water Supply, Electricity, Roads and Infrastructure, Sanitation and Waste, Publi
 | F17 | Image evidence analysis | Local vision model describes the photo, checks it matches the text, adds a severity cue to the explanation | MVP |
 | F18 | Embedding classifier second opinion | Logistic regression on multilingual sentence embeddings, trained on our synthetic and corrected data; disagreement with the LLM sends the case to review | Stretch |
 | F19 | Voice / WhatsApp intake | Speech-to-text or chat channel | Stretch |
-| F20 | SMS delivery | SMS gateway for OTP and status updates (email is live in MVP) | Stretch |
+| F20 | WhatsApp channel | Receive complaints and send status updates on a WhatsApp Business number (roadmap only, not built in the hackathon). No SMS. | Roadmap |
 
 ---
 
 ## 7. Out of Scope (24 hours)
 
-- Real SMS delivery (email is live for OTP and status updates; SMS is logged, not sent)
+- SMS of any kind. Email is the channel: OTP, acknowledgement, under review, routed, and resolved mails.
+- WhatsApp intake and notifications (in the roadmap, not implemented)
 - Mobile-number OTP (the number is collected and validated; verification is by email OTP only)
 - More than 4 languages
 - Native mobile app (the web app is responsive and uses the phone browser's camera and GPS)

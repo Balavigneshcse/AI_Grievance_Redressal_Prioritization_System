@@ -109,6 +109,7 @@ Together the two runs cover every Phase 1 problem except photo evidence, which i
 ## 5. Known limits at this checkpoint
 
 - Latency per complaint is 17-20 s with the GPU free, more while training or generation runs; the UI shows an "analysing" state.
+- Notifications are email only (OTP, acknowledgement, under review, routed, resolved). No SMS. WhatsApp intake and notifications are in the roadmap and deliberately not built.
 - Video: the file is stored and served; only photos go to the model. Key-frame extraction is a stretch.
 - Rules editor UI, dashboard charts and department queue screens are after the core complainant and officer flows.
 - No automated tests beyond the end-to-end script and `scripts/run_eval.py` yet.
