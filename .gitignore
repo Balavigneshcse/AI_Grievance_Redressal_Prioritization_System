@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# Secrets and local config
+.env
+.env.*
+
+# Data, models and media (downloaded or generated, not committed)
+data/raw/
+data/synthetic/
+models/
+media/
+*.db
+*.sqlite
+
+# Organiser documents
+docs/*.docx
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
