@@ -55,12 +55,22 @@ SYSTEM = (
 )
 
 
-def build_prompt(n: int, dept: dict, urg: dict, lang_desc: str) -> str:
+SCRIPT_RULE = {
+    "ta": "Write ONLY in Tamil script (தமிழ் எழுத்துகள்). Do not use English letters except for a place name. Example start: 'எங்கள் தெருவில் ...'",
+    "hi": "Write ONLY in Devanagari script (हिंदी अक्षर). Do not write Hindi in English letters and do not use Urdu or Tamil script. Example start: 'हमारे इलाके में ...'",
+    "en": "Write in English only.",
+    "ta-en": "Write Tamil words in English letters (Tanglish), mixed with English. No Tamil script.",
+    "hi-en": "Write Hindi words in English letters (Hinglish), mixed with English. No Devanagari script.",
+}
+
+
+def build_prompt(n: int, dept: dict, urg: dict, lang_desc: str, lang: str = "en") -> str:
     return f"""Write {n} different citizen complaints.
 
 Department the complaint belongs to: {dept['name']}. Typical issues: {"; ".join(dept['examples'])}.
 Urgency level: {urg['name']}. Meaning: {urg['criteria'].strip()}
 Language: {lang_desc}
+Script rule: {SCRIPT_RULE.get(lang, "")}
 
 Requirements:
 - Each complaint is 2 to 5 sentences, 20 to 80 words, written by a different person.
@@ -99,19 +109,27 @@ def main() -> None:
     for i, (d, u, l) in enumerate(todo, 1):
         key = f"{d['id']}|{u['id']}|{l}"
         t0 = time.time()
-        try:
-            resp = ollama.chat(
-                model=args.model,
-                messages=[
-                    {"role": "system", "content": SYSTEM},
-                    {"role": "user", "content": build_prompt(args.per_combo, d, u, LANGUAGES[l])},
-                ],
-                format=SCHEMA,
-                options={"temperature": 0.9, "num_ctx": 2048, "num_predict": 900},
-            )
-            items = json.loads(resp.message.content)["complaints"]
-        except Exception as exc:
-            print(f"[{i}/{len(todo)}] {key} FAILED: {exc}")
+        items = None
+        # One retry at a lower temperature: Ollama aborts a call when the model
+        # starts repeating itself ("token repeat limit"), and a second sample
+        # usually succeeds.
+        for attempt, temperature in enumerate((0.9, 0.6), 1):
+            try:
+                resp = ollama.chat(
+                    model=args.model,
+                    messages=[
+                        {"role": "system", "content": SYSTEM},
+                        {"role": "user", "content": build_prompt(args.per_combo, d, u, LANGUAGES[l], l)},
+                    ],
+                    format=SCHEMA,
+                    options={"temperature": temperature, "num_ctx": 2048, "num_predict": 900, "repeat_penalty": 1.15},
+                )
+                items = json.loads(resp.message.content)["complaints"]
+                break
+            except Exception as exc:
+                if attempt == 2:
+                    print(f"[{i}/{len(todo)}] {key} FAILED twice: {str(exc)[:80]}")
+        if items is None:
             continue
 
         rows = []

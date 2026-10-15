@@ -1,0 +1,263 @@
+{
+  "app": {
+    "name": "Vindex"
+  },
+  "header": {
+    "language": "Language",
+    "queue": "Queue",
+    "account": "Account",
+    "myComplaints": "My complaints",
+    "logout": "Log out",
+    "login": "Log in"
+  },
+  "role": {
+    "citizen": "Citizen",
+    "officer": "Officer",
+    "admin": "Admin"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "refresh": "Refresh",
+    "back": "Back",
+    "submit": "Submit",
+    "loading": "Loading"
+  },
+  "errors": {
+    "network": "Could not reach the server. Please try again.",
+    "generic": "Something went wrong."
+  },
+  "status": {
+    "received": "Received",
+    "analysing": "Analysing",
+    "under_review": "Under review",
+    "routed": "Routed",
+    "in_progress": "In progress",
+    "resolved": "Resolved",
+    "closed": "Closed",
+    "merged": "Merged",
+    "awaiting_info": "Awaiting info",
+    "unknown": "Unknown"
+  },
+  "urgency": {
+    "critical": "Critical",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low"
+  },
+  "dept": {
+    "water": "Water supply",
+    "electricity": "Electricity",
+    "roads": "Roads",
+    "sanitation": "Sanitation",
+    "health": "Health",
+    "safety": "Public safety",
+    "revenue": "Revenue",
+    "general": "General"
+  },
+  "flag": {
+    "low_confidence": "Low confidence",
+    "possible_duplicate": "Possible duplicate",
+    "duplicate": "Duplicate",
+    "image_mismatch": "Image mismatch",
+    "mixed_language": "Mixed language",
+    "no_location": "No location",
+    "needs_review": "Needs review",
+    "critical": "Critical"
+  },
+  "actor": {
+    "system": "System",
+    "citizen": "Citizen",
+    "officer": "Officer",
+    "admin": "Admin",
+    "ai": "AI"
+  },
+  "age": {
+    "now": "just now",
+    "minutes": "{{count}} min ago",
+    "hours": "{{count}} h ago",
+    "days": "{{count}} d ago"
+  },
+  "media": {
+    "failed": "Could not load attachment",
+    "attachment": "Attachment"
+  },
+  "auth": {
+    "registerTitle": "Create your account",
+    "registerHint": "Register with your mobile number and email to file complaints.",
+    "mobile": "Mobile number",
+    "email": "Email",
+    "password": "Password",
+    "preferredLanguage": "Preferred language",
+    "register": "Register",
+    "haveAccount": "Already have an account?",
+    "loginLink": "Log in",
+    "loginTitle": "Welcome back",
+    "loginHint": "Log in to track your complaints.",
+    "login": "Log in",
+    "noAccount": "New here?",
+    "registerLink": "Create an account",
+    "forgotLink": "Forgot password?",
+    "forgotTitle": "Reset your password",
+    "forgotHint": "We will email you a 6-digit code.",
+    "sendCode": "Send code",
+    "resetTitle": "Choose a new password",
+    "resetHint": "Enter the code from your email and a new password.",
+    "code": "6-digit code",
+    "newPassword": "New password",
+    "reset": "Reset password",
+    "backToLogin": "Back to log in",
+    "registered": "Registered. Check your email for the code.",
+    "notVerified": "Please verify your email first.",
+    "welcome": "Logged in.",
+    "codeSent": "If the email exists, a code has been sent.",
+    "resetDone": "Password updated. Please log in.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
+  },
+  "password": {
+    "weak": "Weak",
+    "fair": "Fair",
+    "strong": "Strong",
+    "rules": "8+ characters with upper, lower, digit and symbol"
+  },
+  "validation": {
+    "mobile": "Enter a 10-digit mobile number",
+    "email": "Enter a valid email",
+    "passwordMin": "At least 8 characters",
+    "passwordUpper": "Add an uppercase letter",
+    "passwordLower": "Add a lowercase letter",
+    "passwordDigit": "Add a digit",
+    "passwordSymbol": "Add a symbol",
+    "required": "Required",
+    "code": "Enter the 6-digit code"
+  },
+  "verify": {
+    "title": "Verify your email",
+    "hint": "Enter the 6-digit code sent to {{email}}.",
+    "emailLabel": "Email",
+    "verify": "Verify",
+    "resend": "Resend code",
+    "resendIn": "Resend in {{s}}s",
+    "sent": "A new code has been sent.",
+    "success": "Email verified.",
+    "resendUnavailable": "Resend is not available. Please register again."
+  },
+  "home": {
+    "title": "My complaints",
+    "emptyTitle": "No complaints yet",
+    "emptyHint": "File your first complaint in any language, with a photo and location.",
+    "new": "New complaint"
+  },
+  "new": {
+    "title": "New complaint",
+    "textLabel": "What is the problem?",
+    "hint": "Write in Tamil, Hindi, English or a mix. Include the street or landmark.",
+    "placeholder": "Describe the issue: what, where, since when",
+    "script": {
+      "ta": "Tamil",
+      "hi": "Hindi",
+      "latin": "English / romanised"
+    },
+    "attachments": "Photos or video",
+    "camera": "Camera",
+    "upload": "Upload",
+    "remove": "Remove",
+    "submit": "Submit complaint",
+    "submitHint": "You will get a tracking id right away.",
+    "tooShort": "Please describe the problem in at least {{min}} characters.",
+    "tooMany": "You can attach up to {{max}} files.",
+    "successTitle": "Complaint received",
+    "successHint": "Save this tracking id. Analysis starts now.",
+    "trackIt": "Track it",
+    "fileAnother": "File another"
+  },
+  "location": {
+    "title": "Location",
+    "hint": "Tap the map or drag the pin, use GPS, or type the address.",
+    "useCurrent": "Use current location",
+    "enterManually": "Enter address manually",
+    "addressLabel": "Address or landmark",
+    "addressPlaceholder": "e.g. Near Anna Nagar bus stop",
+    "unavailable": "Could not get your location. Check location permission.",
+    "distance": "{{km}} km away",
+    "coords": "{{lat}}, {{lng}}",
+    "none": "No location set yet."
+  },
+  "locationSource": {
+    "camera_gps": "Camera GPS",
+    "exif": "Photo metadata",
+    "browser": "Device location",
+    "manual": "Entered manually",
+    "none": "Not provided"
+  },
+  "camera": {
+    "title": "Take a photo",
+    "description": "Your location is captured with the photo.",
+    "capture": "Capture",
+    "switch": "Switch camera",
+    "unsupported": "Camera is not supported in this browser.",
+    "denied": "Camera permission was denied.",
+    "failed": "Could not start the camera."
+  },
+  "track": {
+    "title": "Track complaint",
+    "copy": "Copy tracking id",
+    "copied": "Tracking id copied.",
+    "filedOn": "Filed on {{date}}",
+    "summary": "Summary",
+    "analysingTitle": "Analysing your complaint",
+    "analysingHint": "Detecting language, department and urgency. This page updates automatically.",
+    "timeline": "Timeline",
+    "noTimeline": "No updates yet.",
+    "why": "Why this department?",
+    "department": "Department",
+    "urgency": "Urgency",
+    "confidence": "Confidence",
+    "language": "Language",
+    "rules": "Matched rules",
+    "noImageFindings": "No image findings.",
+    "imageMatches": "image matches text",
+    "imageMismatch": "image does not match text",
+    "decision": "Decision",
+    "duplicates": "Possible duplicates",
+    "noAnalysis": "Analysis is not available yet.",
+    "media": "Attachments",
+    "notFound": "Complaint not found"
+  },
+  "queue": {
+    "title": "Review queue",
+    "filters": "Filters",
+    "allDepartments": "All departments",
+    "allUrgencies": "All urgencies",
+    "allLanguages": "All languages",
+    "department": "Department",
+    "urgency": "Urgency",
+    "language": "Language",
+    "trackingId": "Tracking id",
+    "summary": "Summary",
+    "flags": "Flags",
+    "age": "Age",
+    "confidence": "{{pct}}% confidence",
+    "empty": "The queue is empty."
+  },
+  "officer": {
+    "title": "Review complaint"
+  },
+  "decision": {
+    "accept": "Accept",
+    "reassign": "Reassign",
+    "merge": "Merge",
+    "requestInfo": "Request info",
+    "resolve": "Resolve",
+    "close": "Close",
+    "more": "More",
+    "department": "Department",
+    "urgency": "Urgency",
+    "mergeInto": "Merge into tracking id",
+    "reason": "Reason",
+    "reasonPlaceholder": "Explain the decision for the citizen and the audit log",
+    "dialogHint": "Decision for {{id}}",
+    "done": "Decision saved. Status: {{status}}"
+  }
+}

@@ -4,7 +4,7 @@
 
 Covers: what is built, how it runs, the API, and the evidence from the first end-to-end run.
 
-Date: 15 October 2026 | Status: backend complete and tested; frontend in progress
+Date: 15 October 2026 | Status: backend and frontend complete and tested end to end
 
 ---
 
@@ -24,7 +24,7 @@ Date: 15 October 2026 | Status: backend complete and tested; frontend in progres
 | Notifications | `backend/app/services/notifier.py`: OTP, acknowledgement, routed, under review, status templates in en/ta/hi; every send logged | complete |
 | Local services | `docker-compose.yml`: PostgreSQL 17 + pgvector (port 5434), Mailpit (8025/1025) | running |
 | Seed | `backend/seed.py`: admin, two officers, one citizen | done |
-| Frontend | `frontend/` (React + Vite, shadcn/ui, lucide): register, OTP, login, my complaints, new complaint with camera and location, track, officer queue and workspace | in progress |
+| Frontend | `frontend/` (React 18 + Vite, Tailwind v4, shadcn/ui on Base UI, lucide-react, react-router, react-hook-form + zod, i18next en/ta/hi, react-leaflet): register, OTP verify, login, forgot/reset, my complaints, new complaint with in-app camera, GPS, map pin, reverse geocode and bottom sheet, track page with 3 s polling, evidence highlighting and timeline, officer queue with filters and flags, officer workspace with accept / reassign / merge / request-info dialogs; `npm run build` passes | complete, verified in the browser against the live API (15 Oct 15:25) |
 
 ---
 

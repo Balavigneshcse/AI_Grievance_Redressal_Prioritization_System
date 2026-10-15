@@ -37,4 +37,4 @@ Single model for text and photos: Gemma 3 4B served by Ollama. Embeddings: bge-m
 
 ## Status
 
-Phases 1 to 3 complete. Backend (FastAPI + PostgreSQL + local models) complete and tested end to end; frontend (shadcn/ui) in progress.
+Phases 1 to 4 complete. Backend (FastAPI + PostgreSQL + local models) and frontend (React + shadcn/ui) both working end to end: register with email OTP, file a complaint with photo and location, local analysis, rules, district office routing, officer review, status emails.
