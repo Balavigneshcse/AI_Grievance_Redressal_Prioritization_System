@@ -39,6 +39,45 @@ Single model for text and photos: Gemma 3 4B served by Ollama. Embeddings: bge-m
 
 Phases 1 to 4 complete. Backend (FastAPI + PostgreSQL + local models) and frontend (React + shadcn/ui) both working end to end: register with email OTP, file a complaint with photo and location, local analysis, rules, district office routing, officer review, status emails.
 
+## Test results
+
+All measured on the build laptop (RTX 3050, 4 GB) against the live stack; details and every run are in `docs/06-test-report.md`.
+
+**End-to-end suite** (`scripts/test_api_e2e.py`, run against a Mailpit-backed API): **118 of 118 checks pass** (16 Oct 2026, 02:40, straight after a reset). The suite grew with the product: 61 checks on day 1, then 77, 91, 114 and 118.
+
+| Area | What the checks prove |
+|---|---|
+| Accounts | weak password, wrong OTP, unverified login and bad Aadhaar digits rejected; OTP verify, password reset, old tokens invalidated; name and Aadhaar last 4 taken at registration; twelve failed logins end in 429 |
+| AI pipeline | five complaints in Tamil, Hindi, English, Tanglish and Hinglish get the right department, urgency, rules and review decision; evidence spans quoted verbatim; English summary; district office and due time; second opinion stored |
+| Evidence | JPEG with GPS EXIF resolved to Gandhipuram; the vision model describes the pothole; up to three photos reach the model; media served only to the owner and staff |
+| Duplicates and PII | a repeated complaint flagged at similarity 1.00 and sent to review; phone and Aadhaar-like numbers masked before the model, the map visible to staff only |
+| Roles | department admin sees only its department and district (403 elsewhere); district admin creates department admins for its district only; disabled accounts are locked out |
+| Decisions | accept, reassign, merge, request info, resolve, close with mandatory reasons; citizen reply resumes an awaiting-info case; resolution proof; rating, reopen; me-too support with priority boost; queue search; map scope |
+| Mail and SLA | citizen, department admin and district admin mails for routing, review, reply, resolution and overdue; an English resolve note reaches a Tamil citizen translated; overdue cases escalate exactly once |
+
+**Gold set** (`scripts/run_eval.py`, 12 hand-labelled complaints, replayed after every training round):
+
+| Metric | Gemma 3 4B alone | Whole system (model + rules) |
+|---|---|---|
+| Department accuracy | 0.83 | **1.00** |
+| Urgency exact | 0.83 | **0.92** (every miss within one level) |
+| Critical recall | 0.75 | **1.00** |
+| Language identification | 0.92 | 0.92 |
+| Mean time per complaint | 12.4 s | same |
+
+**Second-opinion classifier** (NumPy softmax regression on bge-m3 embeddings, held-out split of the locally generated set):
+
+| Round | Synthetic rows | Department | Urgency |
+|---|---|---|---|
+| 1 | 460 | 0.869 | 0.479 |
+| 2 | 940 | 0.846 | 0.550 |
+| 3 | 1,169 | 0.875 | 0.555 |
+| 4 | 1,644 | 0.845 (en 0.89, hi-en 0.88, ta-en 0.87, hi 0.80, ta 0.76) | 0.563 |
+
+Department accuracy has settled between 85% and 88%: more synthetic data from the same generator does not move it, so officer corrections are the next source of labels. Urgency stays with the model and the rules; the classifier only votes on the department.
+
+**Performance and delivery:** tracking ID in under 1 s; full analysis of text and photos in 12 to 20 s with the GPU free; 70 mails through one outbox connection in a single suite run with none failed. The browser walk-through and the recorded demo (`docs/demo/`) cover every screen in all three interface languages.
+
 ## Roles and accounts
 
 | Role | Scope | Seed account |

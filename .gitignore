@@ -25,6 +25,7 @@ media/
 
 # Organiser documents, deck backups, Office lock files
 docs/*.docx
+!docs/Vindex_Project_Report.docx
 docs/sample_original.pptx
 docs/sample_v2_original.pptx
 docs/sih_template_original.pptx
