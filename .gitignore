@@ -23,9 +23,11 @@ media/
 *.db
 *.sqlite
 
-# Organiser documents, deck backup, Office lock files
+# Organiser documents, deck backups, Office lock files
 docs/*.docx
 docs/sample_original.pptx
+docs/sample_v2_original.pptx
+docs/sih_template_original.pptx
 ~$*
 
 # OS / editor
