@@ -114,3 +114,20 @@ Suite grown to 91 checks, run against a Mailpit-backed API instance on the new c
 Mail during the run left through the outbox over one connection: citizen OTP, acknowledgement, routed, review and status mails plus the new staff mails (`staff_routed`, `staff_review`, `staff_reply`, `overdue`), none failed.
 
 The browser check of the new screens (rules, metrics, admin, reply card on an awaiting-info complaint) found no console errors.
+
+---
+
+## 9. Round-2 training (15 Oct 2026, 22:00-22:45)
+
+A second generation run added 477 complaints (160 department x urgency x language combinations, 3 each, none dropped by the script check), bringing the synthetic set to 940 rows. The classifier was retrained on 1,163 rows (synthetic + gold + NYC 311 sample) and the gold set replayed.
+
+| Metric | Round 1 (460 synthetic) | Round 2 (940 synthetic) |
+|---|---|---|
+| Department, held-out | 0.869 (137 rows) | 0.846 (234 rows): water 1.00, electricity 0.93, sanitation 0.94, health 0.94, revenue 0.92, roads 0.81, safety 0.75, general 0.53 |
+| Department per language | en 0.93, ta 0.95, hi 0.83, hi-en 0.80, ta-en 0.74 | en 0.91, hi 0.89, ta-en 0.85, hi-en 0.78, ta 0.73 |
+| Urgency, held-out | 0.479 | 0.550 (chance 0.25); low 0.81, critical 0.52 |
+| Gold set, model alone | department 0.83, critical recall 0.75 | unchanged (the model is not trained) |
+| Gold set, system with rules | department 1.00, urgency 0.92, critical recall 1.00, language ID 0.92 | unchanged |
+| Mean model latency on the gold set | 12.7 s | 11.5 s |
+
+Reading: the larger held-out split is a harder, more varied set, so the department number moved from 0.87 to 0.85 while urgency improved from 0.48 to 0.55; the general catch-all remains the weak class (0.53) and Tamil-script department accuracy dropped on a 37-row split. The classifier is a second opinion only: department decisions on the gold set are 100% once rules apply, and every disagreement goes to a human. The running API picked up the new files through `POST /admin/models/reload`.

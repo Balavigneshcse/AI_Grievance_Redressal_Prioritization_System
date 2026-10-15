@@ -25,7 +25,7 @@ Five minutes of clicks, in order. Everything runs on the laptop; nothing leaves 
 ## Numbers to have ready
 
 - Gold set with rules: department 100%, critical recall 100%, language ID 92% (raw 4B model: 75% / 75% / 92%).
-- Classifier held-out (second opinion): department 87%, urgency 52%; retrain after round 2 and update.
+- Second-opinion classifier, held-out after round 2 (940 synthetic + gold + NYC rows, 1,163 in all): department 85% (English 91%, Hindi 89%, Tanglish 85%, Hinglish 78%, Tamil 73%), urgency 55%.
 - End-to-end suite: 77+ checks green; analysis 12 to 20 s per complaint on an RTX 3050 4 GB; tracking ID in under 1 s.
 - Mail: outbox with one persistent connection; 70 mails in one test run, none failed.
 
