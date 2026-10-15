@@ -33,6 +33,9 @@ def init_db() -> None:
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
     Base.metadata.create_all(engine)
     with engine.begin() as conn:
+        # Columns added after the first deployment (create_all does not alter existing tables).
+        for col, typ in [("district", "VARCHAR(60)"), ("office_department_id", "VARCHAR(10)"), ("office_name", "VARCHAR(200)"), ("due_at", "TIMESTAMPTZ")]:
+            conn.execute(text(f"ALTER TABLE complaints ADD COLUMN IF NOT EXISTS {col} {typ}"))
         conn.execute(
             text(
                 "CREATE INDEX IF NOT EXISTS ix_analyses_embedding "

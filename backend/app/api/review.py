@@ -30,7 +30,7 @@ def _flags(c: models.Complaint) -> list[str]:
         flags.append("low_confidence")
     if d:
         for r in d.reasons or []:
-            if r.startswith("second opinion") or r.startswith("rule department"):
+            if r.startswith("second opinion") or r.startswith("rule department") or " suggests " in r:
                 flags.append("disagreement")
             elif r.startswith("possible duplicate"):
                 flags.append("duplicate")
@@ -49,6 +49,7 @@ def _item(c: models.Complaint) -> schemas.QueueItem:
         id=c.id, tracking_id=c.tracking_id, urgency=c.urgency, department=c.department_id,
         language_primary=a.language_primary if a else c.language_hint, summary_en=a.summary_en if a else None,
         flags=_flags(c), confidence=a.confidence if a else None, created_at=c.created_at,
+        district=c.district, office_name=c.office_name, due_at=c.due_at,
     )
 
 

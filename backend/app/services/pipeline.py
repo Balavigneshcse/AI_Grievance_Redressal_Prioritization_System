@@ -18,7 +18,12 @@ from . import rules as rules_engine
 from .notifier import notify
 from .pii import mask_pii
 
-from scripts.common import MODELS, SoftmaxRegression, analysis_system_prompt, detect_language, embed, load_schema, nearest_place
+from datetime import datetime, timedelta, timezone
+
+from scripts.common import (
+    MODELS, URGENCY_SLA_FACTOR, SoftmaxRegression, analysis_system_prompt, category_of_department, detect_language,
+    district_for, embed, load_schema, nearest_place, office_for, office_hint,
+)
 
 URGENCY_RANK = rules_engine.URGENCY_RANK
 OPEN_STATUSES = ("received", "analysing", "under_review", "routed", "in_progress", "awaiting_info")
@@ -92,6 +97,9 @@ def run_analysis(db: Session, complaint_id) -> models.Analysis:
     if c.lat is not None and c.lng is not None:
         place = nearest_place(c.lat, c.lng)
         c.resolved_place = f"{place['name']}, {place['area']}" + (f" (~{place['distance_km']} km)" if place["distance_km"] > 1 else "")
+        c.district = district_for(place["area"]) or district_for(place["name"])
+    if not c.district:
+        c.district = district_for(c.manual_address) or district_for(c.raw_text)
 
     # 4. LLM (first photo, if any, goes in as an image)
     image_path = next((m.file_path for m in c.media if m.kind == "photo"), None)
@@ -175,6 +183,12 @@ def run_analysis(db: Session, complaint_id) -> models.Analysis:
     if rr.department and llm and rr.department != analysis.department_id:
         reasons.append(f"rule department {rr.department} overrides model department {analysis.department_id}")
 
+    # Spreadsheet keyword hint pointing at another category is a disagreement too.
+    hint = office_hint(c.raw_text)
+    hint_category = category_of_department(hint["department_id"]) if hint else None
+    if hint_category and hint_category != department:
+        reasons.append(f"keyword rule {hint['rule_id']} suggests {hint_category}, routing says {department}")
+
     review = False
     if not llm:
         review = True
@@ -187,7 +201,7 @@ def run_analysis(db: Session, complaint_id) -> models.Analysis:
     if llm and analysis.confidence is not None and analysis.confidence < settings.REVIEW_CONFIDENCE_THRESHOLD:
         review = True
         reasons.append(f"low confidence {analysis.confidence:.2f}")
-    if any(r.startswith("second opinion") or r.startswith("rule department") or r.startswith("possible duplicate") for r in reasons):
+    if any(r.startswith("second opinion") or r.startswith("rule department") or r.startswith("possible duplicate") or " suggests " in r for r in reasons):
         review = True
     if c.contact_incomplete:
         reasons.append("contact details incomplete")
@@ -202,13 +216,30 @@ def run_analysis(db: Session, complaint_id) -> models.Analysis:
 
     c.department_id = department
     c.urgency = urgency
+
+    # 10. district office and due time from the Tamil Nadu mapping
+    office = office_for(c.district, department, hint["department_id"] if hint else None)
+    if office:
+        c.office_department_id = office["department_id"]
+        c.office_name = office["office_name"]
+        hours = office["sla_hours"] * URGENCY_SLA_FACTOR.get(urgency, 1.0)
+        c.due_at = datetime.now(timezone.utc) + timedelta(hours=hours)
+        reasons.append(f"office: {office['office_name']} (SLA {hours:g} h for {urgency})")
+        default_office = office_for(c.district, department)
+        if hint and hint["department_id"] == office["department_id"] and default_office and hint["department_id"] != default_office["department_id"]:
+            reasons.append(f"keyword rule {hint['rule_id']} picked the {office['department_name']} office")
+    elif c.district is None:
+        reasons.append("district unknown: no office assigned, officer to confirm location")
+    decision.reasons = list(reasons)
+
     new_status = "under_review" if review else "routed"
     _set_status(db, c, new_status, note="; ".join(reasons) if reasons else "confident, routed automatically")
 
     dept = db.get(models.Department, department)
     dept_name = {"en": dept.name_en, "ta": dept.name_ta, "hi": dept.name_hi}.get(user.preferred_language, dept.name_en) if dept else department
     if new_status == "routed":
-        notify(db, user, "routed", complaint_id=c.id, tracking_id=c.tracking_id, department=dept_name, urgency=urgency)
+        dept_label = f"{dept_name} ({c.office_name})" if c.office_name else dept_name
+        notify(db, user, "routed", complaint_id=c.id, tracking_id=c.tracking_id, department=dept_label, urgency=urgency)
     else:
         notify(db, user, "under_review", complaint_id=c.id, tracking_id=c.tracking_id)
     return analysis

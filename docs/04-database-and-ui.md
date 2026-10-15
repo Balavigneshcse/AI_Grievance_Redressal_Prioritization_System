@@ -85,6 +85,10 @@ erDiagram
         string manual_address
         string resolved_place
         string ward
+        string district "from locality or address, TN list"
+        string office_department_id "DEP01..DEP20 from the TN mapping"
+        string office_name "district office that owns it"
+        datetime due_at "SLA hours x urgency factor"
         uuid duplicate_of FK
         bool contact_incomplete
         datetime created_at
@@ -290,6 +294,7 @@ Rules:
 | Worker: embedding + duplicates | open `analyses.embedding` | `analyses.embedding`, `analyses.duplicate_candidates` |
 | Worker: second opinion + rules | `config/rules.yaml`, `models/second_opinion_*.npz` | `analyses.second_opinion_*`, `analyses.matched_rule_ids` |
 | Worker: decision | `analyses` | `decisions`, `complaints.status/department_id/urgency`, `status_events`, `notifications` (routed or under review) |
+| Worker: district office | `config/tn_mapping.json` (38 districts, 20 departments, 760 offices, 41 keyword hints) | `complaints.district/office_department_id/office_name/due_at`; the SLA from the office row times 0.25 for Critical, 0.5 High, 1 Medium, 3 Low |
 | Officer action | `complaints`, `analyses`, `decisions`, `media` | `overrides`, `complaints`, `status_events`, `notifications` |
 | Admin edits rules | `rules.yaml` | `rules.yaml`, `rule_changes` |
 | Dashboard | `analyses`, `overrides`, `decisions`, `eval_runs`, `eval_results` | nothing |

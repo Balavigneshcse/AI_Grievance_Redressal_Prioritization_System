@@ -18,6 +18,7 @@ Date: 15 October 2026 | Status: backend complete and tested; frontend in progres
 | Complaint intake | `backend/app/api/complaints.py`: multipart text + photos/videos + GPS or manual address, EXIF GPS fallback, tracking ID, acknowledgement email, media served through an authenticated route | complete |
 | Analysis worker | `backend/app/services/worker.py` + `pipeline.py`: one background thread; language hint, PII mask, offline geocode, Gemma 3 (text + first photo) with JSON schema, bge-m3 embedding, pgvector duplicate search, NumPy second opinion, YAML rules, decision, status event, email | complete |
 | Rules engine | `backend/app/services/rules.py`, `config/rules.yaml`: 10 starter rules in English, Tamil, Hindi and romanised forms; hot reload; admin test endpoint | complete |
+| District office routing | `config/tn_mapping.json` from the team's Tamil Nadu spreadsheet (38 districts, 20 departments mapped onto our 8 categories, 760 offices with SLA, 41 keyword hints): each complaint gets a district, a named office and a due time | complete |
 | Officer review | `backend/app/api/review.py`: review queue sorted by urgency then age with flags, department queues, accept / reassign / merge / request info / resolve / close / reopen with mandatory reason, override log, status emails | complete |
 | Admin | `backend/app/api/admin.py`: read/write rules with change log, rule tester, metrics (totals, by status, by department, live accuracy per language from officer corrections, eval runs, second-opinion report) | complete |
 | Notifications | `backend/app/services/notifier.py`: OTP, acknowledgement, routed, under review, status templates in en/ta/hi; every send logged | complete |
@@ -91,7 +92,17 @@ Driven by a script against the live API with Gemma sharing the GPU with the synt
 | Admin metrics | 1 complaint, 1 critical open, review rate 1.0, auto-closed 0, live accuracy for ta recorded the correction as a model miss |
 | Mail | 4 emails to the citizen: OTP, acknowledgement, under review, routed |
 
-This single run exercises every problem from Phase 1 except duplicates and photos, which need a second complaint and an image; both paths are implemented and will be shown in the demo.
+**Second run (14:48), after the Tamil Nadu office mapping was added.** A Hinglish street-light complaint with Ukkadam GPS, filed twice:
+
+| Step | Result |
+|---|---|
+| Model | said Safety (women feel unsafe in the dark), Medium, confidence 0.95 |
+| Rule R5b (street light, three languages) | overrode department to Roads; the override is a disagreement, so the complaint went to review instead of auto-routing |
+| District office | district Coimbatore from the locality; keyword RR008 picked the Street Lighting office rather than the Roads default; due time set 24 h out for Medium |
+| Duplicate detection | the second filing matched the first at similarity 1.00 and was flagged as a possible duplicate |
+| Officer queue | shows the complaint with flags disagreement and duplicate, office name and due time |
+
+Together the two runs cover every Phase 1 problem except photo evidence, which is implemented (first photo goes to the model, EXIF GPS read) and will be shown live.
 
 ---
 

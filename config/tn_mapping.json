@@ -1,0 +1,3694 @@
+{
+ "source": "tn_district_department_mapping.xlsx",
+ "note": "Spreadsheet marks these as demo routing categories; verify the actual office before production.",
+ "districts": [
+  {
+   "id": "D01",
+   "name": "Ariyalur",
+   "headquarters": "Ariyalur"
+  },
+  {
+   "id": "D02",
+   "name": "Chengalpattu",
+   "headquarters": "Chengalpattu"
+  },
+  {
+   "id": "D03",
+   "name": "Chennai",
+   "headquarters": "Chennai"
+  },
+  {
+   "id": "D04",
+   "name": "Coimbatore",
+   "headquarters": "Coimbatore"
+  },
+  {
+   "id": "D05",
+   "name": "Cuddalore",
+   "headquarters": "Cuddalore"
+  },
+  {
+   "id": "D06",
+   "name": "Dharmapuri",
+   "headquarters": "Dharmapuri"
+  },
+  {
+   "id": "D07",
+   "name": "Dindigul",
+   "headquarters": "Dindigul"
+  },
+  {
+   "id": "D08",
+   "name": "Erode",
+   "headquarters": "Erode"
+  },
+  {
+   "id": "D09",
+   "name": "Kallakurichi",
+   "headquarters": "Kallakurichi"
+  },
+  {
+   "id": "D10",
+   "name": "Kancheepuram",
+   "headquarters": "Kancheepuram"
+  },
+  {
+   "id": "D11",
+   "name": "Karur",
+   "headquarters": "Karur"
+  },
+  {
+   "id": "D12",
+   "name": "Krishnagiri",
+   "headquarters": "Krishnagiri"
+  },
+  {
+   "id": "D13",
+   "name": "Madurai",
+   "headquarters": "Madurai"
+  },
+  {
+   "id": "D14",
+   "name": "Mayiladuthurai",
+   "headquarters": "Mayiladuthurai"
+  },
+  {
+   "id": "D15",
+   "name": "Nagapattinam",
+   "headquarters": "Nagapattinam"
+  },
+  {
+   "id": "D16",
+   "name": "Kanyakumari",
+   "headquarters": "Nagercoil"
+  },
+  {
+   "id": "D17",
+   "name": "Namakkal",
+   "headquarters": "Namakkal"
+  },
+  {
+   "id": "D18",
+   "name": "Perambalur",
+   "headquarters": "Perambalur"
+  },
+  {
+   "id": "D19",
+   "name": "Pudukkottai",
+   "headquarters": "Pudukkottai"
+  },
+  {
+   "id": "D20",
+   "name": "Ramanathapuram",
+   "headquarters": "Ramanathapuram"
+  },
+  {
+   "id": "D21",
+   "name": "Ranipet",
+   "headquarters": "Ranipet"
+  },
+  {
+   "id": "D22",
+   "name": "Salem",
+   "headquarters": "Salem"
+  },
+  {
+   "id": "D23",
+   "name": "Sivaganga",
+   "headquarters": "Sivaganga"
+  },
+  {
+   "id": "D24",
+   "name": "Tenkasi",
+   "headquarters": "Tenkasi"
+  },
+  {
+   "id": "D25",
+   "name": "Thanjavur",
+   "headquarters": "Thanjavur"
+  },
+  {
+   "id": "D26",
+   "name": "Theni",
+   "headquarters": "Theni"
+  },
+  {
+   "id": "D27",
+   "name": "Thiruvallur",
+   "headquarters": "Thiruvallur"
+  },
+  {
+   "id": "D28",
+   "name": "Thiruvarur",
+   "headquarters": "Thiruvarur"
+  },
+  {
+   "id": "D29",
+   "name": "Thoothukudi",
+   "headquarters": "Thoothukudi"
+  },
+  {
+   "id": "D30",
+   "name": "Tiruchirappalli",
+   "headquarters": "Tiruchirappalli"
+  },
+  {
+   "id": "D31",
+   "name": "Tirunelveli",
+   "headquarters": "Tirunelveli"
+  },
+  {
+   "id": "D32",
+   "name": "Tirupathur",
+   "headquarters": "Tirupathur"
+  },
+  {
+   "id": "D33",
+   "name": "Tiruppur",
+   "headquarters": "Tiruppur"
+  },
+  {
+   "id": "D34",
+   "name": "Tiruvannamalai",
+   "headquarters": "Tiruvannamalai"
+  },
+  {
+   "id": "D35",
+   "name": "The Nilgiris",
+   "headquarters": "Udhagamandalam"
+  },
+  {
+   "id": "D36",
+   "name": "Vellore",
+   "headquarters": "Vellore"
+  },
+  {
+   "id": "D37",
+   "name": "Viluppuram",
+   "headquarters": "Viluppuram"
+  },
+  {
+   "id": "D38",
+   "name": "Virudhunagar",
+   "headquarters": "Virudhunagar"
+  }
+ ],
+ "departments": [
+  {
+   "id": "DEP01",
+   "name": "Revenue & District Administration",
+   "scope": "Land, certificates, revenue",
+   "category": "revenue"
+  },
+  {
+   "id": "DEP02",
+   "name": "Police",
+   "scope": "Law & order, theft, complaints",
+   "category": "safety"
+  },
+  {
+   "id": "DEP03",
+   "name": "Fire & Rescue",
+   "scope": "Fire, rescue, emergencies",
+   "category": "safety"
+  },
+  {
+   "id": "DEP04",
+   "name": "Health & Medical",
+   "scope": "Hospitals, ambulance, public health",
+   "category": "health"
+  },
+  {
+   "id": "DEP05",
+   "name": "Water Supply",
+   "scope": "Drinking water, water supply",
+   "category": "water"
+  },
+  {
+   "id": "DEP06",
+   "name": "Electricity",
+   "scope": "Power supply, electrical issues",
+   "category": "electricity"
+  },
+  {
+   "id": "DEP07",
+   "name": "Roads & Highways",
+   "scope": "Road damage, potholes",
+   "category": "roads"
+  },
+  {
+   "id": "DEP08",
+   "name": "Street Lighting",
+   "scope": "Street lights",
+   "category": "roads"
+  },
+  {
+   "id": "DEP09",
+   "name": "Sanitation & Garbage",
+   "scope": "Garbage, waste collection",
+   "category": "sanitation"
+  },
+  {
+   "id": "DEP10",
+   "name": "Drainage & Sewage",
+   "scope": "Drainage, sewage",
+   "category": "sanitation"
+  },
+  {
+   "id": "DEP11",
+   "name": "Rural Development & Panchayat",
+   "scope": "Village/panchayat services",
+   "category": "general"
+  },
+  {
+   "id": "DEP12",
+   "name": "Municipal Administration",
+   "scope": "Municipal services",
+   "category": "revenue"
+  },
+  {
+   "id": "DEP13",
+   "name": "School Education",
+   "scope": "Government schools",
+   "category": "general"
+  },
+  {
+   "id": "DEP14",
+   "name": "Social Welfare",
+   "scope": "Pension and welfare schemes",
+   "category": "general"
+  },
+  {
+   "id": "DEP15",
+   "name": "Food & Civil Supplies",
+   "scope": "Ration/PDS",
+   "category": "general"
+  },
+  {
+   "id": "DEP16",
+   "name": "Agriculture",
+   "scope": "Farming/agriculture",
+   "category": "general"
+  },
+  {
+   "id": "DEP17",
+   "name": "Animal Husbandry",
+   "scope": "Livestock/veterinary",
+   "category": "health"
+  },
+  {
+   "id": "DEP18",
+   "name": "Environment & Pollution",
+   "scope": "Pollution/environment",
+   "category": "health"
+  },
+  {
+   "id": "DEP19",
+   "name": "Transport",
+   "scope": "Bus/transport complaints",
+   "category": "general"
+  },
+  {
+   "id": "DEP20",
+   "name": "Women & Child Welfare",
+   "scope": "Women/child welfare",
+   "category": "safety"
+  }
+ ],
+ "category_default_department": {
+  "water": "DEP05",
+  "electricity": "DEP06",
+  "roads": "DEP07",
+  "sanitation": "DEP09",
+  "health": "DEP04",
+  "safety": "DEP03",
+  "revenue": "DEP01",
+  "general": "DEP12"
+ },
+ "offices": {
+  "Ariyalur": {
+   "DEP01": {
+    "office_name": "Ariyalur Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Ariyalur Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Ariyalur Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Ariyalur Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Ariyalur Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Ariyalur Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Ariyalur Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Ariyalur Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Ariyalur Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Ariyalur Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Ariyalur Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Ariyalur Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Ariyalur School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Ariyalur Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Ariyalur Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Ariyalur Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Ariyalur Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Ariyalur Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Ariyalur Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Ariyalur Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Chengalpattu": {
+   "DEP01": {
+    "office_name": "Chengalpattu Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Chengalpattu Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Chengalpattu Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Chengalpattu Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Chengalpattu Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Chengalpattu Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Chengalpattu Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Chengalpattu Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Chengalpattu Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Chengalpattu Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Chengalpattu Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Chengalpattu Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Chengalpattu School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Chengalpattu Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Chengalpattu Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Chengalpattu Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Chengalpattu Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Chengalpattu Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Chengalpattu Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Chengalpattu Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Chennai": {
+   "DEP01": {
+    "office_name": "Chennai Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Chennai Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Chennai Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Chennai Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Chennai Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Chennai Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Chennai Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Chennai Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Chennai Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Chennai Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Chennai Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Chennai Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Chennai School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Chennai Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Chennai Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Chennai Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Chennai Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Chennai Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Chennai Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Chennai Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Coimbatore": {
+   "DEP01": {
+    "office_name": "Coimbatore Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Coimbatore Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Coimbatore Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Coimbatore Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Coimbatore Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Coimbatore Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Coimbatore Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Coimbatore Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Coimbatore Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Coimbatore Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Coimbatore Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Coimbatore Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Coimbatore School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Coimbatore Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Coimbatore Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Coimbatore Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Coimbatore Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Coimbatore Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Coimbatore Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Coimbatore Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Cuddalore": {
+   "DEP01": {
+    "office_name": "Cuddalore Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Cuddalore Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Cuddalore Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Cuddalore Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Cuddalore Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Cuddalore Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Cuddalore Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Cuddalore Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Cuddalore Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Cuddalore Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Cuddalore Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Cuddalore Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Cuddalore School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Cuddalore Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Cuddalore Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Cuddalore Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Cuddalore Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Cuddalore Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Cuddalore Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Cuddalore Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Dharmapuri": {
+   "DEP01": {
+    "office_name": "Dharmapuri Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Dharmapuri Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Dharmapuri Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Dharmapuri Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Dharmapuri Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Dharmapuri Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Dharmapuri Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Dharmapuri Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Dharmapuri Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Dharmapuri Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Dharmapuri Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Dharmapuri Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Dharmapuri School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Dharmapuri Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Dharmapuri Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Dharmapuri Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Dharmapuri Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Dharmapuri Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Dharmapuri Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Dharmapuri Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Dindigul": {
+   "DEP01": {
+    "office_name": "Dindigul Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Dindigul Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Dindigul Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Dindigul Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Dindigul Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Dindigul Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Dindigul Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Dindigul Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Dindigul Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Dindigul Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Dindigul Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Dindigul Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Dindigul School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Dindigul Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Dindigul Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Dindigul Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Dindigul Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Dindigul Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Dindigul Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Dindigul Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Erode": {
+   "DEP01": {
+    "office_name": "Erode Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Erode Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Erode Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Erode Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Erode Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Erode Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Erode Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Erode Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Erode Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Erode Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Erode Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Erode Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Erode School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Erode Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Erode Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Erode Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Erode Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Erode Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Erode Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Erode Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Kallakurichi": {
+   "DEP01": {
+    "office_name": "Kallakurichi Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Kallakurichi Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Kallakurichi Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Kallakurichi Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Kallakurichi Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Kallakurichi Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Kallakurichi Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Kallakurichi Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Kallakurichi Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Kallakurichi Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Kallakurichi Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Kallakurichi Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Kallakurichi School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Kallakurichi Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Kallakurichi Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Kallakurichi Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Kallakurichi Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Kallakurichi Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Kallakurichi Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Kallakurichi Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Kancheepuram": {
+   "DEP01": {
+    "office_name": "Kancheepuram Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Kancheepuram Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Kancheepuram Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Kancheepuram Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Kancheepuram Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Kancheepuram Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Kancheepuram Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Kancheepuram Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Kancheepuram Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Kancheepuram Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Kancheepuram Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Kancheepuram Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Kancheepuram School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Kancheepuram Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Kancheepuram Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Kancheepuram Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Kancheepuram Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Kancheepuram Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Kancheepuram Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Kancheepuram Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Karur": {
+   "DEP01": {
+    "office_name": "Karur Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Karur Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Karur Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Karur Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Karur Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Karur Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Karur Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Karur Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Karur Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Karur Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Karur Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Karur Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Karur School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Karur Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Karur Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Karur Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Karur Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Karur Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Karur Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Karur Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Krishnagiri": {
+   "DEP01": {
+    "office_name": "Krishnagiri Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Krishnagiri Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Krishnagiri Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Krishnagiri Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Krishnagiri Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Krishnagiri Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Krishnagiri Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Krishnagiri Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Krishnagiri Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Krishnagiri Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Krishnagiri Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Krishnagiri Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Krishnagiri School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Krishnagiri Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Krishnagiri Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Krishnagiri Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Krishnagiri Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Krishnagiri Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Krishnagiri Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Krishnagiri Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Madurai": {
+   "DEP01": {
+    "office_name": "Madurai Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Madurai Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Madurai Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Madurai Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Madurai Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Madurai Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Madurai Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Madurai Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Madurai Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Madurai Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Madurai Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Madurai Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Madurai School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Madurai Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Madurai Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Madurai Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Madurai Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Madurai Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Madurai Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Madurai Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Mayiladuthurai": {
+   "DEP01": {
+    "office_name": "Mayiladuthurai Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Mayiladuthurai Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Mayiladuthurai Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Mayiladuthurai Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Mayiladuthurai Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Mayiladuthurai Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Mayiladuthurai Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Mayiladuthurai Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Mayiladuthurai Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Mayiladuthurai Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Mayiladuthurai Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Mayiladuthurai Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Mayiladuthurai School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Mayiladuthurai Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Mayiladuthurai Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Mayiladuthurai Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Mayiladuthurai Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Mayiladuthurai Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Mayiladuthurai Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Mayiladuthurai Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Nagapattinam": {
+   "DEP01": {
+    "office_name": "Nagapattinam Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Nagapattinam Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Nagapattinam Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Nagapattinam Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Nagapattinam Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Nagapattinam Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Nagapattinam Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Nagapattinam Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Nagapattinam Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Nagapattinam Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Nagapattinam Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Nagapattinam Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Nagapattinam School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Nagapattinam Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Nagapattinam Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Nagapattinam Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Nagapattinam Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Nagapattinam Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Nagapattinam Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Nagapattinam Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Kanyakumari": {
+   "DEP01": {
+    "office_name": "Kanyakumari Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Kanyakumari Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Kanyakumari Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Kanyakumari Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Kanyakumari Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Kanyakumari Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Kanyakumari Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Kanyakumari Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Kanyakumari Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Kanyakumari Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Kanyakumari Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Kanyakumari Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Kanyakumari School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Kanyakumari Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Kanyakumari Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Kanyakumari Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Kanyakumari Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Kanyakumari Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Kanyakumari Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Kanyakumari Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Namakkal": {
+   "DEP01": {
+    "office_name": "Namakkal Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Namakkal Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Namakkal Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Namakkal Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Namakkal Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Namakkal Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Namakkal Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Namakkal Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Namakkal Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Namakkal Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Namakkal Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Namakkal Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Namakkal School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Namakkal Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Namakkal Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Namakkal Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Namakkal Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Namakkal Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Namakkal Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Namakkal Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Perambalur": {
+   "DEP01": {
+    "office_name": "Perambalur Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Perambalur Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Perambalur Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Perambalur Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Perambalur Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Perambalur Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Perambalur Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Perambalur Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Perambalur Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Perambalur Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Perambalur Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Perambalur Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Perambalur School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Perambalur Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Perambalur Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Perambalur Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Perambalur Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Perambalur Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Perambalur Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Perambalur Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Pudukkottai": {
+   "DEP01": {
+    "office_name": "Pudukkottai Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Pudukkottai Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Pudukkottai Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Pudukkottai Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Pudukkottai Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Pudukkottai Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Pudukkottai Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Pudukkottai Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Pudukkottai Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Pudukkottai Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Pudukkottai Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Pudukkottai Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Pudukkottai School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Pudukkottai Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Pudukkottai Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Pudukkottai Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Pudukkottai Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Pudukkottai Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Pudukkottai Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Pudukkottai Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Ramanathapuram": {
+   "DEP01": {
+    "office_name": "Ramanathapuram Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Ramanathapuram Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Ramanathapuram Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Ramanathapuram Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Ramanathapuram Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Ramanathapuram Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Ramanathapuram Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Ramanathapuram Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Ramanathapuram Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Ramanathapuram Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Ramanathapuram Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Ramanathapuram Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Ramanathapuram School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Ramanathapuram Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Ramanathapuram Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Ramanathapuram Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Ramanathapuram Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Ramanathapuram Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Ramanathapuram Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Ramanathapuram Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Ranipet": {
+   "DEP01": {
+    "office_name": "Ranipet Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Ranipet Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Ranipet Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Ranipet Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Ranipet Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Ranipet Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Ranipet Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Ranipet Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Ranipet Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Ranipet Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Ranipet Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Ranipet Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Ranipet School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Ranipet Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Ranipet Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Ranipet Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Ranipet Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Ranipet Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Ranipet Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Ranipet Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Salem": {
+   "DEP01": {
+    "office_name": "Salem Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Salem Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Salem Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Salem Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Salem Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Salem Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Salem Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Salem Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Salem Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Salem Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Salem Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Salem Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Salem School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Salem Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Salem Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Salem Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Salem Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Salem Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Salem Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Salem Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Sivaganga": {
+   "DEP01": {
+    "office_name": "Sivaganga Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Sivaganga Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Sivaganga Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Sivaganga Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Sivaganga Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Sivaganga Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Sivaganga Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Sivaganga Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Sivaganga Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Sivaganga Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Sivaganga Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Sivaganga Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Sivaganga School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Sivaganga Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Sivaganga Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Sivaganga Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Sivaganga Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Sivaganga Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Sivaganga Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Sivaganga Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Tenkasi": {
+   "DEP01": {
+    "office_name": "Tenkasi Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Tenkasi Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Tenkasi Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Tenkasi Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Tenkasi Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Tenkasi Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Tenkasi Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Tenkasi Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Tenkasi Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Tenkasi Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Tenkasi Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Tenkasi Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Tenkasi School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Tenkasi Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Tenkasi Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Tenkasi Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Tenkasi Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Tenkasi Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Tenkasi Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Tenkasi Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Thanjavur": {
+   "DEP01": {
+    "office_name": "Thanjavur Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Thanjavur Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Thanjavur Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Thanjavur Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Thanjavur Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Thanjavur Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Thanjavur Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Thanjavur Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Thanjavur Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Thanjavur Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Thanjavur Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Thanjavur Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Thanjavur School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Thanjavur Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Thanjavur Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Thanjavur Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Thanjavur Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Thanjavur Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Thanjavur Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Thanjavur Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Theni": {
+   "DEP01": {
+    "office_name": "Theni Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Theni Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Theni Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Theni Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Theni Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Theni Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Theni Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Theni Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Theni Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Theni Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Theni Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Theni Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Theni School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Theni Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Theni Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Theni Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Theni Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Theni Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Theni Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Theni Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Thiruvallur": {
+   "DEP01": {
+    "office_name": "Thiruvallur Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Thiruvallur Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Thiruvallur Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Thiruvallur Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Thiruvallur Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Thiruvallur Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Thiruvallur Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Thiruvallur Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Thiruvallur Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Thiruvallur Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Thiruvallur Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Thiruvallur Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Thiruvallur School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Thiruvallur Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Thiruvallur Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Thiruvallur Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Thiruvallur Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Thiruvallur Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Thiruvallur Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Thiruvallur Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Thiruvarur": {
+   "DEP01": {
+    "office_name": "Thiruvarur Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Thiruvarur Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Thiruvarur Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Thiruvarur Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Thiruvarur Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Thiruvarur Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Thiruvarur Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Thiruvarur Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Thiruvarur Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Thiruvarur Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Thiruvarur Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Thiruvarur Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Thiruvarur School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Thiruvarur Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Thiruvarur Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Thiruvarur Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Thiruvarur Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Thiruvarur Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Thiruvarur Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Thiruvarur Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Thoothukudi": {
+   "DEP01": {
+    "office_name": "Thoothukudi Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Thoothukudi Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Thoothukudi Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Thoothukudi Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Thoothukudi Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Thoothukudi Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Thoothukudi Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Thoothukudi Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Thoothukudi Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Thoothukudi Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Thoothukudi Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Thoothukudi Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Thoothukudi School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Thoothukudi Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Thoothukudi Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Thoothukudi Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Thoothukudi Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Thoothukudi Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Thoothukudi Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Thoothukudi Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Tiruchirappalli": {
+   "DEP01": {
+    "office_name": "Tiruchirappalli Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Tiruchirappalli Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Tiruchirappalli Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Tiruchirappalli Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Tiruchirappalli Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Tiruchirappalli Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Tiruchirappalli Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Tiruchirappalli Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Tiruchirappalli Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Tiruchirappalli Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Tiruchirappalli Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Tiruchirappalli Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Tiruchirappalli School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Tiruchirappalli Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Tiruchirappalli Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Tiruchirappalli Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Tiruchirappalli Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Tiruchirappalli Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Tiruchirappalli Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Tiruchirappalli Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Tirunelveli": {
+   "DEP01": {
+    "office_name": "Tirunelveli Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Tirunelveli Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Tirunelveli Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Tirunelveli Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Tirunelveli Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Tirunelveli Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Tirunelveli Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Tirunelveli Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Tirunelveli Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Tirunelveli Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Tirunelveli Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Tirunelveli Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Tirunelveli School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Tirunelveli Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Tirunelveli Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Tirunelveli Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Tirunelveli Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Tirunelveli Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Tirunelveli Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Tirunelveli Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Tirupathur": {
+   "DEP01": {
+    "office_name": "Tirupathur Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Tirupathur Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Tirupathur Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Tirupathur Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Tirupathur Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Tirupathur Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Tirupathur Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Tirupathur Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Tirupathur Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Tirupathur Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Tirupathur Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Tirupathur Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Tirupathur School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Tirupathur Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Tirupathur Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Tirupathur Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Tirupathur Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Tirupathur Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Tirupathur Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Tirupathur Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Tiruppur": {
+   "DEP01": {
+    "office_name": "Tiruppur Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Tiruppur Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Tiruppur Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Tiruppur Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Tiruppur Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Tiruppur Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Tiruppur Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Tiruppur Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Tiruppur Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Tiruppur Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Tiruppur Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Tiruppur Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Tiruppur School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Tiruppur Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Tiruppur Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Tiruppur Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Tiruppur Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Tiruppur Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Tiruppur Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Tiruppur Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Tiruvannamalai": {
+   "DEP01": {
+    "office_name": "Tiruvannamalai Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Tiruvannamalai Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Tiruvannamalai Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Tiruvannamalai Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Tiruvannamalai Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Tiruvannamalai Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Tiruvannamalai Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Tiruvannamalai Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Tiruvannamalai Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Tiruvannamalai Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Tiruvannamalai Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Tiruvannamalai Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Tiruvannamalai School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Tiruvannamalai Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Tiruvannamalai Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Tiruvannamalai Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Tiruvannamalai Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Tiruvannamalai Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Tiruvannamalai Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Tiruvannamalai Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "The Nilgiris": {
+   "DEP01": {
+    "office_name": "The Nilgiris Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "The Nilgiris Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "The Nilgiris Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "The Nilgiris Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "The Nilgiris Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "The Nilgiris Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "The Nilgiris Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "The Nilgiris Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "The Nilgiris Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "The Nilgiris Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "The Nilgiris Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "The Nilgiris Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "The Nilgiris School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "The Nilgiris Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "The Nilgiris Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "The Nilgiris Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "The Nilgiris Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "The Nilgiris Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "The Nilgiris Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "The Nilgiris Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Vellore": {
+   "DEP01": {
+    "office_name": "Vellore Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Vellore Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Vellore Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Vellore Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Vellore Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Vellore Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Vellore Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Vellore Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Vellore Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Vellore Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Vellore Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Vellore Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Vellore School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Vellore Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Vellore Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Vellore Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Vellore Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Vellore Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Vellore Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Vellore Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Viluppuram": {
+   "DEP01": {
+    "office_name": "Viluppuram Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Viluppuram Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Viluppuram Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Viluppuram Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Viluppuram Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Viluppuram Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Viluppuram Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Viluppuram Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Viluppuram Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Viluppuram Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Viluppuram Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Viluppuram Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Viluppuram School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Viluppuram Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Viluppuram Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Viluppuram Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Viluppuram Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Viluppuram Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Viluppuram Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Viluppuram Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  },
+  "Virudhunagar": {
+   "DEP01": {
+    "office_name": "Virudhunagar Revenue & District Administration Office",
+    "sla_hours": 24
+   },
+   "DEP02": {
+    "office_name": "Virudhunagar Police Office",
+    "sla_hours": 24
+   },
+   "DEP03": {
+    "office_name": "Virudhunagar Fire & Rescue Office",
+    "sla_hours": 24
+   },
+   "DEP04": {
+    "office_name": "Virudhunagar Health & Medical Office",
+    "sla_hours": 24
+   },
+   "DEP05": {
+    "office_name": "Virudhunagar Water Supply Office",
+    "sla_hours": 24
+   },
+   "DEP06": {
+    "office_name": "Virudhunagar Electricity Office",
+    "sla_hours": 24
+   },
+   "DEP07": {
+    "office_name": "Virudhunagar Roads & Highways Office",
+    "sla_hours": 24
+   },
+   "DEP08": {
+    "office_name": "Virudhunagar Street Lighting Office",
+    "sla_hours": 24
+   },
+   "DEP09": {
+    "office_name": "Virudhunagar Sanitation & Garbage Office",
+    "sla_hours": 24
+   },
+   "DEP10": {
+    "office_name": "Virudhunagar Drainage & Sewage Office",
+    "sla_hours": 24
+   },
+   "DEP11": {
+    "office_name": "Virudhunagar Rural Development & Panchayat Office",
+    "sla_hours": 24
+   },
+   "DEP12": {
+    "office_name": "Virudhunagar Municipal Administration Office",
+    "sla_hours": 24
+   },
+   "DEP13": {
+    "office_name": "Virudhunagar School Education Office",
+    "sla_hours": 24
+   },
+   "DEP14": {
+    "office_name": "Virudhunagar Social Welfare Office",
+    "sla_hours": 24
+   },
+   "DEP15": {
+    "office_name": "Virudhunagar Food & Civil Supplies Office",
+    "sla_hours": 24
+   },
+   "DEP16": {
+    "office_name": "Virudhunagar Agriculture Office",
+    "sla_hours": 24
+   },
+   "DEP17": {
+    "office_name": "Virudhunagar Animal Husbandry Office",
+    "sla_hours": 24
+   },
+   "DEP18": {
+    "office_name": "Virudhunagar Environment & Pollution Office",
+    "sla_hours": 24
+   },
+   "DEP19": {
+    "office_name": "Virudhunagar Transport Office",
+    "sla_hours": 24
+   },
+   "DEP20": {
+    "office_name": "Virudhunagar Women & Child Welfare Office",
+    "sla_hours": 24
+   }
+  }
+ },
+ "keyword_rules": [
+  {
+   "id": "RR001",
+   "keyword": "water",
+   "department_id": "DEP05",
+   "priority": "HIGH"
+  },
+  {
+   "id": "RR002",
+   "keyword": "drinking water",
+   "department_id": "DEP05",
+   "priority": "HIGH"
+  },
+  {
+   "id": "RR003",
+   "keyword": "குடிநீர்",
+   "department_id": "DEP05",
+   "priority": "HIGH"
+  },
+  {
+   "id": "RR004",
+   "keyword": "தண்ணீர்",
+   "department_id": "DEP05",
+   "priority": "HIGH"
+  },
+  {
+   "id": "RR005",
+   "keyword": "electricity",
+   "department_id": "DEP06",
+   "priority": "HIGH"
+  },
+  {
+   "id": "RR006",
+   "keyword": "power cut",
+   "department_id": "DEP06",
+   "priority": "HIGH"
+  },
+  {
+   "id": "RR007",
+   "keyword": "மின்சாரம்",
+   "department_id": "DEP06",
+   "priority": "HIGH"
+  },
+  {
+   "id": "RR008",
+   "keyword": "street light",
+   "department_id": "DEP08",
+   "priority": "HIGH"
+  },
+  {
+   "id": "RR009",
+   "keyword": "தெருவிளக்கு",
+   "department_id": "DEP08",
+   "priority": "HIGH"
+  },
+  {
+   "id": "RR010",
+   "keyword": "pothole",
+   "department_id": "DEP07",
+   "priority": "MEDIUM"
+  },
+  {
+   "id": "RR011",
+   "keyword": "road damage",
+   "department_id": "DEP07",
+   "priority": "MEDIUM"
+  },
+  {
+   "id": "RR012",
+   "keyword": "சாலை",
+   "department_id": "DEP07",
+   "priority": "MEDIUM"
+  },
+  {
+   "id": "RR013",
+   "keyword": "garbage",
+   "department_id": "DEP09",
+   "priority": "MEDIUM"
+  },
+  {
+   "id": "RR014",
+   "keyword": "குப்பை",
+   "department_id": "DEP09",
+   "priority": "MEDIUM"
+  },
+  {
+   "id": "RR015",
+   "keyword": "drainage",
+   "department_id": "DEP10",
+   "priority": "HIGH"
+  },
+  {
+   "id": "RR016",
+   "keyword": "sewage",
+   "department_id": "DEP10",
+   "priority": "HIGH"
+  },
+  {
+   "id": "RR017",
+   "keyword": "சாக்கடை",
+   "department_id": "DEP10",
+   "priority": "HIGH"
+  },
+  {
+   "id": "RR018",
+   "keyword": "hospital",
+   "department_id": "DEP04",
+   "priority": "HIGH"
+  },
+  {
+   "id": "RR019",
+   "keyword": "ambulance",
+   "department_id": "DEP04",
+   "priority": "CRITICAL"
+  },
+  {
+   "id": "RR020",
+   "keyword": "மருத்துவமனை",
+   "department_id": "DEP04",
+   "priority": "HIGH"
+  },
+  {
+   "id": "RR021",
+   "keyword": "police",
+   "department_id": "DEP02",
+   "priority": "CRITICAL"
+  },
+  {
+   "id": "RR022",
+   "keyword": "theft",
+   "department_id": "DEP02",
+   "priority": "CRITICAL"
+  },
+  {
+   "id": "RR023",
+   "keyword": "திருட்டு",
+   "department_id": "DEP02",
+   "priority": "CRITICAL"
+  },
+  {
+   "id": "RR024",
+   "keyword": "fire",
+   "department_id": "DEP03",
+   "priority": "CRITICAL"
+  },
+  {
+   "id": "RR025",
+   "keyword": "gas leak",
+   "department_id": "DEP03",
+   "priority": "CRITICAL"
+  },
+  {
+   "id": "RR026",
+   "keyword": "தீ",
+   "department_id": "DEP03",
+   "priority": "CRITICAL"
+  },
+  {
+   "id": "RR027",
+   "keyword": "school",
+   "department_id": "DEP13",
+   "priority": "MEDIUM"
+  },
+  {
+   "id": "RR028",
+   "keyword": "பள்ளி",
+   "department_id": "DEP13",
+   "priority": "MEDIUM"
+  },
+  {
+   "id": "RR029",
+   "keyword": "ration",
+   "department_id": "DEP15",
+   "priority": "MEDIUM"
+  },
+  {
+   "id": "RR030",
+   "keyword": "ரேஷன்",
+   "department_id": "DEP15",
+   "priority": "MEDIUM"
+  },
+  {
+   "id": "RR031",
+   "keyword": "pension",
+   "department_id": "DEP14",
+   "priority": "MEDIUM"
+  },
+  {
+   "id": "RR032",
+   "keyword": "வேளாண்மை",
+   "department_id": "DEP16",
+   "priority": "MEDIUM"
+  },
+  {
+   "id": "RR033",
+   "keyword": "agriculture",
+   "department_id": "DEP16",
+   "priority": "MEDIUM"
+  },
+  {
+   "id": "RR034",
+   "keyword": "pollution",
+   "department_id": "DEP18",
+   "priority": "HIGH"
+  },
+  {
+   "id": "RR035",
+   "keyword": "மாசு",
+   "department_id": "DEP18",
+   "priority": "HIGH"
+  },
+  {
+   "id": "RR036",
+   "keyword": "bus",
+   "department_id": "DEP19",
+   "priority": "MEDIUM"
+  },
+  {
+   "id": "RR037",
+   "keyword": "பேருந்து",
+   "department_id": "DEP19",
+   "priority": "MEDIUM"
+  },
+  {
+   "id": "RR038",
+   "keyword": "child safety",
+   "department_id": "DEP20",
+   "priority": "CRITICAL"
+  },
+  {
+   "id": "RR039",
+   "keyword": "பெண்கள் பாதுகாப்பு",
+   "department_id": "DEP20",
+   "priority": "CRITICAL"
+  },
+  {
+   "id": "RR040",
+   "keyword": "land",
+   "department_id": "DEP01",
+   "priority": "MEDIUM"
+  },
+  {
+   "id": "RR041",
+   "keyword": "நிலம்",
+   "department_id": "DEP01",
+   "priority": "MEDIUM"
+  }
+ ]
+}

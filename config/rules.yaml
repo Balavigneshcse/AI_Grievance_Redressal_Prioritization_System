@@ -52,6 +52,14 @@ rules:
     action:
       department: water
 
+  - id: R5b
+    name: Street light
+    enabled: true
+    match:
+      keywords: ["street light", "streetlight", "street lamp", "தெருவிளக்கு", "தெரு விளக்கு", "स्ट्रीट लाइट", "street light band", "light band hai", "light not working", "light illa", "light eriyala", "light nahi jal"]
+    action:
+      department: roads
+
   - id: R6
     name: Sewage overflow into homes
     enabled: true

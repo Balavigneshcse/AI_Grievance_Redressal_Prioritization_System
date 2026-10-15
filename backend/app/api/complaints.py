@@ -116,6 +116,7 @@ def my_complaints(user: models.User = Depends(current_user), db: Session = Depen
             schemas.ComplaintSummary(
                 id=c.id, tracking_id=c.tracking_id, status=c.status, department=dept_out(db.get(models.Department, c.department_id)) if c.department_id else None,
                 urgency=c.urgency, created_at=c.created_at, summary_en=a.summary_en if a else None,
+                district=c.district, office_name=c.office_name, due_at=c.due_at,
             )
         )
     return out
@@ -139,6 +140,7 @@ def complaint_detail(db: Session, c: models.Complaint, viewer: models.User) -> s
         id=c.id, tracking_id=c.tracking_id, status=c.status, raw_text=c.raw_text, language_hint=c.language_hint,
         department=dept_out(db.get(models.Department, c.department_id)) if c.department_id else None, urgency=c.urgency,
         lat=c.lat, lng=c.lng, location_source=c.location_source, manual_address=c.manual_address, resolved_place=c.resolved_place,
+        district=c.district, office_name=c.office_name, office_department_id=c.office_department_id, due_at=c.due_at,
         created_at=c.created_at,
         media=[schemas.MediaOut(id=m.id, kind=m.kind, url=f"/media/{m.id}") for m in c.media],
         analysis=analysis,

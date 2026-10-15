@@ -70,6 +70,9 @@ class ComplaintSummary(BaseModel):
     urgency: str | None
     created_at: datetime
     summary_en: str | None
+    district: str | None = None
+    office_name: str | None = None
+    due_at: datetime | None = None
 
 
 class MediaOut(BaseModel):
@@ -125,6 +128,10 @@ class ComplaintDetail(BaseModel):
     location_source: str
     manual_address: str | None
     resolved_place: str | None
+    district: str | None = None
+    office_name: str | None = None
+    office_department_id: str | None = None
+    due_at: datetime | None = None
     created_at: datetime
     media: list[MediaOut]
     analysis: AnalysisOut | None
@@ -147,6 +154,9 @@ class QueueItem(BaseModel):
     flags: list[str]
     confidence: float | None
     created_at: datetime
+    district: str | None = None
+    office_name: str | None = None
+    due_at: datetime | None = None
 
 
 class DecisionIn(BaseModel):

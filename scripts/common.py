@@ -163,6 +163,65 @@ def nearest_place(lat: float, lng: float) -> dict:
     return {"name": best["name"], "area": best["area"], "distance_km": round(best_km, 2)}
 
 
+# ------------------------------------------ district / office routing (TN) ---
+_tn: dict | None = None
+
+URGENCY_SLA_FACTOR = {"critical": 0.25, "high": 0.5, "medium": 1.0, "low": 3.0}
+
+
+def load_tn_mapping() -> dict:
+    """config/tn_mapping.json produced by scripts/import_tn_mapping.py from the
+    Tamil Nadu district / department spreadsheet. Empty dict if absent."""
+    global _tn
+    if _tn is None:
+        p = CONFIG / "tn_mapping.json"
+        _tn = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
+    return _tn
+
+
+def district_for(text: str | None) -> str | None:
+    """District name if the text (a locality area or a manual address) mentions one."""
+    if not text:
+        return None
+    low = text.lower()
+    for d in load_tn_mapping().get("districts", []):
+        if d["name"].lower() in low:
+            return d["name"]
+    return None
+
+
+def office_hint(text: str) -> dict | None:
+    """First spreadsheet keyword rule that matches the complaint text -> {department_id, priority, rule_id}."""
+    low = (text or "").lower()
+    for r in load_tn_mapping().get("keyword_rules", []):
+        if r["keyword"] and r["keyword"] in low:
+            return {"department_id": r["department_id"], "priority": r["priority"], "rule_id": r["id"]}
+    return None
+
+
+def category_of_department(department_id: str | None) -> str | None:
+    """SYNAPSE category that a spreadsheet department (DEP01..DEP20) maps to."""
+    for d in load_tn_mapping().get("departments", []):
+        if d["id"] == department_id:
+            return d["category"]
+    return None
+
+
+def office_for(district: str | None, category: str, hint_department_id: str | None = None) -> dict | None:
+    """The district office for a complaint: the hinted spreadsheet department if it
+    belongs to the same category, else the category's default department."""
+    m = load_tn_mapping()
+    if not m or not district or district not in m.get("offices", {}):
+        return None
+    cat_of = {d["id"]: d["category"] for d in m["departments"]}
+    name_of = {d["id"]: d["name"] for d in m["departments"]}
+    dep = hint_department_id if (hint_department_id and cat_of.get(hint_department_id) == category) else m["category_default_department"].get(category)
+    office = m["offices"][district].get(dep)
+    if not office:
+        return None
+    return {"district": district, "department_id": dep, "department_name": name_of.get(dep, dep), **office}
+
+
 # ------------------------------------------------- numpy softmax classifier ---
 class SoftmaxRegression:
     """Multinomial logistic regression in NumPy (no scikit-learn, no scipy).
