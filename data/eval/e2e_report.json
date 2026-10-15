@@ -70,7 +70,7 @@
     {
       "check": "account carries the name and Aadhaar digits given at registration",
       "ok": true,
-      "detail": "{'id': '5321aaaa-f423-4b2e-baa0-43247fcf4093', 'email': 'e2e.1792096028@synapse.local', 'role': 'com"
+      "detail": "{'id': '27c2b66b-4c9c-410a-a87e-96cc1916aa4d', 'email': 'e2e.1792097822@synapse.local', 'role': 'com"
     },
     {
       "check": "password reset with OTP",
@@ -90,7 +90,7 @@
     {
       "check": "case: ta script, water, child sick",
       "ok": true,
-      "detail": "SYN-2026-000084 under_review water/critical lang=ta conf=0.95 rules=['R5', 'R10'] 28s"
+      "detail": "SYN-2026-000001 under_review water/critical lang=ta conf=0.95 rules=['R5', 'R10'] 16s"
     },
     {
       "check": "  evidence spans present and quoted from text",
@@ -120,7 +120,7 @@
     {
       "check": "case: hi script, power cut, oxygen",
       "ok": true,
-      "detail": "SYN-2026-000085 under_review electricity/critical lang=hi conf=0.95 rules=['R2'] 16s"
+      "detail": "SYN-2026-000002 under_review electricity/critical lang=hi conf=0.95 rules=['R2'] 16s"
     },
     {
       "check": "  evidence spans present and quoted from text",
@@ -130,7 +130,7 @@
     {
       "check": "  english summary present",
       "ok": true,
-      "detail": "A resident is experiencing a prolonged power outage impacting a patient dependen"
+      "detail": "A resident is experiencing a prolonged power outage impacting a patient reliant "
     },
     {
       "check": "  district office and due time set",
@@ -150,12 +150,12 @@
     {
       "check": "case: en, suggestion, low",
       "ok": true,
-      "detail": "SYN-2026-000086 routed general/low lang=en conf=0.95 rules=[] 16s"
+      "detail": "SYN-2026-000003 routed general/low lang=en conf=0.8 rules=[] 16s"
     },
     {
       "check": "  evidence spans present and quoted from text",
       "ok": true,
-      "detail": "['park near Race Course', 'senior citizens']"
+      "detail": "['park near Race Course', 'a few more benches']"
     },
     {
       "check": "  english summary present",
@@ -180,7 +180,7 @@
     {
       "check": "case: hi-en, gas smell",
       "ok": true,
-      "detail": "SYN-2026-000087 under_review safety/critical lang=hi conf=0.95 rules=['R1'] 20s"
+      "detail": "SYN-2026-000004 under_review safety/critical lang=hi conf=0.95 rules=['R1'] 20s"
     },
     {
       "check": "  evidence spans present and quoted from text",
@@ -190,7 +190,7 @@
     {
       "check": "  english summary present",
       "ok": true,
-      "detail": "A gas leak is reported from a shop below a building in Peelamedu, posing an imme"
+      "detail": "A resident reports a gas leak originating from a shop below their building in Pe"
     },
     {
       "check": "  district office and due time set",
@@ -210,7 +210,7 @@
     {
       "check": "case: ta-en, pothole accident, repeat",
       "ok": true,
-      "detail": "SYN-2026-000088 under_review roads/high lang=ta conf=0.9 rules=['R8'] 20s"
+      "detail": "SYN-2026-000005 routed roads/high lang=ta conf=0.9 rules=['R8'] 20s"
     },
     {
       "check": "  evidence spans present and quoted from text",
@@ -220,7 +220,7 @@
     {
       "check": "  english summary present",
       "ok": true,
-      "detail": "A significant pothole is obstructing traffic and endangering drivers near Lakshm"
+      "detail": "A significant pothole is obstructing vehicle movement and posing a danger to dri"
     },
     {
       "check": "  district office and due time set",
@@ -265,7 +265,7 @@
     {
       "check": "duplicate of the Tamil water complaint flagged",
       "ok": true,
-      "detail": "possible duplicate of SYN-2026-000049 (similarity 1.00)"
+      "detail": "possible duplicate of SYN-2026-000001 (similarity 1.00)"
     },
     {
       "check": "PII hidden from complainant",
@@ -280,7 +280,7 @@
     {
       "check": "review queue lists the flagged cases",
       "ok": true,
-      "detail": "50 items; flags of first: ['critical', 'duplicate']"
+      "detail": "5 items; flags of first: ['critical', 'duplicate']"
     },
     {
       "check": "roads admin cannot open a water complaint",
@@ -290,7 +290,7 @@
     {
       "check": "department admin sees only its department",
       "ok": true,
-      "detail": "23 items"
+      "detail": "2 items"
     },
     {
       "check": "merge into unknown target rejected",
@@ -335,7 +335,7 @@
     {
       "check": "department queue shows routed water complaints",
       "ok": true,
-      "detail": "10 items"
+      "detail": "1 items"
     },
     {
       "check": "citizen reply accepted",
@@ -365,12 +365,12 @@
     {
       "check": "department admin emailed about a routed water complaint",
       "ok": true,
-      "detail": "12 mails"
+      "detail": "18 mails"
     },
     {
       "check": "district admin emailed about reviews in Coimbatore",
       "ok": true,
-      "detail": "45 mails"
+      "detail": "59 mails"
     },
     {
       "check": "overdue check escalates the overdue complaint",
@@ -380,7 +380,7 @@
     {
       "check": "overdue flag shown in the queue",
       "ok": true,
-      "detail": "['duplicate', 'overdue']"
+      "detail": "['overdue']"
     },
     {
       "check": "escalation recorded on the complaint and in the timeline",
@@ -390,7 +390,7 @@
     {
       "check": "district admin emailed about the overdue complaint",
       "ok": true,
-      "detail": "46 mails, 45 before"
+      "detail": "61 mails, 59 before"
     },
     {
       "check": "escalation happens once",
@@ -400,7 +400,7 @@
     {
       "check": "health reports outbox, overdue and model latency",
       "ok": true,
-      "detail": "{\"outbox_pending\": 3, \"overdue_open\": 24, \"model_latency_ms\": {\"last\": 11780, \"mean_last_10\": 16065}}"
+      "detail": "{\"outbox_pending\": 0, \"overdue_open\": 1, \"model_latency_ms\": {\"last\": 10842, \"mean_last_10\": 13763}}"
     },
     {
       "check": "queue search by tracking id",
@@ -410,12 +410,12 @@
     {
       "check": "queue search by complainant name",
       "ok": true,
-      "detail": "66 items"
+      "detail": "8 items"
     },
     {
       "check": "office attaches resolution proof",
       "ok": true,
-      "detail": "{\"ok\":true,\"attachments\":1,\"media\":[{\"id\":\"37d15746-ff7d-4cb2-976f-10763dca47b9\",\"kind\":\"photo\",\"url"
+      "detail": "{\"ok\":true,\"attachments\":1,\"media\":[{\"id\":\"c9fee222-6d38-4349-a883-f6d3b0dbe0c5\",\"kind\":\"photo\",\"url"
     },
     {
       "check": "citizen sees the proof photo marked as resolution",
@@ -460,12 +460,12 @@
     {
       "check": "roads admin emailed about the reopen",
       "ok": true,
-      "detail": "3 mails"
+      "detail": "9 mails"
     },
     {
       "check": "officer note translated into Tamil in the status mail",
       "ok": true,
-      "detail": "உங்கள் புகார் SYN-2026-000089 நிலை: resolved. சாலை ஓட்டையில் ஏற்பட்ட விரிசலும், "
+      "detail": "உங்கள் புகார் SYN-2026-000006 நிலை: resolved. சாலை ஓட்டையில் ஏற்பட்ட விரிசலும், "
     },
     {
       "check": "another citizen supports the water complaint",
@@ -485,7 +485,7 @@
     {
       "check": "nearby list shows the supported complaint without personal data",
       "ok": true,
-      "detail": "20 nearby"
+      "detail": "2 nearby"
     },
     {
       "check": "supported list for the citizen",
@@ -500,17 +500,17 @@
     {
       "check": "map lists located complaints in scope",
       "ok": true,
-      "detail": "88 points"
+      "detail": "8 points"
     },
     {
       "check": "map scoped for a department admin",
       "ok": true,
-      "detail": "21 points"
+      "detail": "2 points"
     },
     {
       "check": "metrics carry rating, reopen rate and supporters",
       "ok": true,
-      "detail": "{\"avg_rating\": 4.0, \"reopen_rate\": 0.286, \"supporters\": 4}"
+      "detail": "{\"avg_rating\": 4.0, \"reopen_rate\": 0.5, \"supporters\": 1}"
     },
     {
       "check": "login rate limit after repeated failures",
@@ -520,7 +520,7 @@
     {
       "check": "super admin creates a district admin",
       "ok": true,
-      "detail": "{\"user\":{\"id\":\"900c4f45-3737-4103-9c6a-852b593d1260\",\"email\":\"district.madurai.2096219@synapse.local\",\"role\":\"district_a"
+      "detail": "{\"user\":{\"id\":\"f33d1c21-cf28-4409-9335-553e15d187f9\",\"email\":\"district.madurai.2097985@synapse.local\",\"role\":\"district_a"
     },
     {
       "check": "district admin cannot create another district admin",
@@ -530,7 +530,7 @@
     {
       "check": "district admin creates a department admin in own district",
       "ok": true,
-      "detail": "{\"user\":{\"id\":\"f02ce256-4a83-447d-a0ab-78234c9a4ad7\",\"email\":\"water.madurai.2096219@synapse.local\",\"role\":\"dept_admin\",\""
+      "detail": "{\"user\":{\"id\":\"3b04facd-5ddc-443f-bc0b-6afab9c19b49\",\"email\":\"water.madurai.2097985@synapse.local\",\"role\":\"dept_admin\",\""
     },
     {
       "check": "new department admin sees no Coimbatore complaints",
@@ -540,7 +540,7 @@
     {
       "check": "district admin can disable its department admin",
       "ok": true,
-      "detail": "{\"id\":\"f02ce256-4a83-447d-a0ab-78234c9a4ad7\",\"email\":\"water.madurai.2096219@synapse.local\",\"role\":\"d"
+      "detail": "{\"id\":\"3b04facd-5ddc-443f-bc0b-6afab9c19b49\",\"email\":\"water.madurai.2097985@synapse.local\",\"role\":\"d"
     },
     {
       "check": "disabled account is locked out",
@@ -560,7 +560,7 @@
     {
       "check": "metrics: totals, by status, live accuracy",
       "ok": true,
-      "detail": "{\"complaints\": 91, \"critical_open\": 26, \"review_rate\": 0.846, \"auto_closed\": 0, \"mean_latency_ms\": 18270, \"avg_rating\": "
+      "detail": "{\"complaints\": 8, \"critical_open\": 2, \"review_rate\": 0.625, \"auto_closed\": 0, \"mean_latency_ms\": 13763, \"avg_rating\": 4."
     },
     {
       "check": "metrics: auto-closed is zero",
@@ -590,17 +590,17 @@
     {
       "check": "status emails logged for the citizen in Mailpit",
       "ok": true,
-      "detail": "118 emails"
+      "detail": "235 emails"
     }
   ],
   "ids": {
-    "ta script, water, child sick": "b9b7bd26-d139-4ef5-8a6b-63d25c5bd5e5",
-    "hi script, power cut, oxygen": "7aa03ad2-8293-48f1-a5f0-5dae56ff11e6",
-    "en, suggestion, low": "e542e387-d40c-4f1a-946f-083b6ba813c7",
-    "hi-en, gas smell": "043cd24c-73a7-4f1d-aac7-90451fda7a70",
-    "ta-en, pothole accident, repeat": "0c9fac8f-2cad-4674-9662-816c32b714a0",
-    "photo": "c911f5d7-a354-4131-aab1-38eeab23b54b",
-    "dup": "46d66aa9-c0af-4507-ab33-b69de53bf33d",
-    "pii": "271fb123-7161-4437-9c7e-85a36b1cbe5c"
+    "ta script, water, child sick": "982803b0-5bb8-4d61-98fb-7ea240c8aa3e",
+    "hi script, power cut, oxygen": "1323ec8d-6156-4c2a-9bf6-d9b1bd11cbd8",
+    "en, suggestion, low": "707710b6-715e-49cf-8a5b-a36239a40c90",
+    "hi-en, gas smell": "af0b7732-7661-4625-9ba0-ac3d3966e656",
+    "ta-en, pothole accident, repeat": "5bef947a-4feb-4dd8-b57d-212cd2e39c42",
+    "photo": "f3cf41c0-45f2-4558-9e94-80b040571690",
+    "dup": "821045e8-b12d-466d-bec6-f6b1897271cd",
+    "pii": "05ba10ee-ca2c-421a-872f-f3b26046d524"
   }
 }

@@ -63,7 +63,7 @@ def latest_otp(email: str, seen: int = 0) -> str:
     Mail leaves through a background outbox, so a fresh code can land a second or two
     after the request that created it."""
     for _ in range(40):
-        msgs = requests.get(f"{MAIL}/api/v1/messages?limit=50", timeout=10).json()["messages"]
+        msgs = requests.get(f"{MAIL}/api/v1/search", params={"query": f"to:{email}", "limit": 10}, timeout=10).json()["messages"]
         mine = [m for m in msgs if any(email == (t.get("Address") or "").lower() for t in m["To"])]
         if len(mine) > seen:
             for m in mine:  # Mailpit lists newest first
@@ -87,8 +87,10 @@ def wait_mail(email: str, min_count: int, timeout: int = 120) -> int:
 
 
 def mail_count(email: str) -> int:
-    msgs = requests.get(f"{MAIL}/api/v1/messages?limit=200", timeout=10).json()["messages"]
-    return sum(1 for m in msgs if any(email == (t.get("Address") or "").lower() for t in m["To"]))
+    """Every mail Mailpit holds for the address. The search endpoint counts across the whole
+    inbox; the newest-N list stops growing for an address once the inbox holds more than N mails."""
+    r = requests.get(f"{MAIL}/api/v1/search", params={"query": f"to:{email}", "limit": 1}, timeout=10).json()
+    return int(r.get("messages_count", 0))
 
 
 def submit(H: dict, text: str, **fields) -> dict:

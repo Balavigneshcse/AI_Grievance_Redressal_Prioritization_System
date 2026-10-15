@@ -2,14 +2,16 @@
 
   python scripts/demo_data.py --reset           wipe every complaint (media, analyses, decisions, events,
                                                 notifications) and the accounts created by the test suites
+  python scripts/demo_data.py --districts       one district admin for each of the 38 Tamil Nadu districts,
+                                                district.<district>@synapse.local (password = SEED_PASSWORD)
   python scripts/demo_data.py --staff           add district admins for Chennai and Madurai and a Chennai
                                                 electricity department admin (password = SEED_PASSWORD)
   python scripts/demo_data.py --seed            file ten showcase complaints as the demo citizen through the
                                                 API (the real pipeline runs), then act on a few as staff so
                                                 every queue view has something in it
-  python scripts/demo_data.py --reset --staff --seed     the full demo set in one go
+  python scripts/demo_data.py --reset --districts --staff --seed     the full demo set in one go
 
---reset talks to Postgres directly; --staff and --seed need the API on :8000 with Ollama.
+--reset talks to Postgres directly; --districts, --staff and --seed need the API on :8000 with Ollama.
 Seed accounts (backend/seed.py) are never removed.
 """
 from __future__ import annotations
@@ -86,10 +88,14 @@ STAFF = [
 ]
 
 
+def db_url() -> str:
+    return env("DATABASE_URL", "postgresql+psycopg://postgres:postgres@localhost:5434/synapse").replace("postgresql+psycopg://", "postgresql://")
+
+
 def reset() -> None:
     import psycopg
 
-    url = env("DATABASE_URL", "postgresql+psycopg://postgres:postgres@localhost:5434/synapse").replace("postgresql+psycopg://", "postgresql://")
+    url = db_url()
     with psycopg.connect(url) as conn:
         n = conn.execute("select count(*) from complaints").fetchone()[0]
         for sql in (
@@ -99,6 +105,7 @@ def reset() -> None:
             "delete from status_events",
             "delete from notifications where complaint_id is not null",
             "delete from media",
+            "delete from supports",
             "delete from complaints",
             "delete from otps where user_id in (select id from users where email like 'e2e.%' or email like 'citizen.test%' or email like '%.madurai.%@synapse.local' or email = 'x@synapse.local')",
             "delete from notifications where user_id in (select id from users where email like 'e2e.%' or email like 'citizen.test%' or email like '%.madurai.%@synapse.local' or email = 'x@synapse.local')",
@@ -111,6 +118,29 @@ def reset() -> None:
         for child in media.iterdir():
             shutil.rmtree(child, ignore_errors=True)
     print(f"reset: removed {n} complaints, their media, and the test accounts")
+
+
+def add_district_admins(pw: str) -> None:
+    """One district admin per Tamil Nadu district from config/tn_mapping.json. Accounts that already
+    exist (the seeded Coimbatore admin, or a rerun) are left alone."""
+    import json
+    import re
+
+    districts = json.loads((ROOT / "config" / "tn_mapping.json").read_text(encoding="utf-8"))["districts"]
+    HA = login("admin@synapse.local", pw)
+    created = existing = 0
+    for i, d in enumerate(sorted(districts, key=lambda x: x["name"]), 1):
+        slug = re.sub(r"[^a-z]", "", d["name"].lower())
+        body = {"role": "district_admin", "district": d["name"], "full_name": f"{d['name']} District Admin",
+                "email": f"district.{slug}@synapse.local", "mobile": f"91{i:08d}", "preferred_language": "ta", "password": pw}
+        r = requests.post(f"{API}/admin/users", headers=HA, json=body, timeout=30)
+        if r.status_code == 201:
+            created += 1
+        elif r.status_code == 409:
+            existing += 1
+        else:
+            print(f"district admin {d['name']}: {r.status_code} {r.text[:100]}")
+    print(f"district admins: {created} created, {existing} already there, {len(districts)} districts in all")
 
 
 def add_staff(pw: str) -> None:
@@ -171,19 +201,34 @@ def seed(pw: str) -> None:
         requests.post(f"{API}/review/{routed[-1]}/decision", headers=HA, json={"action": "resolve", "reason": "Work completed and verified on site"}, timeout=30)
         print("  super admin resolved one complaint")
 
+    # One open case past its due time: the queue shows the Overdue badge, the timeline the escalation
+    # note, and the district admin gets the overdue mail (the SLA watch runs now instead of in 60 s).
+    late = routed[:-1] or water[:1]
+    if late:
+        import psycopg
+
+        with psycopg.connect(db_url()) as conn:
+            conn.execute("update complaints set due_at = now() - interval '2 hours' where id = %s", (late[0],))
+            conn.commit()
+        requests.post(f"{API}/admin/sla/check", headers=HA, timeout=120)
+        print(f"  {detail[late[0]]['tracking_id']} is past its due time and escalated to the district admin")
+
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--reset", action="store_true")
+    ap.add_argument("--districts", action="store_true")
     ap.add_argument("--staff", action="store_true")
     ap.add_argument("--seed", action="store_true")
     args = ap.parse_args()
-    if not (args.reset or args.staff or args.seed):
+    if not (args.reset or args.districts or args.staff or args.seed):
         ap.print_help()
         return
     pw = env("SEED_PASSWORD", "Synapse@123")
     if args.reset:
         reset()
+    if args.districts:
+        add_district_admins(pw)
     if args.staff:
         add_staff(pw)
     if args.seed:

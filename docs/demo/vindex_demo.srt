@@ -1,0 +1,211 @@
+1
+00:00:01,813 --> 00:00:07,191
+Vindex: AI grievance triage for Tamil Nadu. Everything runs on one laptop, Gemma 3 on the local GPU, no cloud AI.
+
+2
+00:00:07,391 --> 00:00:13,238
+A citizen registers once: name, mobile, email and the last 4 Aadhaar digits. They go on every complaint; the AI never sees them.
+
+3
+00:00:13,438 --> 00:00:15,863
+Preferred language Tamil: every email to this citizen will be in Tamil.
+
+4
+00:00:16,063 --> 00:00:20,878
+The 6-digit code goes out by email. For this demo the mail server is Mailpit, running on the same laptop.
+
+5
+00:00:21,078 --> 00:00:29,238
+Mailpit: the OTP mail, in Tamil, the citizen's preferred language.
+
+6
+00:00:29,438 --> 00:00:32,519
+Enter the code: the account is verified and the citizen is logged in.
+
+7
+00:00:32,719 --> 00:00:36,081
+My complaints: empty for a new citizen.
+
+8
+00:00:36,281 --> 00:00:39,628
+The complaint form. 'Filing as' carries the name and Aadhaar digits from the account, never retyped.
+
+9
+00:00:39,828 --> 00:00:49,738
+Any language, any script. This one is Tanglish: Tamil written in English letters.
+
+10
+00:00:49,938 --> 00:00:57,488
+In-app camera: a photo, or a video of up to 5 minutes as evidence for the office. Here Chrome's test camera.
+
+11
+00:00:57,688 --> 00:01:01,753
+A photo upload too. The vision model checks whether the picture matches the text.
+
+12
+00:01:01,953 --> 00:01:05,972
+GPS from the device, resolved offline to Gandhipuram, Coimbatore. No map API key, no cloud.
+
+13
+00:01:06,172 --> 00:01:10,784
+Open complaints nearby are listed: a neighbour can support one instead of filing a duplicate.
+
+14
+00:01:10,984 --> 00:01:14,331
+Tracking ID SYN-2026-000011 in under a second. The analysis starts in the background.
+
+15
+00:01:14,531 --> 00:01:39,363
+Analysing: Gemma 3 4B on the laptop GPU reads the text and the photo. 12 to 20 seconds, fully local.
+
+16
+00:01:39,563 --> 00:01:45,081
+Result: Water Supply, Critical, language Tamil-English. Rules forced a human review because children are ill.
+
+17
+00:01:45,281 --> 00:01:50,784
+Evidence quoted from the original text, the rules that matched, the second-opinion classifier, the office and its due time.
+
+18
+00:01:50,984 --> 00:01:56,753
+The timeline: every step is a status event. The video and the photo are kept for the office.
+
+19
+00:01:56,953 --> 00:02:03,753
+Two mails already: the acknowledgement with the tracking ID, then 'under review'. Both in Tamil.
+
+20
+00:02:03,953 --> 00:02:07,581
+Logging in as the Coimbatore district admin.
+
+21
+00:02:07,781 --> 00:02:13,659
+The district admin's review queue: critical, low-confidence or disagreeing cases. Nothing closes without a human.
+
+22
+00:02:13,859 --> 00:02:24,159
+Staff see the masked text with the PII map, the model's reasoning, the second opinion and the evidence.
+
+23
+00:02:24,359 --> 00:02:29,113
+Accepted: routed to the Coimbatore water office with its SLA. The department admin is emailed.
+
+24
+00:02:29,313 --> 00:02:34,488
+Logging in as the water department admin.
+
+25
+00:02:34,688 --> 00:02:42,097
+The water department admin sees only water complaints of Coimbatore, with due times.
+
+26
+00:02:42,297 --> 00:02:47,581
+Accept starts the work: status In progress.
+
+27
+00:02:47,781 --> 00:02:52,503
+Request info: the question is emailed to the citizen in Tamil and the case waits for the reply.
+
+28
+00:02:52,703 --> 00:02:58,878
+Logging in as the second citizen, same street.
+
+29
+00:02:59,078 --> 00:03:05,409
+Same street, same problem: the nearby list shows Priya's complaint. One tap to support it instead of a duplicate.
+
+30
+00:03:05,609 --> 00:03:10,378
+Supporters raise the priority: at five, the urgency goes up one level and the queue flags it as popular.
+
+31
+00:03:10,578 --> 00:03:14,519
+Logging in as the citizen.
+
+32
+00:03:14,719 --> 00:03:25,722
+'The office needs more information': the question is shown on the tracking page.
+
+33
+00:03:25,922 --> 00:03:30,691
+Reply sent with a photo. It goes straight to the department and the case continues as In progress.
+
+34
+00:03:30,891 --> 00:03:36,097
+Logging in as the water department admin.
+
+35
+00:03:36,297 --> 00:03:46,019
+Work done. The admin attaches a resolution photo as proof.
+
+36
+00:03:46,219 --> 00:03:50,972
+Resolved with a note. The note is translated into Tamil for the citizen's status mail.
+
+37
+00:03:51,172 --> 00:03:55,159
+Logging in as the citizen.
+
+38
+00:03:55,359 --> 00:04:03,659
+The citizen sees the proof photo and closes the loop: rate it, or reopen if it is not fixed.
+
+39
+00:04:03,859 --> 00:04:08,628
+Rated 5 of 5. 'Not fixed, reopen' would send it back to the department with a note.
+
+40
+00:04:08,828 --> 00:04:16,972
+Logging in as the super admin.
+
+41
+00:04:17,172 --> 00:04:22,503
+Super admin: every district. Search by tracking ID, name or words from the complaint.
+
+42
+00:04:22,703 --> 00:04:31,519
+The Overdue badge: a seeded case passed its due time and was escalated to the district admin by email.
+
+43
+00:04:31,719 --> 00:04:38,081
+District map: markers by urgency, a red ring for overdue, size grows with supporters.
+
+44
+00:04:38,281 --> 00:04:50,847
+Staff and districts: a district admin for each of the 38 districts, department admins under them, complaints per district.
+
+45
+00:04:51,047 --> 00:04:55,409
+A new department admin for Chennai roads, created by the super admin.
+
+46
+00:04:55,609 --> 00:05:06,175
+Created: the password is shown once and a welcome mail goes out. District admins can do the same for their district.
+
+47
+00:05:06,375 --> 00:05:15,925
+Metrics: accuracy per language, ratings, reopen rate, model latency and live health.
+
+48
+00:05:16,125 --> 00:05:23,253
+Rules win over the model and are editable without a redeploy. Paste a text to see which rules match.
+
+49
+00:05:23,453 --> 00:05:29,800
+Matched: gas leak forces Critical and a human review, whatever the model says.
+
+50
+00:05:30,000 --> 00:05:36,613
+The retrained second-opinion classifier reloads with one click.
+
+51
+00:05:36,813 --> 00:05:43,738
+The whole interface in Tamil, or Hindi, with one switch.
+
+52
+00:05:43,938 --> 00:05:54,378
+Every step mailed: the citizen, the department admin and the district admin. Status notes translated into Tamil.
+
+53
+00:05:54,578 --> 00:06:00,578
+Vindex: 118 automated checks, Tamil, Hindi, English, Tanglish and Hinglish, every decision explained, nothing auto-closed.

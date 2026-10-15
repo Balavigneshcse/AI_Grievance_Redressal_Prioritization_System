@@ -38,6 +38,10 @@ Thumbs.db
 
 # Local credentials workbook (never committed)
 credentials.xlsx
+credentials_update.xlsx
 
 # Self-signed demo certificates (scripts/make_cert.py)
 certs/
+
+# Demo video raw recording and generated stills (scripts/record_demo.py); the MP4s and SRT are kept
+docs/demo/raw/

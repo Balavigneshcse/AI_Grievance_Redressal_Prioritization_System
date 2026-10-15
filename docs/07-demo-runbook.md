@@ -5,7 +5,7 @@ Five minutes of clicks, in order. Everything runs on the laptop; nothing leaves 
 ## Before the slot (15 minutes earlier)
 
 1. Start everything: `powershell -ExecutionPolicy Bypass -File scripts\start.ps1` (add `-Https` if a phone will be used; then open `https://<laptop-ip>:8000/health` on the phone once and accept the warning).
-2. Fresh demo data: `python scripts\demo_data.py --reset --staff --seed` (about four minutes: ten complaints go through the real pipeline). Skip `--reset` if you want to keep what is already there.
+2. Fresh demo data: `python scripts\demo_data.py --reset --districts --staff --seed` (about four minutes: ten complaints go through the real pipeline; `--districts` creates one district admin per Tamil Nadu district, `district.<district>@synapse.local`, and is a no-op once they exist; one seeded case is set past its due time so the Overdue badge, the escalation note and the district admin's overdue mail are there to show). Skip `--reset` if you want to keep what is already there.
 3. Check `http://localhost:8000/health`: `db ok`, `ollama ok`, all three models `true`, `outbox_pending 0`.
 4. Open four browser tabs, logged in as: citizen (`citizen@synapse.local`, registered as Demo Citizen, Aadhaar last 4 `4321`), department admin (`officer.water@synapse.local`), district admin (`district.coimbatore@synapse.local`), super admin (`admin@synapse.local`). Password: `SEED_PASSWORD` from `.env`. Mail inbox: `http://localhost:8025` (or the real Gmail inbox if `.env` points at Gmail). If the jury wants to see registration, the form asks for name, mobile, email, Aadhaar last 4, password and language, then the OTP mail.
 
@@ -47,3 +47,7 @@ Five minutes of clicks, in order. Everything runs on the laptop; nothing leaves 
 - Fairness: formality and language never change urgency; accuracy is measured per language on the dashboard; informal writers get the same service.
 - Scale: stateless API, state in Postgres, one worker per GPU; config (departments, rules, 760 offices) not code; HNSW index keeps duplicate search fast.
 - Pending: WhatsApp intake, video key frames to the model, verified office mapping from the municipality, fine-tuning on officer corrections.
+
+## Demo video
+
+`docs/demo/vindex_demo_subtitled.mp4` (captions burned in) and `docs/demo/vindex_demo.mp4` (no captions) show the whole story above, plus registration with the OTP mail, the in-app video capture, the me-too support, the map, the staff, metrics and rules pages and the Tamil interface; `docs/demo/vindex_demo.srt` holds the captions for players that prefer a subtitle track. The recording is scripted: `python scripts\record_demo.py` drives Chrome through every screen with Playwright and renders both MP4s with ffmpeg (from the `imageio-ffmpeg` package). Record again after `python scripts\demo_data.py --reset --districts --staff --seed` with the API on Mailpit (`SMTP_HOST=localhost`), so the mails are visible; the video citizen `priya.raman@synapse.local` is registered during the recording. Add `--headed` to watch, `--render` to only rebuild the MP4s from the last recording.
