@@ -8,6 +8,12 @@ Run everything from the project root in a normal Command Prompt or PowerShell. T
 pip install -r requirements.txt
 ```
 
+Database and mail inbox (PostgreSQL 17 + pgvector on port 5434, Mailpit on 8025). Copy `.env.example` to `.env` first.
+
+```bash
+docker compose up -d
+```
+
 ```bash
 powershell -ExecutionPolicy Bypass -File scripts\set_ollama_gpu.ps1
 ```
@@ -44,6 +50,14 @@ Twice as fast, using the text-only Qwen already on the laptop (fine for generati
 python scripts\make_synthetic.py --per-combo 3 --model qwen3:4b-instruct-2507-q4_K_M
 ```
 
+## 2b. Clean the synthetic set (after generation finishes)
+
+```bash
+python scripts\clean_synthetic.py
+```
+
+Drops rows whose text is not in the script their language label promises (the LLM ignores the language instruction in roughly 7% of calls) and exact duplicates. Keeps a `.bak` copy. Rerun `make_synthetic.py` afterwards to regenerate the dropped combinations; new runs apply the same check automatically.
+
 ## 3. Train the second-opinion classifier
 
 ```bash
@@ -51,6 +65,8 @@ python scripts\train_second_opinion.py
 ```
 
 Embeds every row with bge-m3 (GPU), trains the department and urgency softmax models, prints held-out accuracy overall and per language, and saves `models/second_opinion_*.npz` plus `models/second_opinion_report.json`.
+
+Run it only after generation has finished: with a partial file the models see one or two departments and the urgency numbers are meaningless (a run at 51 water-only rows gave 0.31 on urgency). The script prints a warning in that case. Do not run it while `make_synthetic.py` is still going; both need the GPU and Ollama serves one request at a time.
 
 ## 4. Evaluate the LLM on the gold set
 

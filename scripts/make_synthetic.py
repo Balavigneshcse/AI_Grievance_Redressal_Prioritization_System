@@ -16,9 +16,18 @@ import uuid
 
 import ollama
 
-from common import DATA, DEFAULT_LLM, LANGUAGES, append_jsonl, load_taxonomy, load_urgency, read_jsonl
+from common import DATA, DEFAULT_LLM, LANGUAGES, append_jsonl, detect_language, load_taxonomy, load_urgency, read_jsonl
 
 OUT = DATA / "synthetic" / "complaints.jsonl"
+
+# Script the generated text must be in for each language code. The LLM sometimes
+# ignores the language instruction (about 7% of rows in the first run), so rows
+# in the wrong script are dropped and the combo is retried on the next run.
+EXPECTED_SCRIPT = {"ta": "ta", "hi": "hi", "en": "latin", "ta-en": "latin", "hi-en": "latin"}
+
+
+def script_ok(text: str, language: str) -> bool:
+    return detect_language(text)[0] == EXPECTED_SCRIPT[language]
 
 SCHEMA = {
     "type": "object",
@@ -106,9 +115,13 @@ def main() -> None:
             continue
 
         rows = []
+        dropped = 0
         for it in items[: args.per_combo]:
             text = (it.get("text") or "").strip()
             if len(text) < 15:
+                continue
+            if not script_ok(text, l):
+                dropped += 1
                 continue
             rows.append(
                 {
@@ -128,7 +141,8 @@ def main() -> None:
         dt = time.time() - t0
         elapsed = time.time() - t_start
         eta = elapsed / i * (len(todo) - i)
-        print(f"[{i}/{len(todo)}] {key}: {len(rows)} rows in {dt:4.1f}s  (ETA {eta/60:4.1f} min)")
+        note = f", {dropped} dropped (wrong script)" if dropped else ""
+        print(f"[{i}/{len(todo)}] {key}: {len(rows)} rows in {dt:4.1f}s{note}  (ETA {eta/60:4.1f} min)")
 
     total = len(read_jsonl(args.out))
     print(f"\nDone. {total} rows in {args.out}")

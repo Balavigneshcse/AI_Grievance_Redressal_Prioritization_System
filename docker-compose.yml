@@ -1,0 +1,36 @@
+# SYNAPSE local services: PostgreSQL 17 with pgvector, and Mailpit (local SMTP + web inbox).
+# Start:  docker compose up -d        Stop:  docker compose down        Reset DB:  docker compose down -v
+#
+# Host ports are 5434 (Postgres; 5432 and 5433 belong to other projects on this laptop)
+# and 8025 / 1025 (Mailpit). The API reads DATABASE_URL and SMTP_* from .env.
+
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    container_name: synapse-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: synapse
+    ports:
+      - "5434:5432"
+    volumes:
+      - synapse_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d synapse"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: synapse-mailpit
+    ports:
+      - "8025:8025"   # web inbox  http://localhost:8025
+      - "1025:1025"   # SMTP
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+
+volumes:
+  synapse_pgdata:

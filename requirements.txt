@@ -11,3 +11,6 @@ pandas
 pillow
 joblib
 tqdm
+psycopg[binary]
+sqlalchemy
+python-dotenv

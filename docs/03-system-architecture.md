@@ -50,7 +50,7 @@ flowchart LR
     end
 
     subgraph Store["Storage"]
-        DB[("SQLite via SQLAlchemy<br/>(Postgres-ready)")]
+        DB[("PostgreSQL 16 + pgvector<br/>via SQLAlchemy")]
         FS[("media/ folder")]
         CFG[("config/rules.yaml<br/>config/taxonomy.yaml")]
     end
@@ -91,7 +91,7 @@ Browser (React)                 API server (FastAPI)              Analysis worke
                                  Metrics                             Decision: rules + thresholds -> queue
                                         |                                      |
                                         v                                      v
-                                 SQLite (SQLAlchemy)  <----------------  analysis, decision, audit
+                                 PostgreSQL + pgvector  <--------------  analysis, decision, audit
                                  media/ folder                         Mailpit / SMTP  <-- ack + status emails
                                  config/*.yaml
 ```
@@ -113,7 +113,7 @@ Browser (React)                 API server (FastAPI)              Analysis worke
 | **Notifier** | Acknowledgement, routed, under-review, resolved emails in the complainant's language; OTP emails; log every send | notifications | SMTP (Mailpit) |
 | **Metrics service** | Compare analyses against eval labels and officer corrections; accuracy per language, category, urgency, formality; review-queue rate; model latency | nothing (reads) | DB |
 | **Ollama runtime** | Serve Gemma 3 with JSON-schema output and image input | model weights | Worker |
-| **Storage** | SQLite file (dev) through SQLAlchemy; media folder; YAML config | everything | all services |
+| **Storage** | PostgreSQL 16 with pgvector (Docker Compose) through SQLAlchemy; media folder; YAML config | everything | all services |
 
 ---
 
@@ -121,14 +121,14 @@ Browser (React)                 API server (FastAPI)              Analysis worke
 
 | Layer | Choice | Why | Rejected alternative |
 |---|---|---|---|
-| Frontend | React 18 + Vite, JavaScript, Tailwind CSS, react-router | Fast scaffold, team familiarity, easy camera and geolocation access through browser APIs, responsive on phones | Plain server-rendered pages (harder camera UX); Next.js (overkill) |
+| Frontend | React 18 + Vite, Tailwind CSS, **shadcn/ui** components, **lucide-react** icons, react-router, react-hook-form + zod | Fast scaffold, accessible components out of the box, consistent look the jury can read, easy camera and geolocation access through browser APIs, responsive on phones | Plain server-rendered pages (harder camera UX); Next.js (overkill); MUI or Ant (heavier, less customisable) |
 | Maps | Leaflet + react-leaflet, OpenStreetMap tiles | No API key, light, pins and ward polygons | Google Maps (key, terms) |
 | Camera / GPS | `getUserMedia`, `<input capture>`, Geolocation API | Native browser features, work in mobile Chrome | Native app (out of scope) |
 | UI languages | i18next with en / ta / hi JSON dictionaries | Portal itself must be readable in the complainant's language | Hard-coded English |
 | Backend | Python 3.11 + FastAPI + Uvicorn | Same language as the ML libraries, async, auto-generated OpenAPI docs for the jury | Node/Express (would need a second process for Python models) |
 | Background work | FastAPI `BackgroundTasks` + a single worker thread with a queue | No Redis or Celery to install; one process to run in the demo | Celery (setup time) |
-| ORM / DB | SQLAlchemy 2 + SQLite | Zero setup, one file, easy to reset; switching to PostgreSQL is a connection-string change | PostgreSQL + pgvector (better at scale, more setup) |
-| Vector search | NumPy cosine over stored float32 embeddings | Thousands of complaints fit in memory; no vector DB needed in 24 h | FAISS, pgvector |
+| ORM / DB | SQLAlchemy 2 + PostgreSQL 16 with pgvector, started by Docker Compose | Relational integrity for an audit-heavy system, `jsonb` for explanation payloads, vector index in the same database; the laptop already runs Docker | SQLite (no concurrent writers, no vector index) |
+| Vector search | pgvector HNSW index, cosine distance in SQL | Duplicate search is one query beside the complaint rows; survives restarts | FAISS, in-memory NumPy |
 | LLM runtime | Ollama serving `gemma3:4b` (CPU / small GPU) or `gemma3:12b` (12 GB+ GPU) | Local, one installer, JSON-schema output, image input, prompt cache | llama.cpp direct (more wiring), vLLM (GPU only) |
 | Language hint | Unicode script detection, pure Python | Three languages: Tamil script, Devanagari, Latin; the LLM decides Tanglish vs English | fastText (native DLL, blocked here) |
 | Embeddings | `bge-m3` served by Ollama, 1024-dim | Strongest open multilingual embedding model; same runtime as Gemma; `num_gpu: 0` at runtime keeps the GPU for Gemma | sentence-transformers (needs torch, blocked here) |
@@ -138,7 +138,7 @@ Browser (React)                 API server (FastAPI)              Analysis worke
 
 Constraint found on the build laptop: Windows Application Control blocks unsigned native DLLs, so torch and scipy do not load. Every model therefore runs inside Ollama (signed binary), and the Python service uses only NumPy, pandas and Pillow on the native side.
 | Auth | argon2-cffi, PyJWT, email OTP | Standard, no third-party identity provider | OAuth (needs cloud) |
-| Email | smtplib to Mailpit (local SMTP + web inbox) in dev; real SMTP by env var | Fully local demo; OTP visible in a browser tab | SendGrid etc. (cloud) |
+| Email | smtplib to Mailpit (local SMTP + web inbox, from Docker Compose) in dev; real SMTP by env var | Fully local demo; OTP visible in a browser tab | SendGrid etc. (cloud) |
 | Config | YAML (`rules.yaml`, `taxonomy.yaml`), hot reload by mtime | Admin-editable, diffable in git | DB-stored rules (needs an editor UI first) |
 | Tests | pytest for pipeline stages; eval runner script | Metrics dashboard needs the eval runner anyway | none |
 
@@ -290,7 +290,7 @@ docs/
 | Process | Command | Port |
 |---|---|---|
 | Ollama | `ollama serve` (auto-starts on Windows) | 11434 |
-| Mailpit | `mailpit.exe` | SMTP 1025, inbox 8025 |
+| PostgreSQL + pgvector and Mailpit | `docker compose up -d` | 5434 (5432 and 5433 are used by other projects on the build laptop); SMTP 1025, inbox 8025 |
 | API | `uvicorn app.main:app --reload` | 8000 |
 | Frontend | `npm run dev` | 5173 |
 

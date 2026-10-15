@@ -13,8 +13,12 @@ Built in 24 hours at SYNAPSE '26, V.S.B. Engineering College.
 | 1. Problem understanding | [docs/01-problem-understanding.md](docs/01-problem-understanding.md) |
 | 1. Models and datasets | [docs/02-models-and-datasets.md](docs/02-models-and-datasets.md) |
 | 2. System architecture | [docs/03-system-architecture.md](docs/03-system-architecture.md) |
-| 3. Database and UI/UX design | docs/04-database-and-ui.md (coming) |
+| 3. Database and UI/UX design, tech stack | [docs/04-database-and-ui.md](docs/04-database-and-ui.md) |
 | Training and evaluation commands | [docs/training-commands.md](docs/training-commands.md) |
+
+## Stack
+
+Backend: Python 3.12, FastAPI, SQLAlchemy. Database: PostgreSQL 16 with pgvector, via Docker Compose. Frontend: React + Vite, shadcn/ui, lucide icons. Models: all local through Ollama.
 
 ## Models
 

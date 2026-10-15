@@ -56,7 +56,11 @@ def load_rows(use_nyc: bool) -> list[dict]:
         import pandas as pd
 
         df = pd.read_csv(DATA / "raw" / "nyc311_sample.csv")
-        df = df[df["complaint_type"].isin(NYC_MAP)].head(300)
+        df = df[df["complaint_type"].isin(NYC_MAP)].copy()
+        df["dept"] = df["complaint_type"].map(NYC_MAP)
+        # At most 40 rows per department, otherwise NYC noise complaints flood
+        # "general" and the English numbers look better than they are.
+        df = df.groupby("dept", group_keys=False).head(40)
         for _, r in df.iterrows():
             rows.append(
                 {
@@ -124,6 +128,13 @@ def main() -> None:
     rows = load_rows(use_nyc=not args.no_nyc)
     if len(rows) < 40:
         raise SystemExit("Not enough data. Run scripts/make_synthetic.py first.")
+    n_syn = sum(1 for r in rows if str(r.get("source", "")).startswith("synthetic"))
+    depts_syn = {r["department"] for r in rows if str(r.get("source", "")).startswith("synthetic")}
+    if n_syn < 200 or len(depts_syn) < 8:
+        print(
+            f"\nWARNING: only {n_syn} synthetic rows covering {len(depts_syn)} of 8 departments. "
+            "The models will be weak until make_synthetic.py has finished; rerun this script afterwards.\n"
+        )
 
     print(f"\nEmbedding {len(rows)} texts with bge-m3 via Ollama ({'CPU' if args.cpu else 'GPU'}) ...")
     X = embed([r["text"] for r in rows], gpu=not args.cpu, progress=True)
