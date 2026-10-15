@@ -31,3 +31,6 @@ docs/*.docx
 Thumbs.db
 .vscode/
 .idea/
+
+# Local credentials workbook (never committed)
+credentials.xlsx
