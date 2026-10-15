@@ -85,6 +85,6 @@
       "accuracy": 0.833
     }
   },
-  "mean_seconds": 11.54,
+  "mean_seconds": 13.16,
   "mean_gen_tokens": 180.4
 }
