@@ -1,7 +1,7 @@
 import { Fragment, type ReactNode } from "react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { Building2, Check, Copy, Image as ImageIcon, Loader2, MapPin, Sparkles, X } from "lucide-react"
+import { AlarmClock, Building2, Check, Copy, Image as ImageIcon, Loader2, MapPin, Sparkles, X } from "lucide-react"
 import { toast } from "sonner"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -118,6 +118,13 @@ export function ComplaintDetail({ complaint, linkBase = "/c", children }: Props)
                 {a.summary_en}
               </p>
             </>
+          ) : null}
+          {complaint.escalated_at && !["resolved", "closed", "merged"].includes(complaint.status) ? (
+            <Alert variant="destructive">
+              <AlarmClock />
+              <AlertTitle>{t("track.escalatedTitle")}</AlertTitle>
+              <AlertDescription>{t("track.escalatedHint", { date: formatDateTime(complaint.escalated_at, i18n.language) })}</AlertDescription>
+            </Alert>
           ) : null}
           {live ? (
             <Alert>

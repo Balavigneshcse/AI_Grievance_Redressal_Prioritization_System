@@ -169,6 +169,7 @@ class ComplaintDetail(BaseModel):
     office_name: str | None = None
     office_department_id: str | None = None
     due_at: datetime | None = None
+    escalated_at: datetime | None = None
     created_at: datetime
     media: list[MediaOut]
     analysis: AnalysisOut | None

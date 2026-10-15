@@ -1,9 +1,13 @@
-"""Email notifications in the complainant's language through SMTP.
+"""Email notifications in the recipient's language through SMTP.
 
 A send never runs inside a request or inside the analysis worker: notify() only
 writes a 'queued' row to the notifications table and wakes the outbox thread,
 which delivers the queue through one persistent SMTP connection (Gmail or the
-local Mailpit). Every row ends as sent, or failed with the reason appended."""
+local Mailpit). Every row ends as sent, or failed with the reason appended.
+
+Citizens get otp / ack / routed / under_review / status mails; staff get
+staff_routed (department admins), staff_review (district admins), staff_reply
+(whoever holds the case) and overdue (both) through notify_staff()."""
 from __future__ import annotations
 
 import logging
@@ -13,7 +17,7 @@ import time
 from datetime import datetime, timezone
 from email.message import EmailMessage
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from ..config import settings
@@ -21,6 +25,11 @@ from ..db import SessionLocal
 from .. import models
 
 log = logging.getLogger("synapse.mail")
+
+STATUS_LABEL = {
+    "routed": "sent to department", "in_progress": "in progress", "resolved": "resolved", "closed": "closed",
+    "merged": "merged with an earlier complaint", "awaiting_info": "waiting for your reply", "under_review": "under review",
+}
 
 TEMPLATES = {
     "otp": {
@@ -65,6 +74,69 @@ TEMPLATES = {
             "आपका Vindex स्टाफ खाता",
             "Vindex शिकायत पोर्टल पर आपके लिए एक खाता बनाया गया है।\nभूमिका: {role}\nज़िला: {district}\nविभाग: {department}\n"
             "लॉगिन: {url}\nअस्थायी पासवर्ड आपका प्रशासक देगा; पहले लॉगिन के बाद 'पासवर्ड भूल गए' से इसे बदल लें।",
+        ),
+    },
+    # ---- staff
+    "staff_routed": {
+        "en": (
+            "New complaint {tracking_id} for {department} ({urgency})",
+            "A complaint was routed to your department.\nTracking ID: {tracking_id}\nUrgency: {urgency}\nSummary: {summary}\n"
+            "Due: {due}\nOpen: {url}",
+        ),
+        "ta": (
+            "புதிய புகார் {tracking_id}: {department} ({urgency})",
+            "உங்கள் துறைக்கு ஒரு புகார் அனுப்பப்பட்டது.\nகண்காணிப்பு எண்: {tracking_id}\nஅவசரம்: {urgency}\nசுருக்கம்: {summary}\n"
+            "கெடு: {due}\nதிறக்க: {url}",
+        ),
+        "hi": (
+            "नई शिकायत {tracking_id}: {department} ({urgency})",
+            "आपके विभाग को एक शिकायत भेजी गई है।\nट्रैकिंग आईडी: {tracking_id}\nप्राथमिकता: {urgency}\nसारांश: {summary}\n"
+            "समय सीमा: {due}\nखोलें: {url}",
+        ),
+    },
+    "staff_review": {
+        "en": (
+            "Complaint {tracking_id} needs a review decision",
+            "A complaint in {district} needs a human decision.\nReasons: {reasons}\nOpen: {url}",
+        ),
+        "ta": (
+            "புகார் {tracking_id}: ஆய்வு முடிவு தேவை",
+            "{district} மாவட்டப் புகார் ஒன்றுக்கு மனித முடிவு தேவை.\nகாரணங்கள்: {reasons}\nதிறக்க: {url}",
+        ),
+        "hi": (
+            "शिकायत {tracking_id}: समीक्षा निर्णय ज़रूरी",
+            "{district} की एक शिकायत को मानवीय निर्णय चाहिए।\nकारण: {reasons}\nखोलें: {url}",
+        ),
+    },
+    "staff_reply": {
+        "en": (
+            "Citizen replied on {tracking_id}",
+            "The complainant added information to {tracking_id}:\n\"{text}\"\nOpen: {url}",
+        ),
+        "ta": (
+            "{tracking_id}: குடிமகன் பதில்",
+            "புகார்தாரர் {tracking_id} புகாருக்கு தகவல் சேர்த்தார்:\n\"{text}\"\nதிறக்க: {url}",
+        ),
+        "hi": (
+            "{tracking_id}: नागरिक का उत्तर",
+            "शिकायतकर्ता ने {tracking_id} में जानकारी जोड़ी:\n\"{text}\"\nखोलें: {url}",
+        ),
+    },
+    "overdue": {
+        "en": (
+            "Overdue: {tracking_id} ({department}, {urgency})",
+            "Complaint {tracking_id} passed its due time ({due}) and is still '{status}'. It has been escalated to the "
+            "district admin.\nOpen: {url}",
+        ),
+        "ta": (
+            "கெடு கடந்தது: {tracking_id} ({department}, {urgency})",
+            "புகார் {tracking_id} அதன் கெடுவை ({due}) கடந்தும் '{status}' நிலையில் உள்ளது. மாவட்ட நிர்வாகிக்கு "
+            "அனுப்பப்பட்டது.\nதிறக்க: {url}",
+        ),
+        "hi": (
+            "समय सीमा पार: {tracking_id} ({department}, {urgency})",
+            "शिकायत {tracking_id} की समय सीमा ({due}) बीत चुकी है और यह अब भी '{status}' है। इसे ज़िला प्रशासक को "
+            "भेज दिया गया है।\nखोलें: {url}",
         ),
     },
 }
@@ -142,6 +214,36 @@ def notify(db: Session, user: models.User, template: str, complaint_id=None, **k
     db.add(n)
     _wake.set()
     return n
+
+
+def staff_for(db: Session, c: models.Complaint, kind: str) -> list[models.User]:
+    """Who holds a complaint: 'department' = active department admins of its department (in its
+    district, or district-less ones); 'district' = active district admins of its district, falling
+    back to the super admins when the district is unknown or has no admin yet."""
+    active = models.User.is_active.is_(True)
+    if kind == "department":
+        if not c.department_id:
+            return []
+        q = select(models.User).where(active, models.User.role == "dept_admin", models.User.department_id == c.department_id)
+        if c.district:
+            q = q.where(or_(models.User.district == c.district, models.User.district.is_(None)))
+        return list(db.execute(q).scalars().all())
+    users: list[models.User] = []
+    if c.district:
+        users = list(db.execute(select(models.User).where(active, models.User.role == "district_admin", models.User.district == c.district)).scalars().all())
+    if not users:
+        users = list(db.execute(select(models.User).where(active, models.User.role == "super_admin")).scalars().all())
+    return users
+
+
+def notify_staff(db: Session, c: models.Complaint, kind: str, template: str, **kw) -> int:
+    """Queue one staff email per holder of the complaint. Returns how many were queued."""
+    kw.setdefault("url", f"{settings.APP_URL}/officer/c/{c.id}")
+    kw.setdefault("tracking_id", c.tracking_id)
+    users = staff_for(db, c, kind)
+    for u in users:
+        notify(db, u, template, complaint_id=c.id, **kw)
+    return len(users)
 
 
 def pending() -> int:

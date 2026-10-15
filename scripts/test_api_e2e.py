@@ -211,10 +211,12 @@ def main() -> int:
 
     print("\n== photo with EXIF GPS ==")
     img = test_image_with_gps()
-    acc = submit(HC, "see this road near our house, bikes are skidding every day, please fix", location_source="none", files=[("files", ("pothole.jpg", img, "image/jpeg"))])
+    acc = submit(HC, "see this road near our house, bikes are skidding every day, please fix", location_source="none",
+                 files=[("files", ("pothole.jpg", img, "image/jpeg")), ("files", ("pothole2.jpg", img, "image/jpeg"))])
     d = wait_analysed(HC, acc["id"])
     ids["photo"] = acc["id"]
     a = d["analysis"] or {}
+    check("photo: both photos stored and sent to the model", len(d["media"]) == 2, f"{len(d['media'])} media")
     check("photo: EXIF GPS used for location", d["location_source"] == "exif" and (d.get("resolved_place") or "").startswith("Gandhipuram"), f"{d['location_source']} {d.get('resolved_place')}")
     check("photo: image findings from the vision model", bool(a.get("image_findings")), (a.get("image_findings") or "")[:100])
     check("photo: media served to owner", requests.get(f"{API}{d['media'][0]['url']}", headers=HC, timeout=30).status_code == 200 if d["media"] else False)
@@ -263,6 +265,44 @@ def main() -> int:
     check("timeline records every transition", [e["to_status"] for e in tl] == ["received", "analysing", "routed", "resolved", "closed"], str([e["to_status"] for e in tl]))
     dq = requests.get(f"{API}/departments/water/queue", headers=HO_water, timeout=30).json()
     check("department queue shows routed water complaints", any(i["id"] == ids[cases[0][0]] for i in dq), f"{len(dq)} items")
+
+    print("\n== citizen reply, staff mail, overdue escalation ==")
+    waiting = ids[cases[1][0]]  # HA asked for more information on this one above
+    r = requests.post(f"{API}/complaints/{waiting}/reply", headers=HC, data={"text": "Door number 12, opposite the temple"}, timeout=60)
+    check("citizen reply accepted", r.status_code == 200 and r.json()["status"] == "under_review", r.text[:100])
+    tl = requests.get(f"{API}/complaints/{waiting}/timeline", headers=HC, timeout=30).json()
+    check("reply recorded in the timeline by the citizen", any(e["actor_type"] == "complainant" and (e["note"] or "").startswith("reply:") for e in tl))
+    r = requests.post(f"{API}/complaints/{ids[cases[0][0]]}/reply", headers=HC, data={"text": "Photo of the dry tap attached"}, files=[("files", ("tap.jpg", img, "image/jpeg"))], timeout=60)
+    check("reply with a photo on a routed complaint", r.status_code == 200 and r.json()["attachments"] == 1 and r.json()["status"] == "routed", r.text[:100])
+    r = requests.post(f"{API}/complaints/{ids[cases[2][0]]}/reply", headers=HC, data={"text": "one more thing"}, timeout=30)
+    check("reply on a closed complaint rejected", r.status_code == 409, str(r.status_code))
+    r = requests.post(f"{API}/complaints/{ids[cases[0][0]]}/reply", headers=HO_roads, data={"text": "hi"}, timeout=30)
+    check("only the complainant can reply", r.status_code == 403, str(r.status_code))
+    if mail_ok:
+        time.sleep(4)
+        check("department admin emailed about a routed water complaint", mail_count("officer.water@synapse.local") >= 1, f"{mail_count('officer.water@synapse.local')} mails")
+        check("district admin emailed about reviews in Coimbatore", mail_count("district.coimbatore@synapse.local") >= 1, f"{mail_count('district.coimbatore@synapse.local')} mails")
+    before_district = mail_count("district.coimbatore@synapse.local") if mail_ok else 0
+    import psycopg
+
+    db_url = env("DATABASE_URL", "postgresql+psycopg://postgres:postgres@localhost:5434/synapse").replace("postgresql+psycopg://", "postgresql://")
+    with psycopg.connect(db_url) as conn:
+        conn.execute("update complaints set due_at = now() - interval '1 hour', escalated_at = null where id = %s", (ids[cases[0][0]],))
+        conn.commit()
+    r = requests.post(f"{API}/admin/sla/check", headers=HA, timeout=60)
+    check("overdue check escalates the overdue complaint", r.status_code == 200 and r.json()["escalated"] >= 1, r.text[:80])
+    q = requests.get(f"{API}/review/queue?view=active", headers=HA, timeout=30).json()
+    item = next((i for i in q if i["id"] == ids[cases[0][0]]), None)
+    check("overdue flag shown in the queue", item is not None and "overdue" in item["flags"], str(item["flags"]) if item else "not in queue")
+    d = requests.get(f"{API}/review/{ids[cases[0][0]]}", headers=HA, timeout=30).json()
+    check("escalation recorded on the complaint and in the timeline", d.get("escalated_at") is not None and any((e["note"] or "").startswith("SLA breached") for e in d["timeline"]))
+    if mail_ok:
+        time.sleep(4)
+        check("district admin emailed about the overdue complaint", mail_count("district.coimbatore@synapse.local") > before_district)
+    r = requests.post(f"{API}/admin/sla/check", headers=HA, timeout=60)
+    check("escalation happens once", r.status_code == 200 and r.json()["escalated"] == 0, r.text[:80])
+    h = requests.get(f"{API}/health", timeout=20).json()
+    check("health reports outbox, overdue and model latency", "outbox_pending" in h and "overdue_open" in h and "model_latency_ms" in h, json.dumps({k: h.get(k) for k in ("outbox_pending", "overdue_open", "model_latency_ms")}))
 
     print("\n== staff accounts and districts ==")
     stamp2 = str(int(time.time()))[-7:]

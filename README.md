@@ -53,3 +53,21 @@ Passwords come from `SEED_PASSWORD` in `.env`. Staff accounts are created from t
 ## Evidence limits
 
 Photos up to 25 MB, videos up to 100 MB and 5 minutes (in-app recording stops automatically). Every complaint records the complainant's name and the last four digits of their Aadhaar number for the office; the model never sees them.
+
+## One-command start and demo data
+
+```bash
+powershell -ExecutionPolicy Bypass -File scripts\start.ps1
+```
+
+Starts Postgres and Mailpit, the API on :8000 and the app on :5173 in their own windows. Add `-Https` to serve both over HTTPS on the laptop's LAN address so phones can use the camera and GPS (self-signed certificate from `scripts\make_cert.py`; accept the warning once on `https://<ip>:8000/health`).
+
+```bash
+python scripts\demo_data.py --reset --staff --seed
+```
+
+Wipes complaints and test accounts, adds district admins for Chennai and Madurai, and files ten showcase complaints through the real pipeline. The demo click path is in `docs/07-demo-runbook.md`.
+
+## What happens after filing
+
+The citizen can answer a request for information or add photos and videos from the Track page; the department holding the case is emailed, and so is the district admin whenever a case needs a human decision. Open complaints past their due time are escalated once to the district admin and carry an overdue flag in the queue.

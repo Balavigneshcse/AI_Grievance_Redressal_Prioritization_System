@@ -38,3 +38,6 @@ Thumbs.db
 
 # Local credentials workbook (never committed)
 credentials.xlsx
+
+# Self-signed demo certificates (scripts/make_cert.py)
+certs/

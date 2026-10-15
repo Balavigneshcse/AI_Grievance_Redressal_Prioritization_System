@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 from ..config import settings
 from .. import models
 from . import rules as rules_engine
-from .notifier import notify
+from .notifier import notify, notify_staff
 from .pii import mask_pii
 
 from datetime import datetime, timedelta, timezone
@@ -54,13 +54,13 @@ def _haversine_km(lat1, lng1, lat2, lng2) -> float:
     return 2 * 6371 * math.asin(math.sqrt(a))
 
 
-def _llm_analyse(masked_text: str, image_path: str | None, language_hint: str | None = None) -> tuple[dict, int]:
+def _llm_analyse(masked_text: str, image_paths: list[str] | None, language_hint: str | None = None) -> tuple[dict, int]:
     import ollama
 
     client = ollama.Client(host=settings.OLLAMA_HOST, timeout=settings.LLM_TIMEOUT_S)
-    user = {"role": "user", "content": complaint_user_message(masked_text, language_hint, has_photo=bool(image_path))}
-    if image_path:
-        user["images"] = [image_path]
+    user = {"role": "user", "content": complaint_user_message(masked_text, language_hint, has_photo=bool(image_paths))}
+    if image_paths:
+        user["images"] = list(image_paths)
     t0 = time.time()
     resp = client.chat(
         model=settings.LLM,
@@ -119,11 +119,11 @@ def run_analysis(db: Session, complaint_id) -> models.Analysis:
     if not c.district:
         c.district = district_for(c.manual_address) or district_for(c.raw_text)
 
-    # 4. LLM (first photo, if any, goes in as an image)
-    image_path = next((m.file_path for m in c.media if m.kind == "photo"), None)
+    # 4. LLM (up to three photos go in as images; videos are evidence for the office only)
+    image_paths = [m.file_path for m in c.media if m.kind == "photo"][:3]
     llm: dict | None = None
     try:
-        llm, analysis.latency_ms = _llm_analyse(masked, image_path, hint)
+        llm, analysis.latency_ms = _llm_analyse(masked, image_paths, hint)
     except Exception as exc:
         analysis.error = f"LLM failed: {exc}"[:500]
 
@@ -138,7 +138,7 @@ def run_analysis(db: Session, complaint_id) -> models.Analysis:
         analysis.entities = llm.get("entities") or {}
         analysis.image_findings = llm.get("image_findings") or None
         analysis.image_matches_text = llm.get("image_matches_text")
-        if image_path and analysis.image_matches_text is False:
+        if image_paths and analysis.image_matches_text is False:
             reasons.append("photo does not match the text")
 
     # 5. embedding (English summary + place) and 6. duplicates via pgvector
@@ -261,4 +261,11 @@ def run_analysis(db: Session, complaint_id) -> models.Analysis:
         notify(db, user, "routed", complaint_id=c.id, tracking_id=c.tracking_id, department=dept_label, urgency=urgency)
     else:
         notify(db, user, "under_review", complaint_id=c.id, tracking_id=c.tracking_id)
+    # The office hears about it too: department admins for routed cases, the district admin for reviews.
+    due = c.due_at.astimezone(timezone.utc).strftime("%d %b %H:%M UTC") if c.due_at else "-"
+    if new_status == "routed":
+        notify_staff(db, c, "department", "staff_routed", department=dept.name_en if dept else department, urgency=urgency or "-",
+                     summary=(analysis.summary_en or "")[:300], due=due)
+    else:
+        notify_staff(db, c, "district", "staff_review", district=c.district or "unknown district", reasons="; ".join(reasons)[:300] or "-")
     return analysis

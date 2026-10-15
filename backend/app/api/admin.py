@@ -41,6 +41,14 @@ def test_rules(body: dict, user: models.User = Depends(require_role(*STAFF_ROLES
     return {"matched": r.matched_ids, "department": r.department, "urgency_floor": r.urgency_floor, "force_review": r.force_review, "notes": r.notes}
 
 
+@router.post("/sla/check")
+def sla_check(user: models.User = Depends(require_role("super_admin"))):
+    """Escalate overdue complaints now instead of waiting for the minute tick."""
+    from ..services.sla import check_overdue
+
+    return {"escalated": check_overdue()}
+
+
 @router.post("/models/reload")
 def reload_models(user: models.User = Depends(require_role("super_admin"))):
     reload_second_opinion()

@@ -11,10 +11,13 @@ import uuid
 from ..db import SessionLocal
 from .. import models
 from .pipeline import _set_status, run_analysis
+from .sla import check_overdue
 
 log = logging.getLogger("synapse.worker")
 _q: "queue.Queue[str]" = queue.Queue()
 _thread: threading.Thread | None = None
+_sla_thread: threading.Thread | None = None
+SLA_INTERVAL_S = 60
 
 
 def enqueue(complaint_id) -> None:
@@ -55,8 +58,22 @@ def _loop() -> None:
                 _q.task_done()
 
 
+def _sla_loop() -> None:
+    while True:
+        time.sleep(SLA_INTERVAL_S)
+        try:
+            n = check_overdue()
+            if n:
+                log.info("sla check: %d complaint(s) escalated", n)
+        except Exception:
+            log.exception("sla check failed")
+
+
 def start() -> None:
-    global _thread
+    global _thread, _sla_thread
     if _thread is None or not _thread.is_alive():
         _thread = threading.Thread(target=_loop, name="synapse-worker", daemon=True)
         _thread.start()
+    if _sla_thread is None or not _sla_thread.is_alive():
+        _sla_thread = threading.Thread(target=_sla_loop, name="synapse-sla", daemon=True)
+        _sla_thread.start()

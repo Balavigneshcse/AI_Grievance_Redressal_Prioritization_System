@@ -81,6 +81,7 @@ class Complaint(Base):
     office_department_id: Mapped[str | None] = mapped_column(String(10), nullable=True)
     office_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
     due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    escalated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)  # SLA breach handled once
     duplicate_of: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("complaints.id"), nullable=True)
     contact_incomplete: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)

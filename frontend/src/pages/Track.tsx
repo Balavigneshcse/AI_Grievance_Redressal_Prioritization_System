@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { ComplaintDetail } from "@/components/ComplaintDetail"
+import { ReplyCard } from "@/components/ReplyCard"
 
 export default function Track() {
   const { id } = useParams<{ id: string }>()
@@ -36,7 +37,9 @@ export default function Track() {
           <Skeleton className="h-48 w-full rounded-xl" />
         </div>
       ) : complaint ? (
-        <ComplaintDetail complaint={complaint} />
+        <ComplaintDetail complaint={complaint}>
+          <ReplyCard complaint={complaint} onSent={() => void reload()} />
+        </ComplaintDetail>
       ) : (
         <Alert variant="destructive">
           <AlertTitle>{t("track.notFound")}</AlertTitle>

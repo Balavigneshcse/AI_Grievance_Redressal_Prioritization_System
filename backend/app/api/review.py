@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import case, select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
 from .. import models, schemas
-from ..services.notifier import notify
+from ..services.notifier import STATUS_LABEL, notify, notify_staff
 from ..services.pipeline import _set_status
 from .complaints import complaint_detail
 from .deps import STAFF_ROLES, as_uuid, can_access, require_role, scope_complaints
@@ -14,10 +16,7 @@ from .deps import STAFF_ROLES, as_uuid, can_access, require_role, scope_complain
 router = APIRouter(tags=["review"])
 
 URGENCY_ORDER = case({"critical": 0, "high": 1, "medium": 2, "low": 3}, value=models.Complaint.urgency, else_=4)
-STATUS_LABEL = {
-    "routed": "sent to department", "in_progress": "in progress", "resolved": "resolved", "closed": "closed",
-    "merged": "merged with an earlier complaint", "awaiting_info": "waiting for your reply", "under_review": "under review",
-}
+OPEN_FOR_SLA = ("routed", "in_progress", "awaiting_info", "under_review")
 # Queue views: what a staff member is looking at.
 VIEWS = {
     "review": ("under_review",),
@@ -48,6 +47,8 @@ def _flags(c: models.Complaint) -> list[str]:
                 flags.append("photo_mismatch")
     if c.contact_incomplete:
         flags.append("contact_incomplete")
+    if c.due_at and c.status in OPEN_FOR_SLA and c.due_at < datetime.now(timezone.utc):
+        flags.append("overdue")
     return sorted(set(flags))
 
 
@@ -171,6 +172,15 @@ def decide(complaint_id: str, body: schemas.DecisionIn, user: models.User = Depe
     db.add(ov)
     dept = db.get(models.Department, c.department_id) if c.department_id else None
     dept_name = {"en": dept.name_en, "ta": dept.name_ta, "hi": dept.name_hi}.get(owner.preferred_language, dept.name_en) if dept else ""
+    # Hand-over emails: a case that lands in a department (reassigned, or confirmed by a reviewer) tells that
+    # department; a reopened case tells the district admin.
+    if c.status == "routed" and (body.action == "reassign" or (body.action == "accept" and user.role != "dept_admin")):
+        a = c.analyses[-1] if c.analyses else None
+        due = c.due_at.astimezone(timezone.utc).strftime("%d %b %H:%M UTC") if c.due_at else "-"
+        notify_staff(db, c, "department", "staff_routed", department=dept.name_en if dept else (c.department_id or "-"),
+                     urgency=c.urgency or "-", summary=((a.summary_en if a else "") or "")[:300], due=due)
+    elif c.status == "under_review" and body.action == "reopen":
+        notify_staff(db, c, "district", "staff_review", district=c.district or "unknown district", reasons=body.reason[:300])
     if c.status == "routed":
         notify(db, owner, "routed", complaint_id=c.id, tracking_id=c.tracking_id, department=dept_name, urgency=c.urgency)
     else:

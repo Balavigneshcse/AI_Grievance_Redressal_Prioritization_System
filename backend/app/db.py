@@ -35,7 +35,7 @@ def init_db() -> None:
     with engine.begin() as conn:
         # Columns added after the first deployment (create_all does not alter existing tables).
         for col, typ in [("district", "VARCHAR(60)"), ("office_department_id", "VARCHAR(10)"), ("office_name", "VARCHAR(200)"), ("due_at", "TIMESTAMPTZ"),
-                         ("complainant_name", "VARCHAR(120)"), ("aadhaar_last4", "VARCHAR(4)")]:
+                         ("complainant_name", "VARCHAR(120)"), ("aadhaar_last4", "VARCHAR(4)"), ("escalated_at", "TIMESTAMPTZ")]:
             conn.execute(text(f"ALTER TABLE complaints ADD COLUMN IF NOT EXISTS {col} {typ}"))
         for col, typ in [("district", "VARCHAR(60)"), ("full_name", "VARCHAR(120)"), ("is_active", "BOOLEAN NOT NULL DEFAULT TRUE")]:
             conn.execute(text(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {col} {typ}"))

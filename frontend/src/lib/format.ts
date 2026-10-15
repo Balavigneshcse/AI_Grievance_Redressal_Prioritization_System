@@ -16,6 +16,20 @@ export function formatDateTime(iso: string | null | undefined, lang: string): st
   }
 }
 
+/** Time left until (or elapsed since) a due time. */
+export function formatDue(iso: string | null | undefined, t: TFunction): { label: string; overdue: boolean } | null {
+  if (!iso) return null
+  const due = new Date(iso).getTime()
+  if (Number.isNaN(due)) return null
+  const diff = due - Date.now()
+  const overdue = diff < 0
+  const m = Math.floor(Math.abs(diff) / 60000)
+  const h = Math.floor(m / 60)
+  const d = Math.floor(h / 24)
+  const span = d >= 1 ? t("due.days", { count: d }) : h >= 1 ? t("due.hours", { count: h }) : t("due.minutes", { count: m })
+  return { label: overdue ? t("due.overdueBy", { time: span }) : t("due.in", { time: span }), overdue }
+}
+
 /** Short relative age with i18n suffixes. */
 export function formatAge(iso: string | null | undefined, t: TFunction): string {
   if (!iso) return ""

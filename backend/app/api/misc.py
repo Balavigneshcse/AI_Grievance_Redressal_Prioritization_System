@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import text
+from datetime import datetime, timezone
+
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from ..config import settings
 from ..db import get_db
-from .. import schemas
-from ..services import worker
+from .. import models, schemas
+from ..services import notifier, worker
 from scripts.common import MODELS, nearest_place
 
 router = APIRouter(tags=["misc"])
@@ -24,6 +26,10 @@ def health(db: Session = Depends(get_db)):
     try:
         db.execute(text("SELECT 1"))
         out["db"] = "ok"
+        recent = db.execute(select(models.Analysis.latency_ms).where(models.Analysis.latency_ms.is_not(None)).order_by(models.Analysis.created_at.desc()).limit(10)).scalars().all()
+        out["model_latency_ms"] = {"last": recent[0] if recent else None, "mean_last_10": int(sum(recent) / len(recent)) if recent else None}
+        out["outbox_pending"] = db.execute(select(func.count()).where(models.Notification.status == "queued")).scalar_one()
+        out["overdue_open"] = db.execute(select(func.count()).where(models.Complaint.due_at < datetime.now(timezone.utc), models.Complaint.status.in_(("routed", "in_progress", "awaiting_info", "under_review")))).scalar_one()
     except Exception as exc:
         out["db"] = f"down: {exc}"[:120]
     try:

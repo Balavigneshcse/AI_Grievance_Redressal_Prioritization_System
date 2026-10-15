@@ -70,6 +70,8 @@ Open `http://localhost:8000/docs` for the API, `http://localhost:8025` for the m
 | PATCH | `/admin/users/{id}` | super admin, district admin | enable or disable, rename, move department, reset password |
 | GET | `/admin/districts` | staff | the 38 Tamil Nadu districts with staff counts |
 | GET | `/admin/overview` | super admin, district admin | complaint counts per district and department |
+| POST | `/complaints/{id}/reply` | complainant (owner) | answer a request for information or add details, with photos or videos; an awaiting-info case resumes; the office is emailed |
+| POST | `/admin/sla/check` | super admin | escalate overdue complaints now (the worker does it every minute) |
 | GET, PUT | `/admin/rules` | super admin (read: all staff) | YAML rules with change log |
 | POST | `/admin/rules/test` | staff | run the rules against a text |
 | POST | `/admin/models/reload` | super admin | pick up a newly trained second-opinion model |
@@ -152,3 +154,22 @@ The camera dialog has a video mode: MediaRecorder at 1.5 Mbit/s with sound when 
 ### Console fixes
 
 Google Fonts were removed (the hackathon network closes those connections); the UI uses the system fonts that ship with Windows and Android and cover Tamil and Devanagari. The two `Button`s that render a router `Link` now pass `nativeButton={false}`, which clears the Base UI warning.
+
+---
+
+## 7. Closing the loops (15 Oct 2026, 20:00-21:30)
+
+| Loop | What was missing | What exists now |
+|---|---|---|
+| Citizen reply | A request for information was a dead end | `POST /complaints/{id}/reply` with text and up to four photos or videos; the Track page shows the office's question and a reply box; an awaiting-info case goes back to the status it came from; the department (or the district admin for a reviewed case) is emailed; the citizen gets a status mail |
+| Staff emails | Only citizens were emailed | `notify_staff()` in `services/notifier.py`: `staff_routed` to the department admins of the complaint's department and district (routing, reassignment, reviewer acceptance), `staff_review` to the district admin (or super admins when the district has none), `staff_reply`, `overdue`; all three languages |
+| SLA | Due times existed but nothing watched them | `services/sla.py`: every minute the worker escalates open complaints past `due_at` once (timeline event, `escalated_at`, emails to district and department admins); the queue shows an `overdue` flag and the time left or exceeded; the Track page shows an escalation notice; `POST /admin/sla/check` runs it on demand |
+| Admin pages | Rules and metrics only through the API | `/admin/rules` (rule list, YAML editor with change note, rule tester, classifier reload; read-only for district admins) and `/admin/metrics` (totals, live health, bars by status and department, live accuracy per language, second-opinion report, gold-set evaluation runs; refreshes every 10 s) |
+| Vision input | Only the first photo reached the model | Up to three photos per complaint are sent to Gemma 3 |
+| Health | `db`, `ollama`, models, queue depth | plus `model_latency_ms` (last and mean of the last 10), `outbox_pending`, `overdue_open` |
+
+### Demo tooling
+
+- `scripts/demo_data.py --reset --staff --seed`: wipes complaints and test accounts, adds Chennai and Madurai district admins and a Chennai electricity admin (password `SEED_PASSWORD`), files ten showcase complaints in five languages across Coimbatore, Chennai, Madurai, Salem and Tiruchirappalli through the real pipeline, then accepts, questions and resolves a few so every queue view has content.
+- `scripts/start.ps1`: one command for Postgres + Mailpit, the API and the app, each in its own window; `-Https` serves both over HTTPS on the laptop's LAN address with a self-signed certificate from `scripts/make_cert.py`, which phones need before the camera and GPS APIs work. The API allows any private-network origin.
+- `docs/07-demo-runbook.md`: the five-minute click path, the numbers to quote, and the recovery steps.

@@ -15,6 +15,8 @@ import Track from "@/pages/Track"
 import OfficerQueue from "@/pages/OfficerQueue"
 import OfficerComplaint from "@/pages/OfficerComplaint"
 import Admin from "@/pages/Admin"
+import AdminRules from "@/pages/AdminRules"
+import AdminMetrics from "@/pages/AdminMetrics"
 
 export default function App() {
   return (
@@ -42,6 +44,8 @@ export default function App() {
 
               <Route element={<RequireAuth staff admin />}>
                 <Route path="/admin" element={<Admin />} />
+                <Route path="/admin/rules" element={<AdminRules />} />
+                <Route path="/admin/metrics" element={<AdminMetrics />} />
               </Route>
 
               <Route path="*" element={<Navigate to="/" replace />} />

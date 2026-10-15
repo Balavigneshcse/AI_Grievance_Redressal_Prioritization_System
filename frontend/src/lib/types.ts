@@ -130,6 +130,7 @@ export interface Complaint {
   district?: string | null
   office_name?: string | null
   due_at?: string | null
+  escalated_at?: string | null
   created_at: string
   media: Media[]
   analysis: Analysis | null
@@ -150,6 +151,7 @@ export interface QueueItem {
   urgency: Urgency | null
   district?: string | null
   office_name?: string | null
+  due_at?: string | null
   complainant_name?: string | null
   department: DepartmentRef
   language_primary: string | null

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { Building2, Copy, KeyRound, Loader2, MapPinned, RefreshCw, UserPlus, Users } from "lucide-react"
+import { BarChart3, Building2, Copy, FileCog, KeyRound, Loader2, MapPinned, RefreshCw, UserPlus, Users } from "lucide-react"
 import { toast } from "sonner"
 import { api, ApiError } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
@@ -74,6 +75,7 @@ function PickSelect({
 export default function Admin() {
   const { t, i18n } = useTranslation()
   const { user } = useAuth()
+  const navigate = useNavigate()
   const { departments, name } = useDepartments()
   const superAdmin = user?.role === "super_admin"
   const [districts, setDistricts] = useState<DistrictInfo[]>([])
@@ -202,7 +204,15 @@ export default function Admin() {
             {superAdmin ? t("admin.subtitle") : t("admin.districtAdminHint", { district: user?.district ?? DASH })}
           </p>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1">
+          <Button variant="outline" size="sm" onClick={() => navigate("/admin/metrics")}>
+            <BarChart3 />
+            {t("admin.metrics")}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => navigate("/admin/rules")}>
+            <FileCog />
+            {t("admin.rules")}
+          </Button>
           <Button variant="ghost" size="icon" aria-label={t("common.refresh")} onClick={() => void load()} disabled={loading}>
             <RefreshCw className={loading ? "animate-spin" : undefined} />
           </Button>

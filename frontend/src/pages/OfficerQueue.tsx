@@ -8,7 +8,8 @@ import type { QueueItem, QueueView } from "@/lib/types"
 import { useAuth } from "@/lib/auth"
 import { useDepartments } from "@/lib/departments"
 import { LANGUAGE_NAMES, URGENCY_ORDER } from "@/lib/labels"
-import { formatAge } from "@/lib/format"
+import { formatAge, formatDue } from "@/lib/format"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -211,7 +212,9 @@ export default function OfficerQueue() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(items ?? []).map((q) => (
+              {(items ?? []).map((q) => {
+                const due = formatDue(q.due_at, t)
+                return (
                 <TableRow
                   key={q.id}
                   role="link"
@@ -259,9 +262,15 @@ export default function OfficerQueue() {
                       ))}
                     </div>
                   </TableCell>
-                  <TableCell className="text-right text-muted-foreground">{formatAge(q.created_at, t)}</TableCell>
+                  <TableCell className="text-right text-muted-foreground">
+                    {formatAge(q.created_at, t)}
+                    {due ? (
+                      <span className={cn("block text-xs", due.overdue ? "font-medium text-red-600" : "")}>{due.label}</span>
+                    ) : null}
+                  </TableCell>
                 </TableRow>
-              ))}
+                )
+              })}
             </TableBody>
           </Table>
         </Card>

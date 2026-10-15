@@ -35,7 +35,12 @@ app = FastAPI(
     description="Multilingual complaint intake, local-model triage, human review and status updates.",
     lifespan=lifespan,
 )
-app.add_middleware(CORSMiddleware, allow_origins=settings.CORS_ORIGINS, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+# Phones on the same Wi-Fi open the app from the laptop's LAN address; any private-network origin is allowed.
+app.add_middleware(
+    CORSMiddleware, allow_origins=settings.CORS_ORIGINS,
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})(:\d+)?",
+    allow_credentials=True, allow_methods=["*"], allow_headers=["*"],
+)
 app.include_router(auth.router)
 app.include_router(complaints.router)
 app.include_router(review.router)
