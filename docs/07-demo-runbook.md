@@ -7,13 +7,13 @@ Five minutes of clicks, in order. Everything runs on the laptop; nothing leaves 
 1. Start everything: `powershell -ExecutionPolicy Bypass -File scripts\start.ps1` (add `-Https` if a phone will be used; then open `https://<laptop-ip>:8000/health` on the phone once and accept the warning).
 2. Fresh demo data: `python scripts\demo_data.py --reset --staff --seed` (about four minutes: ten complaints go through the real pipeline). Skip `--reset` if you want to keep what is already there.
 3. Check `http://localhost:8000/health`: `db ok`, `ollama ok`, all three models `true`, `outbox_pending 0`.
-4. Open four browser tabs, logged in as: citizen (`citizen@synapse.local`), department admin (`officer.water@synapse.local`), district admin (`district.coimbatore@synapse.local`), super admin (`admin@synapse.local`). Password: `SEED_PASSWORD` from `.env`. Mail inbox: `http://localhost:8025` (or the real Gmail inbox if `.env` points at Gmail).
+4. Open four browser tabs, logged in as: citizen (`citizen@synapse.local`, registered as Demo Citizen, Aadhaar last 4 `4321`), department admin (`officer.water@synapse.local`), district admin (`district.coimbatore@synapse.local`), super admin (`admin@synapse.local`). Password: `SEED_PASSWORD` from `.env`. Mail inbox: `http://localhost:8025` (or the real Gmail inbox if `.env` points at Gmail). If the jury wants to see registration, the form asks for name, mobile, email, Aadhaar last 4, password and language, then the OTP mail.
 
 ## The story (one complaint, end to end)
 
 | Step | Tab | Do | Say |
 |---|---|---|---|
-| 1 | Citizen | New complaint. Type in Tanglish: `thanni 3 days ah varala, veetla 2 kids vomiting, Gandhipuram 5th street`. Fill name and Aadhaar last 4. Camera: switch to Video, record 5 seconds, stop. Use current location. Submit. | Any language, any script, photo or video evidence, GPS. Tracking ID in under a second. |
+| 1 | Citizen | New complaint. Type in Tanglish: `thanni 3 days ah varala, veetla 2 kids vomiting, Gandhipuram 5th street`. Point at the "Filing as" line (name and Aadhaar last 4 from the account). Camera: switch to Video, record 5 seconds, stop. Use current location. Submit. | Any language, any script, photo or video evidence, GPS. Identity taken once at registration, never retyped. Tracking ID in under a second. |
 | 2 | Citizen | Open "Track it". Watch Analysing turn into Under review with department, urgency, evidence highlighted in the original text, the office and the due time. | One local model call (Gemma 3 on this laptop), no cloud. Rules overrode "health" to Water Supply and forced a human because children are ill. |
 | 3 | District admin | Queue, "Needs review". Open the complaint. Accept with a reason. | A human decides every uncertain or critical case. The reason is mandatory and becomes part of the audit trail. |
 | 4 | Department admin | Queue, "Active work". The complaint is there (only water, only Coimbatore). Accept (starts work), then Request info: "Please share the door number". | Each department sees only its own cases. The citizen is emailed in Tamil. |
@@ -27,8 +27,8 @@ Five minutes of clicks, in order. Everything runs on the laptop; nothing leaves 
 ## Numbers to have ready
 
 - Gold set with rules: department 100%, critical recall 100%, language ID 92% (raw 4B model: 75% / 75% / 92%).
-- Second-opinion classifier, held-out after round 3 (1,169 synthetic + gold + NYC rows, 1,392 in all): department 88% (English 93%, Hinglish 93%, Hindi 84%, Tanglish 84%, Tamil 78%), urgency 56%.
-- End-to-end suite: 77+ checks green; analysis 12 to 20 s per complaint on an RTX 3050 4 GB; tracking ID in under 1 s.
+- Second-opinion classifier, held-out after round 4 (1,644 synthetic + gold + NYC rows, 1,867 in all): department 85% (English 89%, Hinglish 88%, Tanglish 87%, Hindi 80%, Tamil 76%), urgency 56%. Across four rounds it has settled between 85% and 88%: more synthetic data from the same generator does not move it; real labelled corrections would.
+- End-to-end suite: 118 checks green; analysis 12 to 20 s per complaint on an RTX 3050 4 GB; tracking ID in under 1 s.
 - Mail: outbox with one persistent connection; 70 mails in one test run, none failed.
 
 ## If something goes wrong

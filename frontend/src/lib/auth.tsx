@@ -19,6 +19,8 @@ interface AuthContextValue {
   ready: boolean
   login: (token: string, user: User) => void
   logout: () => void
+  /** Replace the stored user after a profile change (PATCH /auth/me). */
+  updateUser: (user: User) => void
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -59,6 +61,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }, [])
 
+  const updateUser = useCallback((nextUser: User) => {
+    try {
+      localStorage.setItem(USER_KEY, JSON.stringify(nextUser))
+    } catch {
+      /* ignore */
+    }
+    setUser(nextUser)
+  }, [])
+
   // Refresh the user from /auth/me on boot; drop the session only on a real 401.
   useEffect(() => {
     let cancelled = false
@@ -97,8 +108,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [logout])
 
   const value = useMemo(
-    () => ({ user, token, ready, login, logout }),
-    [user, token, ready, login, logout],
+    () => ({ user, token, ready, login, logout, updateUser }),
+    [user, token, ready, login, logout, updateUser],
   )
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

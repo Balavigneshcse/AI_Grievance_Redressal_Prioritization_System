@@ -93,8 +93,6 @@ def mail_count(email: str) -> int:
 
 def submit(H: dict, text: str, **fields) -> dict:
     files = fields.pop("files", None)
-    fields.setdefault("complainant_name", "Demo Citizen")
-    fields.setdefault("aadhaar_last4", "4321")
     r = requests.post(f"{API}/complaints", headers=H, data={"text": text, **fields}, files=files, timeout=120)
     if r.status_code != 202:
         raise RuntimeError(f"submit failed {r.status_code}: {r.text[:200]}")
@@ -146,17 +144,26 @@ def main() -> int:
     HA = login("admin@synapse.local", seed_pw)
     r = requests.get(f"{API}/review/queue", headers=HC, timeout=30)
     check("complainant cannot open the review queue", r.status_code == 403)
-    r = requests.post(f"{API}/complaints", headers=HC, data={"text": "water not coming since morning in our street"}, timeout=60)
-    check("complaint without name and Aadhaar digits rejected", r.status_code in (400, 422), str(r.status_code))
+    # Identity (name, Aadhaar last 4) is taken once at registration and copied onto every complaint.
+    no_id = {"mobile": "9123456780", "email": "no.identity@synapse.local", "password": "Strong@12345"}
+    r = requests.post(f"{API}/auth/register", json=no_id, timeout=30)
+    check("registration without name and Aadhaar digits rejected", r.status_code in (400, 422), str(r.status_code))
+    r = requests.post(f"{API}/auth/register", json={**no_id, "full_name": "No Identity", "aadhaar_last4": "12a4"}, timeout=30)
+    check("registration with bad Aadhaar digits rejected", r.status_code == 400, r.json().get("detail", "")[:60])
+    r = requests.patch(f"{API}/auth/me", headers=HC, json={"full_name": "Demo Citizen", "aadhaar_last4": "4321"}, timeout=30)
+    check("citizen completes account details (PATCH /auth/me)", r.status_code == 200 and r.json().get("aadhaar_last4") == "4321", r.text[:80])
+    r = requests.patch(f"{API}/auth/me", headers=HC, json={"aadhaar_last4": "43210"}, timeout=30)
+    check("five-digit Aadhaar rejected", r.status_code == 400, str(r.status_code))
 
     mail_ok = env("SMTP_HOST", "localhost") == "localhost"
     stamp = int(time.time())
     new_email = f"e2e.{stamp}@synapse.local"
     new_mobile = "9" + str(stamp)[-9:]  # unique per run; mobiles are unique in the users table
     if mail_ok:
-        r = requests.post(f"{API}/auth/register", json={"mobile": new_mobile, "email": new_email, "password": "Weak", "preferred_language": "hi"}, timeout=30)
+        new_user = {"mobile": new_mobile, "email": new_email, "preferred_language": "hi", "full_name": "E2E Citizen", "aadhaar_last4": "7788"}
+        r = requests.post(f"{API}/auth/register", json={**new_user, "password": "Weak"}, timeout=30)
         check("weak password rejected", r.status_code == 400, r.json().get("detail", "")[:60])
-        r = requests.post(f"{API}/auth/register", json={"mobile": new_mobile, "email": new_email, "password": "Strong@12345", "preferred_language": "hi"}, timeout=60)
+        r = requests.post(f"{API}/auth/register", json={**new_user, "password": "Strong@12345"}, timeout=60)
         check("register accepted", r.status_code == 201, r.text[:80] if r.status_code != 201 else "")
         r = requests.post(f"{API}/auth/login", json={"email": new_email, "password": "Strong@12345"}, timeout=30)
         check("login blocked until verified", r.status_code == 403)
@@ -165,6 +172,8 @@ def main() -> int:
         check("wrong OTP rejected", r.status_code == 400)
         r = requests.post(f"{API}/auth/verify-otp", json={"email": new_email, "code": code}, timeout=30)
         check("correct OTP verifies and logs in", r.status_code == 200)
+        me = r.json().get("user", {})
+        check("account carries the name and Aadhaar digits given at registration", me.get("full_name") == "E2E Citizen" and me.get("aadhaar_last4") == "7788", str(me)[:100])
         H_new = {"Authorization": "Bearer " + r.json()["access_token"]}
         seen = mail_count(new_email)
         requests.post(f"{API}/auth/forgot", json={"email": new_email}, timeout=60)
@@ -218,7 +227,7 @@ def main() -> int:
         check(f"  english summary present", bool(a.get("summary_en")), (a.get("summary_en") or "")[:80])
         check(f"  district office and due time set", bool(d.get("office_name")) and bool(d.get("due_at")), f"{d.get('district')} / {d.get('office_name')}")
         check(f"  second opinion populated (staff view)", requests.get(f"{API}/review/{acc['id']}", headers=HA, timeout=30).json()["analysis"].get("second_opinion_department") is not None)
-        check(f"  complainant name and Aadhaar digits stored", d.get("complainant_name") == "Demo Citizen" and d.get("aadhaar_last4") == "4321")
+        check(f"  complaint carries the account's name and Aadhaar digits", d.get("complainant_name") == "Demo Citizen" and d.get("aadhaar_last4") == "4321")
 
     print("\n== photo with EXIF GPS ==")
     img = test_image_with_gps()

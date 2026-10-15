@@ -52,7 +52,7 @@ Passwords come from `SEED_PASSWORD` in `.env`. Staff accounts are created from t
 
 ## Evidence limits
 
-Photos up to 25 MB, videos up to 100 MB and 5 minutes (in-app recording stops automatically). Every complaint records the complainant's name and the last four digits of their Aadhaar number for the office; the model never sees them.
+Photos up to 25 MB, videos up to 100 MB and 5 minutes (in-app recording stops automatically). The complainant's name and the last four digits of their Aadhaar number are taken once at registration; every complaint carries them for the office, and the model never sees them.
 
 ## One-command start and demo data
 

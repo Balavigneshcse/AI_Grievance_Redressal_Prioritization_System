@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -94,8 +93,6 @@ async def _save_uploads(db: Session, c: models.Complaint, files: list[UploadFile
 @router.post("/complaints", status_code=202, response_model=schemas.ComplaintAccepted)
 async def create_complaint(
     text: str = Form(...),
-    complainant_name: str = Form(...),
-    aadhaar_last4: str = Form(...),
     language_hint: str | None = Form(None),
     lat: float | None = Form(None),
     lng: float | None = Form(None),
@@ -110,16 +107,13 @@ async def create_complaint(
         raise HTTPException(400, "Please describe the problem in at least a few words")
     if location_source not in ("camera_gps", "exif", "browser", "manual", "none"):
         location_source = "none"
-    complainant_name = " ".join((complainant_name or "").split())
-    if not 2 <= len(complainant_name) <= 120:
-        raise HTTPException(400, "Please enter your name")
-    aadhaar_last4 = (aadhaar_last4 or "").strip()
-    if not re.fullmatch(r"\d{4}", aadhaar_last4):
-        raise HTTPException(400, "Enter the last 4 digits of your Aadhaar number")
+    # Name and Aadhaar last 4 are taken once, at registration (or PATCH /auth/me); every complaint carries them for the office.
+    if not (user.full_name and user.aadhaar_last4):
+        raise HTTPException(400, "Add your name and the last 4 digits of your Aadhaar number to your account first")
 
     c = models.Complaint(
         tracking_id=_tracking_id(db), user_id=user.id, raw_text=text, language_hint=language_hint,
-        complainant_name=complainant_name, aadhaar_last4=aadhaar_last4,
+        complainant_name=user.full_name, aadhaar_last4=user.aadhaar_last4,
         lat=lat, lng=lng, location_source=location_source if (lat is not None or manual_address) else "none",
         manual_address=manual_address, contact_incomplete=not (user.mobile and user.email),
     )

@@ -126,7 +126,7 @@ def seed(pw: str) -> None:
     ids = []
     for i, (text, loc, extra) in enumerate(SHOWCASE, 1):
         files = [("files", ("pothole.jpg", pothole_image(), "image/jpeg"))] if extra.get("photo") else None
-        data = {"text": text, "complainant_name": "Demo Citizen", "aadhaar_last4": "4321", **loc}
+        data = {"text": text, **loc}  # name and Aadhaar digits come from the citizen account
         r = requests.post(f"{API}/complaints", headers=HC, data=data, files=files, timeout=120)
         if r.status_code != 202:
             print(f"[{i}] submit failed: {r.status_code} {r.text[:120]}")

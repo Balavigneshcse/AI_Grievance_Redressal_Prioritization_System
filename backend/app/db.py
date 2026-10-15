@@ -39,8 +39,17 @@ def init_db() -> None:
                          ("rating", "INTEGER"), ("rating_note", "TEXT"), ("rated_at", "TIMESTAMPTZ"),
                          ("reopen_count", "INTEGER NOT NULL DEFAULT 0"), ("supporters", "INTEGER NOT NULL DEFAULT 0")]:
             conn.execute(text(f"ALTER TABLE complaints ADD COLUMN IF NOT EXISTS {col} {typ}"))
-        for col, typ in [("district", "VARCHAR(60)"), ("full_name", "VARCHAR(120)"), ("is_active", "BOOLEAN NOT NULL DEFAULT TRUE")]:
+        for col, typ in [("district", "VARCHAR(60)"), ("full_name", "VARCHAR(120)"), ("is_active", "BOOLEAN NOT NULL DEFAULT TRUE"),
+                         ("aadhaar_last4", "VARCHAR(4)")]:
             conn.execute(text(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {col} {typ}"))
+        # Identity moved from the complaint form to registration (16 Oct 2026): accounts that filed
+        # complaints before that carry over the name and Aadhaar digits from their latest complaint.
+        conn.execute(text(
+            "UPDATE users u SET full_name = COALESCE(u.full_name, c.complainant_name), aadhaar_last4 = c.aadhaar_last4 "
+            "FROM (SELECT DISTINCT ON (user_id) user_id, complainant_name, aadhaar_last4 FROM complaints "
+            "      WHERE aadhaar_last4 IS NOT NULL ORDER BY user_id, created_at DESC) c "
+            "WHERE c.user_id = u.id AND u.aadhaar_last4 IS NULL"
+        ))
         conn.execute(text("ALTER TABLE media ADD COLUMN IF NOT EXISTS role VARCHAR(12) NOT NULL DEFAULT 'evidence'"))
         conn.execute(text("ALTER TABLE media ADD COLUMN IF NOT EXISTS uploaded_by UUID"))
         conn.execute(text("ALTER TABLE notifications ADD COLUMN IF NOT EXISTS note_en TEXT"))

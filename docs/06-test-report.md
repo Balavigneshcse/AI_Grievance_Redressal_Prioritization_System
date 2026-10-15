@@ -121,18 +121,20 @@ The browser check of the new screens (rules, metrics, admin, reply card on an aw
 
 A second generation run added 477 complaints (160 department x urgency x language combinations, 3 each, none dropped by the script check), bringing the synthetic set to 940 rows. The classifier was retrained on 1,163 rows (synthetic + gold + NYC 311 sample) and the gold set replayed.
 
-| Metric | Round 1 (460 synthetic) | Round 2 (940 synthetic) | Round 3 (1,169 synthetic, partial run) |
-|---|---|---|---|
-| Department, held-out | 0.869 (137 rows) | 0.846 (234 rows): water 1.00, electricity 0.93, sanitation 0.94, health 0.94, revenue 0.92, roads 0.81, safety 0.75, general 0.53 | 0.875 (279 rows): health 1.00, roads 0.98, water 0.97, revenue 0.96, electricity 0.90, sanitation 0.83, safety 0.82, general 0.50 |
-| Department per language | en 0.93, ta 0.95, hi 0.83, hi-en 0.80, ta-en 0.74 | en 0.91, hi 0.89, ta-en 0.85, hi-en 0.78, ta 0.73 | en 0.93, hi-en 0.93, hi 0.84, ta-en 0.84, ta 0.78 |
-| Urgency, held-out | 0.479 | 0.550 (chance 0.25); low 0.81, critical 0.52 | 0.555; low 0.79, critical 0.61 |
-| Gold set, model alone | department 0.83, critical recall 0.75 | unchanged (the model is not trained) | unchanged |
-| Gold set, system with rules | department 1.00, urgency 0.92, critical recall 1.00, language ID 0.92 | unchanged | unchanged |
-| Mean model latency on the gold set | 12.7 s | 11.5 s | 13.2 s |
+| Metric | Round 1 (460 synthetic) | Round 2 (940 synthetic) | Round 3 (1,169 synthetic, partial run) | Round 4 (1,644 synthetic) |
+|---|---|---|---|---|
+| Department, held-out | 0.869 (137 rows) | 0.846 (234 rows): water 1.00, electricity 0.93, sanitation 0.94, health 0.94, revenue 0.92, roads 0.81, safety 0.75, general 0.53 | 0.875 (279 rows): health 1.00, roads 0.98, water 0.97, revenue 0.96, electricity 0.90, sanitation 0.83, safety 0.82, general 0.50 | 0.845 (373 rows): water 0.98, revenue 0.97, roads 0.95, electricity 0.92, health 0.91, sanitation 0.87, safety 0.78, general 0.34 |
+| Department per language | en 0.93, ta 0.95, hi 0.83, hi-en 0.80, ta-en 0.74 | en 0.91, hi 0.89, ta-en 0.85, hi-en 0.78, ta 0.73 | en 0.93, hi-en 0.93, hi 0.84, ta-en 0.84, ta 0.78 | en 0.89, hi-en 0.88, ta-en 0.87, hi 0.80, ta 0.76 |
+| Urgency, held-out | 0.479 | 0.550 (chance 0.25); low 0.81, critical 0.52 | 0.555; low 0.79, critical 0.61 | 0.563; low 0.73, critical 0.63, high 0.56 |
+| Gold set, model alone | department 0.83, critical recall 0.75 | unchanged (the model is not trained) | unchanged | unchanged |
+| Gold set, system with rules | department 1.00, urgency 0.92, critical recall 1.00, language ID 0.92 | unchanged | unchanged | unchanged |
+| Mean model latency on the gold set | 12.7 s | 11.5 s | 13.2 s | 12.4 s |
 
 Reading: the larger held-out split is a harder, more varied set, so the department number moved from 0.87 to 0.85 while urgency improved from 0.48 to 0.55; the general catch-all remains the weak class (0.53) and Tamil-script department accuracy dropped on a 37-row split. The classifier is a second opinion only: department decisions on the gold set are 100% once rules apply, and every disagreement goes to a human. The running API picked up the new files through `POST /admin/models/reload`.
 
 Round 3 (16 Oct, 00:30-01:10) was cut short at 79 of 160 combinations when the generator had to be stopped for the test run; its 229 rows were cleaned and appended, and the retrain on 1,392 rows lifted department accuracy to 0.875 with Hinglish at 0.93; Tamil script remains the weakest language (0.78 on 49 rows) and the general catch-all the weakest class (0.50).
+
+Round 4 (16 Oct, 01:30-02:50) completed all 160 combinations (475 rows, none dropped) and the synthetic set reached 1,644 rows. The retrain on 1,867 rows gives department 0.845 and urgency 0.563: urgency keeps creeping up, department has settled in the 0.85 to 0.88 band across four rounds and the general catch-all got harder (0.34) as the data grew more varied. The reading is that more synthetic data from the same generator has stopped helping; the next gain has to come from real labelled complaints and the officer corrections the system already records.
 
 ---
 
@@ -143,3 +145,9 @@ Suite grown to 114 checks, run against a Mailpit-backed API instance.
 **Result: 114 of 114 checks passed.** New checks: queue search by tracking ID and by complainant name; the office attaches a resolution photo, the citizen sees it marked as proof, and an upload outside the admin's scope is refused; the citizen rates a resolved complaint (stored with its feedback window), reopens it with a note (back to in progress, reopen count 1, citizen event in the timeline, roads admin emailed), and cannot rate while it is open again; the English resolve note reaches the Tamil-speaking citizen translated into Tamil script in the status mail; another citizen supports the water complaint (counted once, the owner cannot support their own), the nearby list shows it as supported without any personal data, the supported list and the queue carry the count; the map lists located complaints and is scoped for a department admin; metrics carry the average rating, reopen rate and supporters; twelve failed logins for one address end in 429.
 
 Three runs were needed. The first two stalled because the round-3 generator was still running (its process survived a Ctrl+C) and Ollama, serving one request at a time, replayed a queue of timed-out requests; the fix was to stop the generator, restart the Ollama server, and give the embedding call a timeout so a wedged model can never block the worker again. The remaining defects were ours: the static routes `/complaints/nearby` and `/complaints/supported` were registered after `/complaints/{id}` and were swallowed by it; the outbox translated a mail before sending the staff mails behind it (plain mails now go first and the suite waits for mail instead of sleeping); and the nearby list cut a supported complaint off at five results when older test complaints sat at the same coordinates (ties now break by supporters and recency).
+
+## 11. Morning run (16 Oct 2026, 02:00): identity taken at registration
+
+The name and the last four digits of the Aadhaar number moved from the complaint form to registration: `POST /auth/register` now requires `full_name` and `aadhaar_last4`, `PATCH /auth/me` lets an account from before this change add them once, and every complaint copies them from the account at intake (`db.py` also backfills older accounts from their latest complaint at start-up). Suite grown to 118 checks, run against a Mailpit-backed API instance on the new code.
+
+**Result: 118 of 118 checks passed, first run.** New checks: registration without the two fields is rejected (422) and with `12a4` as the digits (400); the seeded citizen completes its details through `PATCH /auth/me` and a five-digit value is refused; a newly registered account carries the name and digits given at registration in the login response; every analysed complaint carries the account's name and digits although the form no longer sends them. The old check "complaint without name and Aadhaar digits rejected" went with the form fields. Browser check: the registration form shows the two new fields with the Aadhaar hint in all three languages, and the complaint form shows a "Filing as Demo Citizen, XXXX XXXX 4321" line from the account instead of the inputs.

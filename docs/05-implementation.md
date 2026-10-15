@@ -50,12 +50,13 @@ Open `http://localhost:8000/docs` for the API, `http://localhost:8025` for the m
 
 | Method | Path | Role | Purpose |
 |---|---|---|---|
-| POST | `/auth/register` | public | mobile, email, password, language; sends OTP |
+| POST | `/auth/register` | public | name, Aadhaar last 4, mobile, email, password, language; sends OTP |
 | POST | `/auth/verify-otp` | public | activates the account, returns JWT |
 | POST | `/auth/resend-otp` | public | new registration code |
 | POST | `/auth/login` | public | JWT; 403 if unverified |
 | POST | `/auth/forgot`, `/auth/reset` | public | password reset by OTP; invalidates old sessions |
 | GET | `/auth/me` | any | current user |
+| PATCH | `/auth/me` | any | change name, Aadhaar last 4 or mail language; accounts from before 16 Oct complete their details here |
 | GET | `/departments` | public | ids and names in three languages |
 | POST | `/complaints` | complainant | multipart intake, returns 202 + tracking ID, queues analysis |
 | GET | `/complaints/mine` | complainant | own complaints |
@@ -145,7 +146,7 @@ Frontend: `/admin` (super and district admins) lists staff with an active switch
 
 ### Complaint identity
 
-Every complaint now carries `complainant_name` and `aadhaar_last4` (exactly four digits), entered in a "Your details" card on the form and validated by the API (400 otherwise). They are stored on the complaint, shown to the owner and to staff, and never sent to the model: the model only sees the masked complaint text.
+The citizen's full name and the last four digits of their Aadhaar number are taken once, at registration (`users.full_name`, `users.aadhaar_last4`; the API rejects a registration without them or with anything but four digits). Every complaint copies them at intake into `complaints.complainant_name` and `complaints.aadhaar_last4`, so the office sees them on the queue and the detail page, the citizen sees them on the tracking page, and the model never does: it only sees the masked complaint text. The complaint form shows a "Filing as" line from the account instead of asking again. Accounts created before 16 Oct are backfilled at start-up from their latest complaint; one that never filed sees a one-time "Complete your account" card on the form, which saves through `PATCH /auth/me`. An account without the details gets 400 on submit.
 
 ### Video evidence
 

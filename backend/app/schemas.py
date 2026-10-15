@@ -12,7 +12,17 @@ class RegisterIn(BaseModel):
     mobile: str
     email: str
     password: str
+    full_name: str
+    aadhaar_last4: str
     preferred_language: Literal["en", "ta", "hi"] = "en"
+
+
+class ProfileIn(BaseModel):
+    """PATCH /auth/me: only the fields sent are changed."""
+
+    full_name: str | None = None
+    aadhaar_last4: str | None = None
+    preferred_language: Literal["en", "ta", "hi"] | None = None
 
 
 class VerifyOtpIn(BaseModel):
@@ -43,6 +53,7 @@ class UserOut(BaseModel):
     department_id: str | None = None
     district: str | None = None
     full_name: str | None = None
+    aadhaar_last4: str | None = None
     is_active: bool = True
 
 

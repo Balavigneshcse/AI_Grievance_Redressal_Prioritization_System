@@ -75,7 +75,7 @@ def user_out(u: models.User):
 
     return schemas.UserOut(
         id=u.id, email=u.email, role=u.role, preferred_language=u.preferred_language, department_id=u.department_id,
-        district=u.district, full_name=u.full_name, is_active=u.is_active,
+        district=u.district, full_name=u.full_name, aadhaar_last4=u.aadhaar_last4, is_active=u.is_active,
     )
 
 

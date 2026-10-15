@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Loader2, Mail, Phone, UserPlus } from "lucide-react"
+import { IdCard, Loader2, Mail, Phone, UserPlus, UserRound } from "lucide-react"
 import { toast } from "sonner"
 import { api, ApiError } from "@/lib/api"
 import { passwordSchema } from "@/lib/password"
@@ -13,12 +13,14 @@ import { AuthCard } from "@/components/AuthCard"
 import { PasswordInput } from "@/components/PasswordInput"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const schema = z.object({
+  full_name: z.string().trim().min(2, "validation.name").max(120, "validation.name"),
   mobile: z.string().regex(/^[0-9]{10}$/, "validation.mobile"),
   email: z.email({ error: "validation.email" }),
+  aadhaar_last4: z.string().regex(/^[0-9]{4}$/, "validation.aadhaar"),
   password: passwordSchema,
   preferred_language: z.enum(["en", "ta", "hi"]),
 })
@@ -38,8 +40,10 @@ export default function Register() {
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
+      full_name: "",
       mobile: "",
       email: "",
+      aadhaar_last4: "",
       password: "",
       preferred_language: (["en", "ta", "hi"].includes(i18n.language.slice(0, 2))
         ? i18n.language.slice(0, 2)
@@ -77,6 +81,23 @@ export default function Register() {
     >
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <FieldGroup>
+          <Field data-invalid={!!errors.full_name}>
+            <FieldLabel htmlFor="full_name">{t("auth.fullName")}</FieldLabel>
+            <div className="relative">
+              <UserRound className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="full_name"
+                autoComplete="name"
+                placeholder={t("auth.fullNamePlaceholder")}
+                maxLength={120}
+                className="pl-8"
+                aria-invalid={!!errors.full_name}
+                {...register("full_name")}
+              />
+            </div>
+            <FieldError>{errors.full_name?.message ? t(errors.full_name.message) : undefined}</FieldError>
+          </Field>
+
           <Field data-invalid={!!errors.mobile}>
             <FieldLabel htmlFor="mobile">{t("auth.mobile")}</FieldLabel>
             <div className="relative">
@@ -110,6 +131,27 @@ export default function Register() {
               />
             </div>
             <FieldError>{errors.email?.message ? t(errors.email.message) : undefined}</FieldError>
+          </Field>
+
+          <Field data-invalid={!!errors.aadhaar_last4}>
+            <FieldLabel htmlFor="aadhaar_last4">{t("auth.aadhaar")}</FieldLabel>
+            <div className="relative">
+              <IdCard className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="aadhaar_last4"
+                inputMode="numeric"
+                autoComplete="off"
+                placeholder="1234"
+                maxLength={4}
+                className="pl-8 font-mono tracking-widest"
+                aria-invalid={!!errors.aadhaar_last4}
+                {...register("aadhaar_last4", {
+                  setValueAs: (v: string) => (v ?? "").replace(/\D/g, "").slice(0, 4),
+                })}
+              />
+            </div>
+            <FieldDescription>{t("auth.aadhaarHint")}</FieldDescription>
+            <FieldError>{errors.aadhaar_last4?.message ? t(errors.aadhaar_last4.message) : undefined}</FieldError>
           </Field>
 
           <Field data-invalid={!!errors.password}>

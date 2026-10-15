@@ -8,6 +8,7 @@ export interface User {
   department_id?: string | null
   district?: string | null
   full_name?: string | null
+  aadhaar_last4?: string | null
   is_active?: boolean
 }
 

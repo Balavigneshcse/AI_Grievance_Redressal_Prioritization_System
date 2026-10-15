@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next"
 import { Camera, CheckCircle2, IdCard, Loader2, Plus, Send, Upload, Video, X } from "lucide-react"
 import { toast } from "sonner"
 import { api, ApiError } from "@/lib/api"
+import { useAuth } from "@/lib/auth"
+import type { User } from "@/lib/types"
 import { currentLang } from "@/lib/i18n"
 import { detectScript, languageHint } from "@/lib/script"
 import { reverseGeocode } from "@/lib/geo"
@@ -28,22 +30,20 @@ interface Attachment {
 
 const MAX_FILES = 6
 const MIN_TEXT = 10
-const NAME_KEY = "synapse_name"
 
 export default function NewComplaint() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+  const { user, updateUser } = useAuth()
   const fileInput = useRef<HTMLInputElement | null>(null)
   const textarea = useRef<HTMLTextAreaElement | null>(null)
   const [text, setText] = useState("")
-  const [fullName, setFullName] = useState(() => {
-    try {
-      return localStorage.getItem(NAME_KEY) ?? ""
-    } catch {
-      return ""
-    }
-  })
+  // Name and Aadhaar last 4 live on the account (taken at registration). Accounts created
+  // before that may still lack them; they add them once here and every complaint carries them.
+  const hasIdentity = !!(user?.full_name && user?.aadhaar_last4)
+  const [fullName, setFullName] = useState(user?.full_name ?? "")
   const [aadhaar, setAadhaar] = useState("")
+  const [savingIdentity, setSavingIdentity] = useState(false)
   const [files, setFiles] = useState<Attachment[]>([])
   const [location, setLocation] = useState<LocationState>(EMPTY_LOCATION)
   const [cameraOpen, setCameraOpen] = useState(false)
@@ -126,13 +126,7 @@ export default function NewComplaint() {
     setResult(null)
   }
 
-  const submit = async () => {
-    const body = text.trim()
-    if (body.length < MIN_TEXT) {
-      toast.error(t("new.tooShort", { min: MIN_TEXT }))
-      textarea.current?.focus()
-      return
-    }
+  const saveIdentity = async () => {
     const name = fullName.trim().replace(/\s+/g, " ")
     if (name.length < 2) {
       toast.error(t("new.nameRequired"))
@@ -142,12 +136,33 @@ export default function NewComplaint() {
       toast.error(t("new.aadhaarInvalid"))
       return
     }
+    setSavingIdentity(true)
+    try {
+      const me = await api<User>("/auth/me", { method: "PATCH", body: { full_name: name, aadhaar_last4: aadhaar.trim() } })
+      updateUser(me)
+      toast.success(t("new.detailsSaved"))
+    } catch (err) {
+      toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+    } finally {
+      setSavingIdentity(false)
+    }
+  }
+
+  const submit = async () => {
+    const body = text.trim()
+    if (body.length < MIN_TEXT) {
+      toast.error(t("new.tooShort", { min: MIN_TEXT }))
+      textarea.current?.focus()
+      return
+    }
+    if (!hasIdentity) {
+      toast.error(t("new.completeFirst"))
+      return
+    }
     setSubmitting(true)
     try {
       const fd = new FormData()
       fd.append("text", body)
-      fd.append("complainant_name", name)
-      fd.append("aadhaar_last4", aadhaar.trim())
       const hint = languageHint(body, currentLang())
       if (hint) fd.append("language_hint", hint)
       if (location.lat != null && location.lng != null) {
@@ -159,11 +174,6 @@ export default function NewComplaint() {
       files.forEach((f) => fd.append("files", f.file, f.file.name))
       const res = await api<{ id: string; tracking_id: string; status: string }>("/complaints", { body: fd })
       setResult(res)
-      try {
-        localStorage.setItem(NAME_KEY, name)
-      } catch {
-        /* ignore */
-      }
     } catch (err) {
       toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
     } finally {
@@ -197,42 +207,56 @@ export default function NewComplaint() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <IdCard className="size-4" />
-            {t("new.identity")}
-          </CardTitle>
-          <CardDescription>{t("new.identityHint")}</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="complainant-name">{t("new.name")}</Label>
-            <Input
-              id="complainant-name"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder={t("new.namePlaceholder")}
-              autoComplete="name"
-              maxLength={120}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="aadhaar-last4">{t("new.aadhaar")}</Label>
-            <Input
-              id="aadhaar-last4"
-              value={aadhaar}
-              onChange={(e) => setAadhaar(e.target.value.replace(/\D/g, "").slice(0, 4))}
-              placeholder="1234"
-              inputMode="numeric"
-              pattern="[0-9]{4}"
-              maxLength={4}
-              className="font-mono tracking-widest"
-            />
-            <p className="text-xs text-muted-foreground">{t("new.aadhaarHint")}</p>
-          </div>
-        </CardContent>
-      </Card>
+      {hasIdentity ? (
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border bg-muted/40 px-4 py-2.5 text-sm">
+          <IdCard className="size-4 text-muted-foreground" />
+          <span className="text-muted-foreground">{t("new.filingAs")}</span>
+          <span className="font-medium">{user?.full_name}</span>
+          <span className="font-mono text-muted-foreground">XXXX XXXX {user?.aadhaar_last4}</span>
+          <span className="basis-full text-xs text-muted-foreground">{t("new.filingHint")}</span>
+        </div>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <IdCard className="size-4" />
+              {t("new.completeAccount")}
+            </CardTitle>
+            <CardDescription>{t("new.completeAccountHint")}</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3 sm:grid-cols-[1fr_8rem_auto] sm:items-end">
+            <div className="space-y-1.5">
+              <Label htmlFor="account-name">{t("new.name")}</Label>
+              <Input
+                id="account-name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder={t("new.namePlaceholder")}
+                autoComplete="name"
+                maxLength={120}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="account-aadhaar">{t("new.aadhaar")}</Label>
+              <Input
+                id="account-aadhaar"
+                value={aadhaar}
+                onChange={(e) => setAadhaar(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                placeholder="1234"
+                inputMode="numeric"
+                pattern="[0-9]{4}"
+                maxLength={4}
+                className="font-mono tracking-widest"
+              />
+            </div>
+            <Button type="button" variant="secondary" onClick={saveIdentity} disabled={savingIdentity}>
+              {savingIdentity ? <Loader2 className="animate-spin" /> : <IdCard />}
+              {t("new.saveDetails")}
+            </Button>
+            <p className="text-xs text-muted-foreground sm:col-span-3">{t("new.aadhaarHint")}</p>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

@@ -31,6 +31,7 @@ class User(Base):
     department_id: Mapped[str | None] = mapped_column(ForeignKey("departments.id"), nullable=True)  # dept_admin only
     district: Mapped[str | None] = mapped_column(String(60), nullable=True, index=True)  # district_admin and dept_admin
     full_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    aadhaar_last4: Mapped[str | None] = mapped_column(String(4), nullable=True)  # complainants: taken once at registration
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     preferred_language: Mapped[str] = mapped_column(String(5), default="en")
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)

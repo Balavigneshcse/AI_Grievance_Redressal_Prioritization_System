@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -15,6 +16,7 @@ from ..services.ratelimit import client_ip, hit
 from .deps import current_user, user_out
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+AADHAAR4_RE = re.compile(r"[0-9]{4}")
 
 
 def _issue_otp(db: Session, user: models.User, purpose: str) -> None:
@@ -53,6 +55,22 @@ def _token(user: models.User) -> schemas.TokenOut:
     )
 
 
+def _clean_name(value: str | None) -> str:
+    """Collapse whitespace; 400 unless 2 to 120 characters remain."""
+    name = " ".join((value or "").split())
+    if not 2 <= len(name) <= 120:
+        raise HTTPException(400, "Please enter your full name")
+    return name
+
+
+def _clean_aadhaar(value: str | None) -> str:
+    """Exactly the last four digits of the Aadhaar number, never more."""
+    digits = (value or "").strip()
+    if not AADHAAR4_RE.fullmatch(digits):
+        raise HTTPException(400, "Enter the last 4 digits of your Aadhaar number")
+    return digits
+
+
 @router.post("/register", status_code=201)
 def register(body: schemas.RegisterIn, request: Request, db: Session = Depends(get_db)):
     hit(f"register:{client_ip(request)}", 20, 600)
@@ -65,6 +83,7 @@ def register(body: schemas.RegisterIn, request: Request, db: Session = Depends(g
     problems = password_problems(body.password)
     if problems:
         raise HTTPException(400, "Password needs " + ", ".join(problems))
+    full_name, aadhaar_last4 = _clean_name(body.full_name), _clean_aadhaar(body.aadhaar_last4)
 
     user = db.execute(select(models.User).where(models.User.email == email)).scalar_one_or_none()
     if user and user.is_verified:
@@ -74,11 +93,13 @@ def register(body: schemas.RegisterIn, request: Request, db: Session = Depends(g
         raise HTTPException(409, "This mobile number is already registered")
 
     if user is None:
-        user = models.User(mobile=mobile, email=email, password_hash=hash_password(body.password), preferred_language=body.preferred_language)
+        user = models.User(mobile=mobile, email=email, password_hash=hash_password(body.password), preferred_language=body.preferred_language,
+                           full_name=full_name, aadhaar_last4=aadhaar_last4)
         db.add(user)
         db.flush()
     else:  # unverified: refresh details and resend
         user.mobile, user.password_hash, user.preferred_language = mobile, hash_password(body.password), body.preferred_language
+        user.full_name, user.aadhaar_last4 = full_name, aadhaar_last4
     _issue_otp(db, user, "register")
     db.commit()
     return {"user_id": str(user.id), "message": "Verification code sent to your email"}
@@ -149,6 +170,20 @@ def reset(body: schemas.ResetIn, db: Session = Depends(get_db)):
     user.is_verified = True
     db.commit()
     return {"message": "Password updated. Please log in."}
+
+
+@router.patch("/me", response_model=schemas.UserOut)
+def update_me(body: schemas.ProfileIn, user: models.User = Depends(current_user), db: Session = Depends(get_db)):
+    """Complete or correct the details every complaint carries (name, Aadhaar last 4) and the mail language."""
+    if body.full_name is not None:
+        user.full_name = _clean_name(body.full_name)
+    if body.aadhaar_last4 is not None:
+        user.aadhaar_last4 = _clean_aadhaar(body.aadhaar_last4)
+    if body.preferred_language is not None:
+        user.preferred_language = body.preferred_language
+    db.commit()
+    db.refresh(user)
+    return user_out(user)
 
 
 @router.get("/me", response_model=schemas.UserOut)
