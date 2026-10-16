@@ -1,6 +1,6 @@
 {
-  "passed": 148,
-  "total": 148,
+  "passed": 155,
+  "total": 155,
   "results": [
     {
       "check": "health: db and ollama up",
@@ -35,7 +35,7 @@
     {
       "check": "citizen completes account details (PATCH /auth/me)",
       "ok": true,
-      "detail": "{\"id\":\"bfc03431-5834-495c-ba92-663093d880b1\",\"email\":\"citizen@synapse.local\",\"ro"
+      "detail": "{\"id\":\"bc20a7c5-3fd1-4ddd-b55f-3fc4efea62d7\",\"email\":\"citizen@synapse.local\",\"ro"
     },
     {
       "check": "five-digit Aadhaar rejected",
@@ -70,7 +70,7 @@
     {
       "check": "account carries the name and Aadhaar digits given at registration",
       "ok": true,
-      "detail": "{'id': '6163a9ff-c690-4242-be84-cf153909682c', 'email': 'e2e.1792132326@synapse.local', 'role': 'com"
+      "detail": "{'id': '002ef763-1e9d-4a24-9186-d805ee11c2ab', 'email': 'e2e.1792135601@synapse.local', 'role': 'com"
     },
     {
       "check": "password reset with OTP",
@@ -90,7 +90,7 @@
     {
       "check": "case: ta script, water, child sick",
       "ok": true,
-      "detail": "SYN-2026-000001 under_review water/critical lang=ta conf=0.95 rules=['R5', 'R10'] 45s"
+      "detail": "SYN-2026-000001 under_review water/critical lang=ta conf=0.95 rules=['R5', 'R10'] 40s"
     },
     {
       "check": "  evidence spans present and quoted from text",
@@ -100,7 +100,7 @@
     {
       "check": "  english summary present",
       "ok": true,
-      "detail": "A resident is reporting a lack of water supply for three days and their children"
+      "detail": "A resident is reporting a lack of water supply for three days and the resulting "
     },
     {
       "check": "  district office and due time set",
@@ -120,7 +120,7 @@
     {
       "check": "case: hi script, power cut, oxygen",
       "ok": true,
-      "detail": "SYN-2026-000002 under_review electricity/critical lang=hi conf=0.95 rules=['R2'] 24s"
+      "detail": "SYN-2026-000002 under_review electricity/critical lang=hi conf=0.95 rules=['R2'] 28s"
     },
     {
       "check": "  evidence spans present and quoted from text",
@@ -130,7 +130,7 @@
     {
       "check": "  english summary present",
       "ok": true,
-      "detail": "A resident is requesting immediate assistance due to a prolonged power outage af"
+      "detail": "A resident is experiencing a prolonged power outage impacting a patient dependen"
     },
     {
       "check": "  district office and due time set",
@@ -160,7 +160,7 @@
     {
       "check": "  english summary present",
       "ok": true,
-      "detail": "The citizen is offering a suggestion for additional seating in a public park."
+      "detail": "The citizen is offering a suggestion for improving a public park."
     },
     {
       "check": "  district office and due time set",
@@ -250,7 +250,7 @@
     {
       "check": "photo: image findings from the vision model",
       "ok": true,
-      "detail": "The image shows a large, dark circular pothole in the center of the frame on a paved road."
+      "detail": "The image shows a large pothole in the center of the road."
     },
     {
       "check": "photo: media served to owner",
@@ -265,7 +265,7 @@
     {
       "check": "duplicate of the Tamil water complaint flagged",
       "ok": true,
-      "detail": "possible duplicate of SYN-2026-000001 (similarity 0.98)"
+      "detail": "possible duplicate of SYN-2026-000001 (similarity 0.88)"
     },
     {
       "check": "PII hidden from complainant",
@@ -370,12 +370,12 @@
     {
       "check": "department admin emailed about a routed water complaint",
       "ok": true,
-      "detail": "2 mails"
+      "detail": "3 mails"
     },
     {
       "check": "district admin emailed about reviews in Coimbatore",
       "ok": true,
-      "detail": "6 mails"
+      "detail": "15 mails"
     },
     {
       "check": "overdue check escalates the overdue complaint",
@@ -395,7 +395,7 @@
     {
       "check": "district admin emailed about the overdue complaint",
       "ok": true,
-      "detail": "7 mails, 6 before"
+      "detail": "17 mails, 15 before"
     },
     {
       "check": "escalation happens once",
@@ -405,7 +405,7 @@
     {
       "check": "health reports outbox, overdue and model latency",
       "ok": true,
-      "detail": "{\"outbox_pending\": 0, \"overdue_open\": 1, \"model_latency_ms\": {\"last\": 24816, \"mean_last_10\": 22807}}"
+      "detail": "{\"outbox_pending\": 3, \"overdue_open\": 1, \"model_latency_ms\": {\"last\": 20716, \"mean_last_10\": 22246}}"
     },
     {
       "check": "queue search by tracking id",
@@ -420,7 +420,7 @@
     {
       "check": "office attaches resolution proof",
       "ok": true,
-      "detail": "{\"ok\":true,\"attachments\":1,\"media\":[{\"id\":\"5c1535fe-e278-44b7-969a-708db146d9a8\",\"kind\":\"photo\",\"url"
+      "detail": "{\"ok\":true,\"attachments\":1,\"media\":[{\"id\":\"8d6f03f7-a0f2-44c3-8632-7771902d4de4\",\"kind\":\"photo\",\"url"
     },
     {
       "check": "citizen sees the proof photo marked as resolution",
@@ -465,7 +465,7 @@
     {
       "check": "roads admin emailed about the reopen",
       "ok": true,
-      "detail": "2 mails"
+      "detail": "4 mails"
     },
     {
       "check": "officer note translated into Tamil in the status mail",
@@ -525,7 +525,7 @@
     {
       "check": "super admin creates a district admin",
       "ok": true,
-      "detail": "{\"user\":{\"id\":\"c635de95-2945-440f-a883-2350686bc05a\",\"email\":\"district.madurai.2132600@synapse.local\",\"role\":\"district_a"
+      "detail": "{\"user\":{\"id\":\"351d5863-25d6-4b18-bb1b-36353f382cb6\",\"email\":\"district.madurai.2135871@synapse.local\",\"role\":\"district_a"
     },
     {
       "check": "district admin cannot create another district admin",
@@ -535,7 +535,7 @@
     {
       "check": "district admin creates a department admin in own district",
       "ok": true,
-      "detail": "{\"user\":{\"id\":\"94885359-4eab-458b-9067-93a36478e207\",\"email\":\"water.madurai.2132600@synapse.local\",\"role\":\"dept_admin\",\""
+      "detail": "{\"user\":{\"id\":\"9458dde3-c7ae-4e32-ae08-611557ee83fd\",\"email\":\"water.madurai.2135871@synapse.local\",\"role\":\"dept_admin\",\""
     },
     {
       "check": "new department admin sees no Coimbatore complaints",
@@ -545,7 +545,7 @@
     {
       "check": "district admin can disable its department admin",
       "ok": true,
-      "detail": "{\"id\":\"94885359-4eab-458b-9067-93a36478e207\",\"email\":\"water.madurai.2132600@synapse.local\",\"role\":\"d"
+      "detail": "{\"id\":\"9458dde3-c7ae-4e32-ae08-611557ee83fd\",\"email\":\"water.madurai.2135871@synapse.local\",\"role\":\"d"
     },
     {
       "check": "disabled account is locked out",
@@ -565,7 +565,7 @@
     {
       "check": "metrics: totals, by status, live accuracy",
       "ok": true,
-      "detail": "{\"complaints\": 8, \"critical_open\": 2, \"review_rate\": 0.625, \"auto_closed\": 0, \"mean_latency_ms\": 22807, \"avg_rating\": 4."
+      "detail": "{\"complaints\": 8, \"critical_open\": 2, \"review_rate\": 0.625, \"auto_closed\": 0, \"mean_latency_ms\": 22246, \"avg_rating\": 4."
     },
     {
       "check": "metrics: auto-closed is zero",
@@ -685,7 +685,7 @@
     {
       "check": "staff cannot add me-too support (403)",
       "ok": true,
-      "detail": "403 {\"detail\":\"Only citizens can support a complaint\"}"
+      "detail": "403 {\"detail\":\"Only citizens can support a complaint\",\"code\":\"su"
     },
     {
       "check": "support needs the citizen's location (400), refused from another city (403), counted from 1 km away",
@@ -715,7 +715,7 @@
     {
       "check": "a complaint over 5,000 characters refused (400), nothing stored",
       "ok": true,
-      "detail": "400 {\"detail\":\"Please keep the complaint to 5000 characters or fewer\"}"
+      "detail": "400 {\"detail\":\"Please keep the complaint to 5000 characters or fewer\",\"cod"
     },
     {
       "check": "verify-otp and reset: an unknown email gets the same 400 and message as a wrong code for a real account",
@@ -738,19 +738,54 @@
       "detail": "{\"Old age pension not re\": [], \"बुजुर्ग पेंशन तीन महीन\": [], \"முதியவர் உதவித்தொகை மூ\": [], \"No water for three day\": [\"R10b\"], \"kids are sick after dr\": [\"R10\"]}"
     },
     {
+      "check": "a refusal keeps its English message in detail and adds its code and parameters",
+      "ok": true,
+      "detail": "{\"detail\":\"Please keep the complaint to 5000 characters or fewer\",\"code\":\"complaint_too_long\",\"params\":{\"max\":5000}}"
+    },
+    {
+      "check": "a refused decision sends the action and the status as ids (the app shows its own labels)",
+      "ok": true,
+      "detail": "{\"detail\":\"Cannot resolve from status merged\",\"code\":\"decision_not_allowed\",\"params\":{\"action\":\"resolve\",\"status\":\"merge"
+    },
+    {
+      "check": "a weak password: the missing rules as ids in the parameters, in words in the English message",
+      "ok": true,
+      "detail": "{\"detail\":\"Password needs an uppercase letter, a digit, a symbol\",\"code\":\"password_weak\",\"params\":{\"missing\":[\"uppercase"
+    },
+    {
+      "check": "support from too far: the distance limit as a parameter",
+      "ok": true,
+      "detail": "{\"detail\":\"Only complaints within 2 km of you can be supported\",\"code\":\"support_too_far\",\"params\":{\"km\":2.0}}"
+    },
+    {
+      "check": "a failed login and the rate limit carry their codes; the limit keeps its Retry-After header",
+      "ok": true,
+      "detail": "401 login_failed / 429 too_many_attempts Retry-After 60"
+    },
+    {
+      "check": "validation errors keep FastAPI's 422 list in detail, without a code",
+      "ok": true,
+      "detail": "{\"detail\":[{\"type\":\"greater_than\",\"loc\":[\"query\",\"km\"],\"msg\":\"Input should be greater than 0\",\"input"
+    },
+    {
+      "check": "every error code (60) has English, Tamil and Hindi text using the API's parameters; the three files share their 471 keys",
+      "ok": true,
+      "detail": ""
+    },
+    {
       "check": "status emails logged for the citizen in Mailpit",
       "ok": true,
-      "detail": "35 emails"
+      "detail": "114 emails"
     }
   ],
   "ids": {
-    "ta script, water, child sick": "3837b6f1-8ff6-4d75-aa01-2b30197fb94c",
-    "hi script, power cut, oxygen": "2e494b62-3b0f-4075-804e-f3e5b6148969",
-    "en, suggestion, low": "fe48a5c2-3ab7-42de-8eca-5278cb69fa54",
-    "hi-en, gas smell": "ba4d90ea-f086-4ffe-8b67-4cabb3cc0890",
-    "ta-en, pothole accident, repeat": "17bcfe7b-d51b-457e-a898-a41051ed60ea",
-    "photo": "38742174-00b7-40ea-9f43-8f2cce42d311",
-    "dup": "16b6294c-8724-4de2-a24b-0e6bcd979ab3",
-    "pii": "686d504c-5d18-455d-9756-29c15b902b41"
+    "ta script, water, child sick": "282cc735-1d33-43d0-a7f1-544a33da7b48",
+    "hi script, power cut, oxygen": "987c1ddb-168a-49b3-a13b-f474c02d4950",
+    "en, suggestion, low": "59dee607-6874-477d-b65f-e2ed116e7109",
+    "hi-en, gas smell": "7ab6d439-80d3-4fa9-8933-7d06b279b4b8",
+    "ta-en, pothole accident, repeat": "afb301d4-f223-4d59-9a31-a4f2e419dfa5",
+    "photo": "2f663a14-8a35-4a5b-8034-508c1bb36390",
+    "dup": "dc2ac2fa-ad0d-4e9e-9c4b-e9963dd75945",
+    "pii": "6a72707f-168a-41fd-a964-4a1c8c7c31b8"
   }
 }

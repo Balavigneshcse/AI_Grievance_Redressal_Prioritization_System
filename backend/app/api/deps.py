@@ -2,25 +2,26 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import Depends, Header, HTTPException
+from fastapi import Depends, Header
 from sqlalchemy.orm import Session
 
 from ..db import get_db
+from ..errors import ApiError
 from .. import models
 from ..security import decode_token
 
 
 def current_user(authorization: str | None = Header(default=None), db: Session = Depends(get_db)) -> models.User:
     if not authorization or not authorization.lower().startswith("bearer "):
-        raise HTTPException(401, "Not authenticated")
+        raise ApiError(401, "not_authenticated")
     payload = decode_token(authorization.split(" ", 1)[1].strip())
     if not payload:
-        raise HTTPException(401, "Invalid or expired token")
+        raise ApiError(401, "token_invalid")
     user = db.get(models.User, as_uuid(payload["sub"]))
     if user is None or user.password_version != payload.get("pv"):
-        raise HTTPException(401, "Session no longer valid")
+        raise ApiError(401, "session_ended")
     if not user.is_active:
-        raise HTTPException(403, "Account disabled")
+        raise ApiError(403, "account_disabled")
     return user
 
 
@@ -30,13 +31,13 @@ def as_uuid(value) -> uuid.UUID:
     try:
         return uuid.UUID(str(value))
     except (ValueError, TypeError):
-        raise HTTPException(404, "Not found")
+        raise ApiError(404, "not_found")
 
 
 def require_role(*roles: str):
     def dep(user: models.User = Depends(current_user)) -> models.User:
         if user.role not in roles:
-            raise HTTPException(403, "Not allowed for this role")
+            raise ApiError(403, "role_not_allowed")
         return user
     return dep
 

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { Loader2, Mail, RefreshCw, ShieldCheck } from "lucide-react"
 import { toast } from "sonner"
 import { api, ApiError } from "@/lib/api"
+import { errorText } from "@/lib/errors"
 import { useAuth } from "@/lib/auth"
 import type { AuthResponse } from "@/lib/types"
 import { AuthCard } from "@/components/AuthCard"
@@ -40,7 +41,7 @@ export default function Verify() {
       toast.success(t("verify.success"))
       navigate("/", { replace: true })
     } catch (err) {
-      toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+      toast.error(errorText(err))
     } finally {
       setBusy(false)
     }
@@ -56,7 +57,7 @@ export default function Verify() {
       setCooldown(RESEND_SECONDS)
     } catch (err) {
       if (err instanceof ApiError && err.status === 404) toast.error(t("verify.resendUnavailable"))
-      else toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+      else toast.error(errorText(err))
     } finally {
       setResending(false)
     }

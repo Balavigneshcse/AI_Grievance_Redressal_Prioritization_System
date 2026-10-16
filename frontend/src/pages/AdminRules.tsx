@@ -3,7 +3,8 @@ import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { ArrowLeft, FlaskConical, Loader2, RefreshCw, Save, ShieldCheck } from "lucide-react"
 import { toast } from "sonner"
-import { api, ApiError } from "@/lib/api"
+import { api } from "@/lib/api"
+import { errorText } from "@/lib/errors"
 import { useAuth } from "@/lib/auth"
 import { useDepartments } from "@/lib/departments"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -58,11 +59,11 @@ export default function AdminRules() {
       setData(r)
       setYaml(r.yaml)
     } catch (err) {
-      toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+      toast.error(errorText(err))
     } finally {
       setLoading(false)
     }
-  }, [t])
+  }, [])
 
   useEffect(() => {
     void load()
@@ -76,7 +77,7 @@ export default function AdminRules() {
       setNote("")
       void load()
     } catch (err) {
-      toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+      toast.error(errorText(err))
     } finally {
       setSaving(false)
     }
@@ -88,7 +89,7 @@ export default function AdminRules() {
     try {
       setResult(await api<TestOut>("/admin/rules/test", { body: { text: sample } }))
     } catch (err) {
-      toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+      toast.error(errorText(err))
     } finally {
       setTesting(false)
     }
@@ -100,7 +101,7 @@ export default function AdminRules() {
       await api("/admin/models/reload", { method: "POST" })
       toast.success(t("admin.reloaded"))
     } catch (err) {
-      toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+      toast.error(errorText(err))
     } finally {
       setReloading(false)
     }

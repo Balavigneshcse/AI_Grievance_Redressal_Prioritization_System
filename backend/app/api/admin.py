@@ -3,12 +3,13 @@ from __future__ import annotations
 import json
 from collections import defaultdict
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from ..config import settings
 from ..db import get_db
+from ..errors import ApiError
 from .. import models, schemas
 from ..services import rules as rules_engine
 from ..services.pipeline import reload_second_opinion
@@ -27,7 +28,7 @@ def put_rules(body: schemas.RulesIn, user: models.User = Depends(require_role("s
     try:
         rules_engine.validate_rules_yaml(body.yaml)
     except Exception as exc:
-        raise HTTPException(400, f"Invalid rules: {exc}")
+        raise ApiError(400, "rules_invalid", reason=str(exc))
     before = rules_engine.rules_yaml_text()
     rules_engine.RULES_PATH.write_text(body.yaml, encoding="utf-8")
     db.add(models.RuleChange(admin_id=user.id, yaml_before=before, yaml_after=body.yaml, note=body.note))

@@ -13,7 +13,8 @@ import {
   XCircle,
 } from "lucide-react"
 import { toast } from "sonner"
-import { api, ApiError } from "@/lib/api"
+import { api } from "@/lib/api"
+import { errorText } from "@/lib/errors"
 import { useAuth } from "@/lib/auth"
 import type { Complaint, DecisionAction, DecisionPayload, Urgency } from "@/lib/types"
 import { useDepartments } from "@/lib/departments"
@@ -99,7 +100,7 @@ export function DecisionBar({ complaint, onDecided }: Props) {
       setMergedInto("")
       onDecided()
     } catch (err) {
-      toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+      toast.error(errorText(err))
     } finally {
       setBusy(false)
     }

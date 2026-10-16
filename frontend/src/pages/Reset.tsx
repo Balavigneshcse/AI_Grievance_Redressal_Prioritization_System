@@ -6,7 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { KeyRound, Loader2, Mail } from "lucide-react"
 import { toast } from "sonner"
-import { api, ApiError } from "@/lib/api"
+import { api } from "@/lib/api"
+import { errorText } from "@/lib/errors"
 import { passwordSchema } from "@/lib/password"
 import { AuthCard } from "@/components/AuthCard"
 import { PasswordInput } from "@/components/PasswordInput"
@@ -42,11 +43,11 @@ export default function Reset() {
   const onSubmit = async (values: FormValues) => {
     setBusy(true)
     try {
-      const res = await api<{ message?: string }>("/auth/reset", { body: values })
-      toast.success(res?.message || t("auth.resetDone"))
+      await api("/auth/reset", { body: values })
+      toast.success(t("auth.resetDone"))
       navigate("/login", { replace: true })
     } catch (err) {
-      toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+      toast.error(errorText(err))
     } finally {
       setBusy(false)
     }

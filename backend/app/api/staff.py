@@ -10,14 +10,15 @@ import secrets
 import string
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from ..config import settings
 from ..db import get_db
+from ..errors import ApiError
 from .. import models, schemas
-from ..security import EMAIL_RE, MOBILE_RE, hash_password, password_problems
+from ..security import EMAIL_RE, MOBILE_RE, check_password, hash_password, password_problems
 from ..services.notifier import notify
 from .deps import ADMIN_ROLES, STAFF_ROLES, as_uuid, dept_out, require_role, scope_complaints
 from scripts.common import load_tn_mapping
@@ -78,32 +79,30 @@ def list_staff(district: str | None = None, user: models.User = Depends(require_
 def create_staff(body: schemas.StaffCreateIn, user: models.User = Depends(require_role(*ADMIN_ROLES)), db: Session = Depends(get_db)):
     if user.role == "district_admin":
         if body.role != "dept_admin":
-            raise HTTPException(403, "A district admin can only create department admins")
+            raise ApiError(403, "dept_admins_only")
         district = user.district
     else:
         district = body.district
     if not _district_ok(district):
-        raise HTTPException(400, "Choose a Tamil Nadu district")
+        raise ApiError(400, "district_required")
     department_id = None
     if body.role == "dept_admin":
         if not body.department_id or db.get(models.Department, body.department_id) is None:
-            raise HTTPException(400, "Choose a department")
+            raise ApiError(400, "department_required")
         department_id = body.department_id
 
     email = body.email.strip().lower()
     mobile = body.mobile.strip().replace(" ", "").removeprefix("+91")
     if not EMAIL_RE.match(email):
-        raise HTTPException(400, "Invalid email address")
+        raise ApiError(400, "email_invalid")
     if not MOBILE_RE.match(mobile):
-        raise HTTPException(400, "Mobile number must be 10 digits starting with 6-9")
+        raise ApiError(400, "mobile_invalid")
     if db.execute(select(models.User).where(models.User.email == email)).scalar_one_or_none():
-        raise HTTPException(409, "An account with this email already exists")
+        raise ApiError(409, "email_taken")
     if db.execute(select(models.User).where(models.User.mobile == mobile)).scalar_one_or_none():
-        raise HTTPException(409, "An account with this mobile number already exists")
+        raise ApiError(409, "mobile_taken")
     if body.password:
-        problems = password_problems(body.password)
-        if problems:
-            raise HTTPException(400, "Password needs " + ", ".join(problems))
+        check_password(body.password)
     password = body.password or _generate_password()
 
     u = models.User(
@@ -123,42 +122,40 @@ def create_staff(body: schemas.StaffCreateIn, user: models.User = Depends(requir
 def update_staff(user_id: str, body: schemas.StaffPatchIn, user: models.User = Depends(require_role(*ADMIN_ROLES)), db: Session = Depends(get_db)):
     target = db.get(models.User, as_uuid(user_id))
     if target is None or target.role not in STAFF_ROLES:
-        raise HTTPException(404, "Staff account not found")
+        raise ApiError(404, "staff_not_found")
     if target.role == "super_admin" and target.id != user.id:
-        raise HTTPException(403, "Another super admin cannot be changed")
+        raise ApiError(403, "super_admin_locked")
     if user.role == "district_admin" and not (target.role == "dept_admin" and target.district == user.district):
-        raise HTTPException(403, "Outside your district")
+        raise ApiError(403, "outside_district")
 
     if body.is_active is not None:
         if target.id == user.id and not body.is_active:
-            raise HTTPException(400, "You cannot disable your own account")
+            raise ApiError(400, "cannot_disable_self")
         target.is_active = body.is_active
         if not body.is_active:
             target.password_version += 1  # ends every open session
     if body.email is not None:
         email = body.email.strip().lower()
         if not EMAIL_RE.match(email):
-            raise HTTPException(400, "Invalid email address")
+            raise ApiError(400, "email_invalid")
         clash = db.execute(select(models.User).where(models.User.email == email, models.User.id != target.id)).scalar_one_or_none()
         if clash is not None:
-            raise HTTPException(409, "An account with this email already exists")
+            raise ApiError(409, "email_taken")
         target.email = email
     if body.full_name is not None:
         target.full_name = body.full_name.strip() or None
     if body.department_id is not None:
         if target.role != "dept_admin" or db.get(models.Department, body.department_id) is None:
-            raise HTTPException(400, "Unknown department")
+            raise ApiError(400, "department_unknown")
         target.department_id = body.department_id
     if body.district is not None:
         if user.role != "super_admin" or not _district_ok(body.district):
-            raise HTTPException(400, "Unknown district")
+            raise ApiError(400, "district_unknown")
         target.district = body.district
     if body.preferred_language is not None:
         target.preferred_language = body.preferred_language
     if body.password:
-        problems = password_problems(body.password)
-        if problems:
-            raise HTTPException(400, "Password needs " + ", ".join(problems))
+        check_password(body.password)
         target.password_hash = hash_password(body.password)
         target.password_version += 1
     db.commit()

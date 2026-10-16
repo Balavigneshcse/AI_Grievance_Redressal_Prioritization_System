@@ -24,10 +24,16 @@ export function getToken(): string | null {
 
 export class ApiError extends Error {
   status: number
-  constructor(message: string, status: number) {
+  /** The stable code of an API refusal and its parameters (backend/app/errors.py); errorText() in
+   *  lib/errors.ts shows them in the app's language. The message stays the API's English text. */
+  code?: string
+  params?: Record<string, unknown>
+  constructor(message: string, status: number, code?: string, params?: Record<string, unknown>) {
     super(message)
     this.name = "ApiError"
     this.status = status
+    this.code = code
+    this.params = params
   }
 }
 
@@ -44,21 +50,24 @@ export function resolveApiUrl(url: string): string {
   return `${API_URL.replace(/\/$/, "")}/${url.replace(/^\//, "")}`
 }
 
-async function parseError(res: Response): Promise<string> {
+async function parseError(res: Response): Promise<ApiError> {
   try {
-    const data = (await res.json()) as { detail?: unknown }
-    if (typeof data.detail === "string") return data.detail
+    const data = (await res.json()) as { detail?: unknown; code?: unknown; params?: unknown }
+    const code = typeof data.code === "string" ? data.code : undefined
+    const params = data.params && typeof data.params === "object" ? (data.params as Record<string, unknown>) : undefined
+    if (typeof data.detail === "string") return new ApiError(data.detail, res.status, code, params)
     if (Array.isArray(data.detail)) {
       // FastAPI validation errors
-      return data.detail
+      const message = data.detail
         .map((d: { msg?: string; loc?: unknown[] }) =>
           d.loc ? `${d.loc.slice(-1)[0]}: ${d.msg ?? ""}` : d.msg ?? "",
         )
         .join("; ")
+      return new ApiError(message, res.status)
     }
-    return res.statusText || `HTTP ${res.status}`
+    return new ApiError(res.statusText || `HTTP ${res.status}`, res.status, code, params)
   } catch {
-    return res.statusText || `HTTP ${res.status}`
+    return new ApiError(res.statusText || `HTTP ${res.status}`, res.status)
   }
 }
 
@@ -93,9 +102,9 @@ export async function api<T = unknown>(path: string, opts: RequestOptions = {}):
   }
 
   if (!res.ok) {
-    const detail = await parseError(res)
+    const error = await parseError(res)
     if (res.status === 401) window.dispatchEvent(new CustomEvent("synapse:unauthorized"))
-    throw new ApiError(detail, res.status)
+    throw error
   }
   if (res.status === 204) return undefined as T
   const text = await res.text()
@@ -114,7 +123,7 @@ export async function fetchMediaObjectUrl(url: string, signal?: AbortSignal): Pr
   const token = getToken()
   if (token) headers.Authorization = `Bearer ${token}`
   const res = await fetch(resolveApiUrl(url), { headers, signal })
-  if (!res.ok) throw new ApiError(await parseError(res), res.status)
+  if (!res.ok) throw await parseError(res)
   const type = (res.headers.get("content-type") || "").split(";")[0].trim().toLowerCase()
   if (!SAFE_MEDIA_TYPES.has(type)) throw new ApiError("unsupported_media", 415)
   return URL.createObjectURL(new Blob([await res.arrayBuffer()], { type }))

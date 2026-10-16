@@ -2,7 +2,8 @@ import { useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Loader2, MessageSquareReply, Paperclip, Send, X } from "lucide-react"
 import { toast } from "sonner"
-import { api, ApiError } from "@/lib/api"
+import { api } from "@/lib/api"
+import { errorText } from "@/lib/errors"
 import type { Complaint } from "@/lib/types"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -55,7 +56,7 @@ export function ReplyCard({ complaint, onSent }: { complaint: Complaint; onSent:
       setFiles([])
       onSent()
     } catch (err) {
-      toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+      toast.error(errorText(err))
     } finally {
       setBusy(false)
     }

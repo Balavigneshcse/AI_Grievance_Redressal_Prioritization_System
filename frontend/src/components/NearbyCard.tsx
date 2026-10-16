@@ -2,7 +2,8 @@ import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Building2, Loader2, MapPin, ThumbsUp, Users } from "lucide-react"
 import { toast } from "sonner"
-import { api, ApiError } from "@/lib/api"
+import { api } from "@/lib/api"
+import { errorText } from "@/lib/errors"
 import { useAuth } from "@/lib/auth"
 import type { NearbyItem } from "@/lib/types"
 import { useDepartments } from "@/lib/departments"
@@ -46,7 +47,7 @@ export function NearbyCard({ lat, lng }: { lat: number; lng: number }) {
       setItems((prev) => (prev ?? []).map((i) => (i.id === item.id ? { ...i, supported: true, supporters: r.supporters, urgency: (r.urgency as NearbyItem["urgency"]) ?? i.urgency } : i)))
       toast.success(t("nearby.supported", { id: item.tracking_id, count: r.supporters }))
     } catch (err) {
-      toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+      toast.error(errorText(err))
     } finally {
       setBusy(null)
     }

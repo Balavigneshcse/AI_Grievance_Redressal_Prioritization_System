@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { Camera, CheckCircle2, IdCard, Loader2, Plus, Send, Upload, Video, X } from "lucide-react"
 import { toast } from "sonner"
-import { api, ApiError } from "@/lib/api"
+import { api } from "@/lib/api"
+import { errorText } from "@/lib/errors"
 import { useAuth } from "@/lib/auth"
 import type { User } from "@/lib/types"
 import { currentLang } from "@/lib/i18n"
@@ -143,7 +144,7 @@ export default function NewComplaint() {
       updateUser(me)
       toast.success(t("new.detailsSaved"))
     } catch (err) {
-      toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+      toast.error(errorText(err))
     } finally {
       setSavingIdentity(false)
     }
@@ -181,7 +182,7 @@ export default function NewComplaint() {
       const res = await api<{ id: string; tracking_id: string; status: string }>("/complaints", { body: fd })
       setResult(res)
     } catch (err) {
-      toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+      toast.error(errorText(err))
     } finally {
       setSubmitting(false)
     }

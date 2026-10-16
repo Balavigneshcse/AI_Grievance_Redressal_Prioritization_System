@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Query, UploadFile
 from sqlalchemy import case, or_, select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
+from ..errors import ApiError
 from .. import models, schemas
 from ..services.notifier import STATUS_LABEL, notify, notify_staff
 from ..services.pipeline import _set_status
@@ -80,9 +81,9 @@ def _load(db: Session, complaint_id: str, user: models.User, lock: bool = False)
     # lock: hold the row until commit, so a second decision on the same case waits and sees the new status
     c = db.get(models.Complaint, as_uuid(complaint_id), with_for_update=True if lock else None)
     if c is None:
-        raise HTTPException(404, "Complaint not found")
+        raise ApiError(404, "complaint_not_found")
     if not can_access(c, user):
-        raise HTTPException(403, "Outside your district or department")
+        raise ApiError(403, "outside_scope")
     return c
 
 
@@ -121,7 +122,7 @@ def review_queue(
 @router.get("/departments/{dept}/queue", response_model=list[schemas.QueueItem])
 def department_queue(dept: str, user: models.User = Depends(require_role(*STAFF_ROLES)), db: Session = Depends(get_db)):
     if user.role == "dept_admin" and user.department_id != dept:
-        raise HTTPException(403, "Not your department")
+        raise ApiError(403, "not_your_department")
     q = scope_complaints(select(models.Complaint), user).where(
         models.Complaint.department_id == dept, models.Complaint.status.in_(("routed", "in_progress", "awaiting_info"))
     )
@@ -138,11 +139,12 @@ def review_detail(complaint_id: str, user: models.User = Depends(require_role(*S
 def decide(complaint_id: str, body: schemas.DecisionIn, user: models.User = Depends(require_role(*STAFF_ROLES)), db: Session = Depends(get_db)):
     c = _load(db, complaint_id, user, lock=True)
     if c.status not in ALLOWED_FROM[body.action]:
-        raise HTTPException(409, f"Cannot {body.action.replace('_', ' ')} from status {c.status}")
+        raise ApiError(409, "decision_not_allowed", message=f"Cannot {body.action.replace('_', ' ')} from status {c.status}",
+                       action=body.action, status=c.status)
     if body.action == "accept" and c.status == "routed" and user.role != "dept_admin":
         # Accept on a routed case is the department admin's Start work. A reviewer's would only add a second
         # Routed entry and send the routed mails again (DecisionBar.tsx offers it to department admins only).
-        raise HTTPException(409, "Already routed: the department admin starts the work")
+        raise ApiError(409, "already_routed")
     owner = db.get(models.User, c.user_id)
     ov = models.Override(
         complaint_id=c.id, officer_id=user.id, action=body.action, from_department=c.department_id, to_department=c.department_id,
@@ -157,27 +159,27 @@ def decide(complaint_id: str, body: schemas.DecisionIn, user: models.User = Depe
         _set_status(db, c, target, "officer", user.id, note)
     elif body.action == "reassign":
         if not body.department and not body.urgency:
-            raise HTTPException(400, "reassign needs a department or an urgency")
+            raise ApiError(400, "reassign_target_missing")
         if body.department:
             if db.get(models.Department, body.department) is None:
-                raise HTTPException(400, "Unknown department")
+                raise ApiError(400, "department_unknown")
             c.department_id = ov.to_department = body.department
         if body.urgency:
             c.urgency = ov.to_urgency = body.urgency
         _set_status(db, c, "routed", "officer", user.id, note)
     elif body.action == "merge":
         if not body.merged_into:
-            raise HTTPException(400, "merge needs merged_into")
+            raise ApiError(400, "merge_target_missing")
         target = db.execute(select(models.Complaint).where(models.Complaint.tracking_id == body.merged_into.upper())).scalar_one_or_none()
         if target is None:
             try:
                 target = db.get(models.Complaint, as_uuid(body.merged_into))
-            except HTTPException:
+            except ApiError:  # not a UUID either
                 target = None
         if target is None or target.id == c.id:
-            raise HTTPException(400, "Target complaint not found")
+            raise ApiError(400, "merge_target_not_found")
         if target.duplicate_of is not None:
-            raise HTTPException(400, "Target is itself a duplicate; merge into the original")
+            raise ApiError(400, "merge_target_duplicate")
         c.duplicate_of = target.id
         ov.merged_into = target.id
         _set_status(db, c, "merged", "officer", user.id, note + f" (into {target.tracking_id})")
@@ -223,7 +225,7 @@ async def add_attachments(
     c = _load(db, complaint_id, user)
     saved = await _save_uploads(db, c, files, captured_in_app=False, role="resolution", uploaded_by=user.id)
     if not saved:
-        raise HTTPException(400, "Attach at least one photo or video")
+        raise ApiError(400, "attachment_required")
     db.add(models.StatusEvent(complaint_id=c.id, from_status=c.status, to_status=c.status, actor_type="officer", actor_id=user.id,
                               note=f"resolution proof added ({saved} file{'s' if saved != 1 else ''})"))
     db.commit()

@@ -2,7 +2,8 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { CheckCircle2, Loader2, RotateCcw, Star } from "lucide-react"
 import { toast } from "sonner"
-import { api, ApiError } from "@/lib/api"
+import { api } from "@/lib/api"
+import { errorText } from "@/lib/errors"
 import type { Complaint } from "@/lib/types"
 import { formatDateTime } from "@/lib/format"
 import { Button } from "@/components/ui/button"
@@ -39,7 +40,7 @@ export function FeedbackCard({ complaint, onSent }: { complaint: Complaint; onSe
       setReopening(false)
       onSent()
     } catch (err) {
-      toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+      toast.error(errorText(err))
     } finally {
       setBusy(false)
     }

@@ -12,20 +12,31 @@ from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 
 from .config import settings
+from .errors import ApiError
 
 _ph = PasswordHasher()
 
-PASSWORD_RULES = [
-    (r".{8,}", "at least 8 characters"),
-    (r"[A-Z]", "an uppercase letter"),
-    (r"[a-z]", "a lowercase letter"),
-    (r"[0-9]", "a digit"),
-    (r"[^A-Za-z0-9]", "a symbol"),
+PASSWORD_RULES = [  # (rule id, translated by the app as password.missing.<id>; pattern; English words)
+    ("min_length", r".{8,}", "at least 8 characters"),
+    ("uppercase", r"[A-Z]", "an uppercase letter"),
+    ("lowercase", r"[a-z]", "a lowercase letter"),
+    ("digit", r"[0-9]", "a digit"),
+    ("symbol", r"[^A-Za-z0-9]", "a symbol"),
 ]
 
 
-def password_problems(pw: str) -> list[str]:
-    return [msg for pat, msg in PASSWORD_RULES if not re.search(pat, pw or "")]
+def password_problems(pw: str) -> list[tuple[str, str]]:
+    """(rule id, English words) of every rule the password misses; empty when it is strong enough."""
+    return [(rule, words) for rule, pat, words in PASSWORD_RULES if not re.search(pat, pw or "")]
+
+
+def check_password(pw: str) -> None:
+    """400 password_weak unless the password meets every rule: the ids of the missing rules in the
+    parameters, for the app to name them in the user's language, and their English words in the message."""
+    problems = password_problems(pw)
+    if problems:
+        raise ApiError(400, "password_weak", message="Password needs " + ", ".join(words for _, words in problems),
+                       missing=[rule for rule, _ in problems])
 
 
 def hash_password(pw: str) -> str:

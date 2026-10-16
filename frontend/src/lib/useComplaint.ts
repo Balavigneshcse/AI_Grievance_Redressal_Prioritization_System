@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { api, ApiError } from "@/lib/api"
+import { api } from "@/lib/api"
 import type { Complaint } from "@/lib/types"
 import { isLiveStatus } from "@/lib/labels"
 
-/** Loads a complaint and polls every 3 s while it is still received/analysing. */
+/** Loads a complaint and polls every 3 s while it is still received/analysing. `error` is the failed
+ *  request (show it with errorText from lib/errors.ts). */
 export function useComplaint(id: string | undefined, intervalMs = 3000) {
   const [complaint, setComplaint] = useState<Complaint | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<unknown>(null)
   const [loading, setLoading] = useState(true)
   const timer = useRef<number | null>(null)
 
@@ -17,7 +18,7 @@ export function useComplaint(id: string | undefined, intervalMs = 3000) {
       setComplaint(data)
       setError(null)
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "network_error")
+      setError(err)
     } finally {
       setLoading(false)
     }

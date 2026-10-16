@@ -3,7 +3,8 @@ import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { Activity, ArrowLeft, BarChart3, RefreshCw } from "lucide-react"
 import { toast } from "sonner"
-import { api, ApiError } from "@/lib/api"
+import { api } from "@/lib/api"
+import { errorText } from "@/lib/errors"
 import { useDepartments } from "@/lib/departments"
 import { LANGUAGE_NAMES } from "@/lib/labels"
 import { Button } from "@/components/ui/button"
@@ -79,11 +80,11 @@ export default function AdminMetrics() {
       setM(mm)
       setH(hh)
     } catch (err) {
-      if (!silent) toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+      if (!silent) toast.error(errorText(err))
     } finally {
       setLoading(false)
     }
-  }, [t])
+  }, [])
 
   useEffect(() => {
     void load()

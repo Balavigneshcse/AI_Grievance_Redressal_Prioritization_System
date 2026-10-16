@@ -7,6 +7,7 @@ import { z } from "zod"
 import { Loader2, LogIn, Mail } from "lucide-react"
 import { toast } from "sonner"
 import { api, ApiError } from "@/lib/api"
+import { errorText } from "@/lib/errors"
 import { useAuth } from "@/lib/auth"
 import type { AuthResponse } from "@/lib/types"
 import { AuthCard } from "@/components/AuthCard"
@@ -44,12 +45,13 @@ export default function Login() {
       toast.success(t("auth.welcome"))
       navigate(from, { replace: true })
     } catch (err) {
-      if (err instanceof ApiError && err.status === 403) {
+      // 403 is an unverified account (to the code page), unless the account is disabled.
+      if (err instanceof ApiError && err.status === 403 && err.code !== "account_disabled") {
         toast.info(t("auth.notVerified"))
         navigate(`/verify?email=${encodeURIComponent(values.email)}`)
         return
       }
-      toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+      toast.error(errorText(err))
     } finally {
       setBusy(false)
     }

@@ -7,7 +7,7 @@ import threading
 import time
 from collections import defaultdict, deque
 
-from fastapi import HTTPException
+from ..errors import ApiError
 
 _hits: dict[str, deque] = defaultdict(deque)
 _lock = threading.Lock()
@@ -21,7 +21,7 @@ def hit(key: str, limit: int, window_s: int) -> None:
             q.popleft()
         if len(q) >= limit:
             retry = int(q[0] + window_s - now) + 1
-            raise HTTPException(429, "Too many attempts. Please wait a minute and try again.", headers={"Retry-After": str(retry)})
+            raise ApiError(429, "too_many_attempts", headers={"Retry-After": str(retry)})
         q.append(now)
 
 

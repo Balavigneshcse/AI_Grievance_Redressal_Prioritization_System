@@ -3,23 +3,21 @@ from __future__ import annotations
 import re
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..config import settings
 from ..db import get_db
+from ..errors import ApiError
 from .. import models, schemas
-from ..security import EMAIL_RE, MOBILE_RE, create_token, hash_otp, hash_password, new_otp, otp_matches, password_problems, verify_password
+from ..security import EMAIL_RE, MOBILE_RE, check_password, create_token, hash_otp, hash_password, new_otp, otp_matches, verify_password
 from ..services.notifier import notify
 from ..services.ratelimit import client_ip, hit
 from .deps import current_user, user_out
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 AADHAAR4_RE = re.compile(r"[0-9]{4}")
-# One answer for a wrong, expired or missing code and for an email with no account, so verify-otp and
-# reset never tell whether an address is registered (forgot and resend-otp are generic for the same reason).
-BAD_CODE = "Incorrect or expired code. Check it, or request a new one."
 
 
 def _issue_otp(db: Session, user: models.User, purpose: str) -> None:
@@ -34,20 +32,22 @@ def _issue_otp(db: Session, user: models.User, purpose: str) -> None:
 
 
 def _check_otp(db: Session, user: models.User | None, purpose: str, code: str) -> None:
+    # One answer (code_invalid) for a wrong, expired or missing code and for an email with no account, so verify-otp and
+    # reset never tell whether an address is registered (forgot and resend-otp are generic for the same reason).
     if user is None:
-        raise HTTPException(400, BAD_CODE)
+        raise ApiError(400, "code_invalid")
     otp = db.execute(
         select(models.Otp).where(models.Otp.user_id == user.id, models.Otp.purpose == purpose, models.Otp.consumed_at.is_(None))
         .order_by(models.Otp.created_at.desc()).limit(1)
     ).scalar_one_or_none()
     if otp is None or otp.expires_at < datetime.now(timezone.utc):
-        raise HTTPException(400, BAD_CODE)
+        raise ApiError(400, "code_invalid")
     if otp.attempts >= settings.OTP_MAX_ATTEMPTS:
-        raise HTTPException(429, "Too many attempts. Request a new code.")
+        raise ApiError(429, "code_attempts_exceeded")
     otp.attempts += 1
     if not otp_matches(code, otp.code_hash):
         db.commit()
-        raise HTTPException(400, BAD_CODE)
+        raise ApiError(400, "code_invalid")
     otp.consumed_at = datetime.now(timezone.utc)
 
 
@@ -62,7 +62,7 @@ def _clean_name(value: str | None) -> str:
     """Collapse whitespace; 400 unless 2 to 120 characters remain."""
     name = " ".join((value or "").split())
     if not 2 <= len(name) <= 120:
-        raise HTTPException(400, "Please enter your full name")
+        raise ApiError(400, "name_invalid")
     return name
 
 
@@ -70,7 +70,7 @@ def _clean_aadhaar(value: str | None) -> str:
     """Exactly the last four digits of the Aadhaar number, never more."""
     digits = (value or "").strip()
     if not AADHAAR4_RE.fullmatch(digits):
-        raise HTTPException(400, "Enter the last 4 digits of your Aadhaar number")
+        raise ApiError(400, "aadhaar_invalid")
     return digits
 
 
@@ -80,20 +80,18 @@ def register(body: schemas.RegisterIn, request: Request, db: Session = Depends(g
     email = body.email.strip().lower()
     mobile = body.mobile.strip().replace(" ", "").removeprefix("+91")
     if not MOBILE_RE.match(mobile):
-        raise HTTPException(400, "Mobile number must be 10 digits starting with 6-9")
+        raise ApiError(400, "mobile_invalid")
     if not EMAIL_RE.match(email):
-        raise HTTPException(400, "Invalid email address")
-    problems = password_problems(body.password)
-    if problems:
-        raise HTTPException(400, "Password needs " + ", ".join(problems))
+        raise ApiError(400, "email_invalid")
+    check_password(body.password)
     full_name, aadhaar_last4 = _clean_name(body.full_name), _clean_aadhaar(body.aadhaar_last4)
 
     user = db.execute(select(models.User).where(models.User.email == email)).scalar_one_or_none()
     if user and user.is_verified:
-        raise HTTPException(409, "An account with this email already exists")
+        raise ApiError(409, "email_taken")
     other = db.execute(select(models.User).where(models.User.mobile == mobile)).scalar_one_or_none()
     if other and other.id != (user.id if user else None):
-        raise HTTPException(409, "This mobile number is already registered")
+        raise ApiError(409, "mobile_taken")
 
     if user is None:
         user = models.User(mobile=mobile, email=email, password_hash=hash_password(body.password), preferred_language=body.preferred_language,
@@ -136,11 +134,11 @@ def login(body: schemas.LoginIn, request: Request, db: Session = Depends(get_db)
     hit(f"login:{body.email.strip().lower()}", 10, 60)
     user = db.execute(select(models.User).where(models.User.email == body.email.strip().lower())).scalar_one_or_none()
     if user is None or not verify_password(body.password, user.password_hash):
-        raise HTTPException(401, "Incorrect email or password")
+        raise ApiError(401, "login_failed")
     if not user.is_verified:
-        raise HTTPException(403, "Account not verified")
+        raise ApiError(403, "account_not_verified")
     if not user.is_active:
-        raise HTTPException(403, "Account disabled")
+        raise ApiError(403, "account_disabled")
     user.last_login_at = datetime.now(timezone.utc)
     db.commit()
     return _token(user)
@@ -159,9 +157,7 @@ def forgot(body: schemas.ForgotIn, request: Request, db: Session = Depends(get_d
 
 @router.post("/reset")
 def reset(body: schemas.ResetIn, db: Session = Depends(get_db)):
-    problems = password_problems(body.new_password)  # before the account lookup: the same answer either way
-    if problems:
-        raise HTTPException(400, "Password needs " + ", ".join(problems))
+    check_password(body.new_password)  # before the account lookup: the same answer either way
     user = db.execute(select(models.User).where(models.User.email == body.email.strip().lower())).scalar_one_or_none()
     _check_otp(db, user, "reset", body.code)
     user.password_hash = hash_password(body.new_password)

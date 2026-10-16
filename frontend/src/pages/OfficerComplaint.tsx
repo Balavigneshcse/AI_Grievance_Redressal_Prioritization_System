@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { ArrowLeft, RefreshCw } from "lucide-react"
 import { toast } from "sonner"
 import { useComplaint } from "@/lib/useComplaint"
+import { errorText } from "@/lib/errors"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -15,10 +16,12 @@ export default function OfficerComplaint() {
   const { id } = useParams<{ id: string }>()
   const { t } = useTranslation()
   const { complaint, loading, error, reload } = useComplaint(id)
+  // The text, not the error object, keys the toast: a poll that fails the same way again stays quiet.
+  const message = error ? errorText(error) : null
 
   useEffect(() => {
-    if (error) toast.error(error === "network_error" ? t("errors.network") : error)
-  }, [error, t])
+    if (message) toast.error(message)
+  }, [message])
 
   return (
     <div className="space-y-4">
@@ -51,7 +54,7 @@ export default function OfficerComplaint() {
       ) : (
         <Alert variant="destructive">
           <AlertTitle>{t("track.notFound")}</AlertTitle>
-          <AlertDescription>{error === "network_error" ? t("errors.network") : error}</AlertDescription>
+          <AlertDescription>{message}</AlertDescription>
         </Alert>
       )}
     </div>

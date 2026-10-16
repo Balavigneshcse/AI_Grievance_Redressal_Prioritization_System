@@ -6,7 +6,8 @@ import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 import { ArrowLeft, MapPinned, RefreshCw } from "lucide-react"
 import { toast } from "sonner"
-import { api, ApiError } from "@/lib/api"
+import { api } from "@/lib/api"
+import { errorText } from "@/lib/errors"
 import { useDepartments } from "@/lib/departments"
 import { DEFAULT_CENTER } from "@/lib/geo"
 import type { MapPoint, Urgency } from "@/lib/types"
@@ -44,13 +45,13 @@ export default function AdminMap() {
         const rows = await api<MapPoint[]>(`/admin/map?view=${view}`)
         setPoints(Array.isArray(rows) ? rows : [])
       } catch (err) {
-        if (!silent) toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+        if (!silent) toast.error(errorText(err))
         setPoints((prev) => prev ?? [])
       } finally {
         setLoading(false)
       }
     },
-    [view, t],
+    [view],
   )
 
   useEffect(() => {

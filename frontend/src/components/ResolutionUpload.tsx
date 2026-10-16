@@ -2,7 +2,8 @@ import { useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { ImagePlus, Loader2 } from "lucide-react"
 import { toast } from "sonner"
-import { api, ApiError } from "@/lib/api"
+import { api } from "@/lib/api"
+import { errorText } from "@/lib/errors"
 import type { Complaint } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -36,7 +37,7 @@ export function ResolutionUpload({ complaint, onDone }: { complaint: Complaint; 
       toast.success(t("officer.proofAdded", { count: ok.length }))
       onDone()
     } catch (err) {
-      toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+      toast.error(errorText(err))
     } finally {
       setBusy(false)
     }

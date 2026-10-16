@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
 from fastapi.responses import FileResponse
 from datetime import timedelta
 
@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from ..config import settings
 from ..db import get_db
+from ..errors import ApiError
 from .. import models, schemas
 from ..services.notifier import STATUS_LABEL, notify, notify_staff
 from ..services.pipeline import _set_status
@@ -86,7 +87,7 @@ async def _save_uploads(db: Session, c: models.Complaint, files: list[UploadFile
     Any refused file refuses the whole request, and files already written for it are removed."""
     files = [f for f in files or [] if f.filename]
     if len(files) > settings.MAX_FILES:
-        raise HTTPException(400, f"Attach at most {settings.MAX_FILES} photos or videos at a time")
+        raise ApiError(400, "too_many_files", max=settings.MAX_FILES)
     folder = settings.MEDIA_DIR / str(c.id)
     written: list[Path] = []
     saved = 0
@@ -95,7 +96,7 @@ async def _save_uploads(db: Session, c: models.Complaint, files: list[UploadFile
             first = await f.read(1024 * 1024)
             mime = _sniff(first[:16])
             if mime is None:
-                raise HTTPException(400, f"{f.filename}: only JPEG, PNG or WebP photos and WebM, MP4 or MOV videos are accepted")
+                raise ApiError(400, "file_type_refused", name=f.filename)
             kind, ext = MEDIA_TYPES[mime]
             limit_mb = settings.MAX_PHOTO_MB if kind == "photo" else settings.MAX_VIDEO_MB
             folder.mkdir(parents=True, exist_ok=True)
@@ -108,7 +109,7 @@ async def _save_uploads(db: Session, c: models.Complaint, files: list[UploadFile
                 while chunk:
                     size += len(chunk)
                     if size > limit_mb * 1024 * 1024:
-                        raise HTTPException(413, f"{f.filename} is larger than {limit_mb} MB ({kind} limit)")
+                        raise ApiError(413, "file_too_large", name=f.filename, max=limit_mb, kind=kind)
                     fh.write(chunk)
                     chunk = await f.read(1024 * 1024)
             exif_lat, exif_lng = _exif_gps(path) if kind == "photo" else (None, None)
@@ -140,18 +141,18 @@ async def create_complaint(
 ):
     text = (text or "").strip()
     if len(text) < 10:
-        raise HTTPException(400, "Please describe the problem in at least a few words")
+        raise ApiError(400, "complaint_too_short")
     if len(text) > settings.MAX_COMPLAINT_CHARS:
-        raise HTTPException(400, f"Please keep the complaint to {settings.MAX_COMPLAINT_CHARS} characters or fewer")
+        raise ApiError(400, "complaint_too_long", max=settings.MAX_COMPLAINT_CHARS)
     if location_source not in ("camera_gps", "exif", "browser", "manual", "none"):
         location_source = "none"
     if (lat is None) != (lng is None):
-        raise HTTPException(400, "Send both lat and lng, or neither")
+        raise ApiError(400, "location_incomplete")
     if lat is not None and not (-90 <= lat <= 90 and -180 <= lng <= 180):  # written this way it also refuses NaN
-        raise HTTPException(400, "lat must be between -90 and 90 and lng between -180 and 180")
+        raise ApiError(400, "location_out_of_range")
     # Name and Aadhaar last 4 are taken once, at registration (or PATCH /auth/me); every complaint carries them for the office.
     if not (user.full_name and user.aadhaar_last4):
-        raise HTTPException(400, "Add your name and the last 4 digits of your Aadhaar number to your account first")
+        raise ApiError(400, "profile_incomplete")
 
     c = models.Complaint(
         tracking_id=_tracking_id(db), user_id=user.id, raw_text=text, language_hint=language_hint,
@@ -236,11 +237,11 @@ def _haversine_km(lat1, lng1, lat2, lng2) -> float:
 def _load_for(db: Session, complaint_id: str, user: models.User) -> models.Complaint:
     c = db.get(models.Complaint, as_uuid(complaint_id))
     if c is None:
-        raise HTTPException(404, "Complaint not found")
+        raise ApiError(404, "complaint_not_found")
     if user.role == "complainant" and c.user_id != user.id:
-        raise HTTPException(403, "Not your complaint")
+        raise ApiError(403, "not_your_complaint")
     if user.role in STAFF_ROLES and not can_access(c, user):
-        raise HTTPException(403, "Outside your district or department")
+        raise ApiError(403, "outside_scope")
     return c
 
 
@@ -303,7 +304,7 @@ def track(tracking_id: str, user: models.User = Depends(current_user), db: Sessi
     # lookup never confirms that an ID exists.
     c = db.execute(select(models.Complaint).where(models.Complaint.tracking_id == tracking_id.upper())).scalar_one_or_none()
     if c is None or not can_access(c, user):
-        raise HTTPException(404, "Complaint not found")
+        raise ApiError(404, "complaint_not_found")
     return complaint_detail(db, c, user)
 
 
@@ -322,7 +323,7 @@ def timeline(complaint_id: str, user: models.User = Depends(current_user), db: S
 def media(media_id: str, user: models.User = Depends(current_user), db: Session = Depends(get_db)):
     m = db.get(models.Media, as_uuid(media_id))
     if m is None:
-        raise HTTPException(404, "Media not found")
+        raise ApiError(404, "media_not_found")
     _load_for(db, str(m.complaint_id), user)
     # Files stored before the upload check existed may be anything: hand those out as a download only.
     safe = m.mime in SAFE_MEDIA_TYPES
@@ -344,12 +345,12 @@ async def reply(
     An awaiting-info case goes back to where it was; the office holding the case is emailed."""
     c = _load_for(db, complaint_id, user)
     if c.user_id != user.id:
-        raise HTTPException(403, "Only the complainant can reply")
+        raise ApiError(403, "reply_not_owner")
     if c.status in ("closed", "merged"):
-        raise HTTPException(409, "This complaint is closed")
+        raise ApiError(409, "complaint_closed")
     text = " ".join((text or "").split())
     if len(text) < 2 and not any(f.filename for f in files or []):
-        raise HTTPException(400, "Write a reply or attach a photo or video")
+        raise ApiError(400, "reply_empty")
     saved = await _save_uploads(db, c, files, captured_in_app=False)
     note = (f"reply: {text}" if text else "reply with attachments") + (f" (+{saved} file{'s' if saved != 1 else ''})" if saved and text else "")
     if c.status == "awaiting_info":
@@ -374,12 +375,12 @@ def feedback(complaint_id: str, body: schemas.FeedbackIn, user: models.User = De
     Both are allowed for REOPEN_WINDOW_DAYS after the resolve/close event."""
     c = _load_for(db, complaint_id, user)
     if c.user_id != user.id:
-        raise HTTPException(403, "Only the complainant can give feedback")
+        raise ApiError(403, "feedback_not_owner")
     deadline = _reopen_deadline(c)
     if deadline is None:
-        raise HTTPException(409, "Feedback is possible once the complaint is resolved")
+        raise ApiError(409, "feedback_not_resolved")
     if datetime.now(timezone.utc) > deadline:
-        raise HTTPException(409, "The feedback window has closed")
+        raise ApiError(409, "feedback_window_closed")
     note = " ".join((body.note or "").split())[:500]
     if body.reopen:
         c.reopen_count = (c.reopen_count or 0) + 1
@@ -389,7 +390,7 @@ def feedback(complaint_id: str, body: schemas.FeedbackIn, user: models.User = De
                note="Your complaint was reopened and sent back to the department.")
     else:
         if body.rating is None:
-            raise HTTPException(400, "Give a rating from 1 to 5, or reopen the complaint")
+            raise ApiError(400, "rating_required")
         c.rating, c.rating_note, c.rated_at = body.rating, note or None, datetime.now(timezone.utc)
         db.add(models.StatusEvent(complaint_id=c.id, from_status=c.status, to_status=c.status, actor_type="complainant", actor_id=user.id,
                                   note=f"rated {body.rating}/5" + (f": {note}" if note else "")))
@@ -402,20 +403,20 @@ def support(complaint_id: str, body: schemas.SupportIn | None = None, user: mode
     """'Me too': back an existing open complaint instead of filing a duplicate. Enough supporters raise its urgency one level.
     Citizens only, and only from near the complaint: the point they send must be within NEARBY_KM of it, as in the nearby list."""
     if user.role != "complainant":
-        raise HTTPException(403, "Only citizens can support a complaint")
+        raise ApiError(403, "support_citizens_only")
     # Row lock until commit: simultaneous clicks queue up here, so the second sees the first's support row
     # (no unique-constraint error) and two citizens' counts never overwrite each other.
     c = db.get(models.Complaint, as_uuid(complaint_id), with_for_update=True)
     if c is None:
-        raise HTTPException(404, "Complaint not found")
+        raise ApiError(404, "complaint_not_found")
     if c.user_id == user.id:
-        raise HTTPException(400, "You filed this complaint")
+        raise ApiError(400, "support_own_complaint")
     if c.status not in OPEN_FOR_SUPPORT:
-        raise HTTPException(409, "This complaint is no longer open")
+        raise ApiError(409, "complaint_not_open")
     if body is None:
-        raise HTTPException(400, "Send your location: only complaints near you can be supported")
+        raise ApiError(400, "support_location_required")
     if c.lat is None or c.lng is None or _haversine_km(body.lat, body.lng, c.lat, c.lng) > settings.NEARBY_KM:
-        raise HTTPException(403, f"Only complaints within {settings.NEARBY_KM:g} km of you can be supported")
+        raise ApiError(403, "support_too_far", km=settings.NEARBY_KM)
     exists = db.execute(select(models.Support).where(models.Support.complaint_id == c.id, models.Support.user_id == user.id)).scalar_one_or_none()
     if exists is None:
         db.add(models.Support(complaint_id=c.id, user_id=user.id))

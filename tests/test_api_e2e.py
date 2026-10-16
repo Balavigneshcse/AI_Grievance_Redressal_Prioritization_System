@@ -22,6 +22,7 @@ import io
 import os
 import json
 import re
+import string
 import sys
 import threading
 import time
@@ -128,6 +129,14 @@ def at_once(fn, n: int) -> list:
         t.start()
     for t in threads:
         t.join()
+    return out
+
+
+def flat(d: dict, prefix: str = "") -> dict[str, str]:
+    """An i18n file's nested keys as dotted paths."""
+    out = {}
+    for k, v in d.items():
+        out.update(flat(v, f"{prefix}{k}.") if isinstance(v, dict) else {prefix + k: v})
     return out
 
 
@@ -609,6 +618,53 @@ def main() -> int:
         got[text[:22]] = sorted({"R10", "R10b"} & set(t["matched"]))
     check("rules test: an old-age pension complaint (English, Hindi, Tamil) matches no at-risk rule; elderly residents and sick children still do",
           list(got.values()) == [[], [], [], ["R10b"], ["R10"]], json.dumps(got, ensure_ascii=False))
+
+    print("\n== error codes for the app's languages (16 Oct) ==")
+    # Every refusal carries a stable code and its parameters next to the English detail; the app shows apiErrors.<code>
+    # from the en / ta / hi files. FastAPI's own 422 list is unchanged.
+    max_chars = int(env("MAX_COMPLAINT_CHARS", "5000"))
+    r = requests.post(f"{API}/complaints", headers=HC, data={"text": "x" * (max_chars + 1), "location_source": "none"}, timeout=30)
+    check("a refusal keeps its English message in detail and adds its code and parameters",
+          r.status_code == 400 and r.json().get("detail") == f"Please keep the complaint to {max_chars} characters or fewer"
+          and r.json().get("code") == "complaint_too_long" and r.json().get("params") == {"max": max_chars}, r.text[:120])
+    r = decide(ids["dup"], "resolve")  # merged above: no decision is taken from merged
+    check("a refused decision sends the action and the status as ids (the app shows its own labels)",
+          r.status_code == 409 and r.json().get("code") == "decision_not_allowed" and r.json().get("params") == {"action": "resolve", "status": "merged"}, r.text[:120])
+    r = requests.post(f"{API}/auth/register", json={"mobile": "9123456781", "email": f"codes.{stamp}@synapse.local", "password": "weakpass",
+                                                   "full_name": "Code Check", "aadhaar_last4": "1234"}, timeout=30)
+    check("a weak password: the missing rules as ids in the parameters, in words in the English message",
+          r.status_code == 400 and r.json().get("code") == "password_weak" and r.json().get("params") == {"missing": ["uppercase", "digit", "symbol"]}
+          and r.json().get("detail") == "Password needs an uppercase letter, a digit, a symbol", r.text[:120])
+    if H_new:
+        r = requests.post(f"{API}/complaints/{photo_id}/support", headers=H_new, json={"lat": 13.0827, "lng": 80.2707}, timeout=30)  # Chennai
+        check("support from too far: the distance limit as a parameter", r.status_code == 403 and r.json().get("code") == "support_too_far"
+              and r.json().get("params") == {"km": near_km}, r.text[:120])
+    rl = [requests.post(f"{API}/auth/login", json={"email": f"codes.{stamp}@synapse.local", "password": "nope-Nope-1!"}, timeout=30) for _ in range(11)]
+    check("a failed login and the rate limit carry their codes; the limit keeps its Retry-After header",
+          rl[0].status_code == 401 and rl[0].json().get("code") == "login_failed" and rl[-1].status_code == 429
+          and rl[-1].json().get("code") == "too_many_attempts" and rl[-1].headers.get("Retry-After", "").isdigit(),
+          f"{rl[0].status_code} {rl[0].json().get('code')} / {rl[-1].status_code} {rl[-1].json().get('code')} Retry-After {rl[-1].headers.get('Retry-After')}")
+    r = requests.get(f"{API}/complaints/nearby?lat=11.0&lng=76.9&km=0", headers=HA, timeout=30)
+    check("validation errors keep FastAPI's 422 list in detail, without a code", r.status_code == 422 and isinstance(r.json().get("detail"), list) and "code" not in r.json(), r.text[:100])
+    # Static: every code the backend raises is in errors.MESSAGES and has text in the three language files, which share
+    # their keys and placeholders, and a translation only uses parameters the API sends with that code.
+    sys.path.insert(0, str(ROOT))
+    from backend.app.errors import MESSAGES
+
+    app_dir = ROOT / "backend" / "app"
+    raised = {c for p in app_dir.rglob("*.py") for c in re.findall(r'ApiError\(\s*\d{3},\s*"([a-z_]+)"', p.read_text(encoding="utf-8"))}
+    bare = [p.name for p in app_dir.rglob("*.py") if "raise HTTPException(" in p.read_text(encoding="utf-8")]
+    langs = {lang: flat(json.loads((ROOT / "frontend" / "src" / "i18n" / f"{lang}.json").read_text(encoding="utf-8"))) for lang in ("en", "ta", "hi")}
+    holes = lambda text: sorted(set(re.findall(r"\{\{\s*(\w+)", text)))
+    fields = lambda template: {f for _, f, _, _ in string.Formatter().parse(template) if f}
+    problems = [f"raised but not in MESSAGES: {c}" for c in sorted(raised - set(MESSAGES))] + [f"raise HTTPException in {p}" for p in bare]
+    problems += [f"keys of {lang}.json differ from en.json" for lang in ("ta", "hi") if set(langs[lang]) != set(langs["en"])]
+    problems += [f"no {lang} text for {c}" for c in MESSAGES for lang in langs if not langs[lang].get(f"apiErrors.{c}")]
+    problems += [f"apiErrors.{k[10:]} is not an API code" for k in langs["en"] if k.startswith("apiErrors.") and k[10:] not in MESSAGES]
+    problems += [f"placeholders differ in {k}" for k in langs["en"] if not holes(langs["en"][k]) == holes(langs["ta"].get(k, "")) == holes(langs["hi"].get(k, ""))]
+    problems += [f"apiErrors.{c} uses a parameter the API does not send" for c in MESSAGES if not set(holes(langs["en"].get(f"apiErrors.{c}", ""))) <= fields(MESSAGES[c])]
+    check(f"every error code ({len(MESSAGES)}) has English, Tamil and Hindi text using the API's parameters; the three files share their {len(langs['en'])} keys",
+          not problems, "; ".join(problems)[:200])
 
     print("\n== notifications ==")
     n = mail_count("citizen@synapse.local")

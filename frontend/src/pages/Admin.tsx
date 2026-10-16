@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { BarChart3, Building2, Copy, FileCog, KeyRound, Loader2, MailPlus, MapPinned, RefreshCw, UserPlus, Users } from "lucide-react"
 import { toast } from "sonner"
-import { api, ApiError } from "@/lib/api"
+import { api } from "@/lib/api"
+import { errorText } from "@/lib/errors"
 import { useAuth } from "@/lib/auth"
 import { useDepartments } from "@/lib/departments"
 import { formatDateTime } from "@/lib/format"
@@ -108,11 +109,11 @@ export default function Admin() {
       setOverview(ov)
     } catch (err) {
       setStaff((prev) => prev ?? [])
-      toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+      toast.error(errorText(err))
     } finally {
       setLoading(false)
     }
-  }, [superAdmin, districtFilter, t])
+  }, [superAdmin, districtFilter])
 
   useEffect(() => {
     void load()
@@ -156,7 +157,7 @@ export default function Admin() {
       toast.success(t("admin.created"))
       void load()
     } catch (err) {
-      toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+      toast.error(errorText(err))
     } finally {
       setBusy(false)
     }
@@ -168,7 +169,7 @@ export default function Admin() {
       setStaff((prev) => (prev ?? []).map((s) => (s.id === u.id ? updated : s)))
       toast.success(active ? t("admin.activated") : t("admin.deactivated"))
     } catch (err) {
-      toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+      toast.error(errorText(err))
     }
   }
 
@@ -181,7 +182,7 @@ export default function Admin() {
       toast.success(t("admin.emailUpdated"))
       setEmailTarget(null)
     } catch (err) {
-      toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+      toast.error(errorText(err))
     } finally {
       setEmailBusy(false)
     }

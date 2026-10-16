@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { Filter, Inbox, RefreshCw, Search } from "lucide-react"
 import { toast } from "sonner"
-import { api, ApiError } from "@/lib/api"
+import { api } from "@/lib/api"
+import { errorText } from "@/lib/errors"
 import type { QueueItem, QueueView } from "@/lib/types"
 import { useAuth } from "@/lib/auth"
 import { useDepartments } from "@/lib/departments"
@@ -96,14 +97,14 @@ export default function OfficerQueue() {
         setItems(Array.isArray(list) ? list : [])
       } catch (err) {
         setItems((prev) => prev ?? [])
-        if (!silent) toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+        if (!silent) toast.error(errorText(err))
       } finally {
         inFlight.current = false
         setLoading(false)
         setRefreshing(false)
       }
     },
-    [view, department, urgency, language, district, query, t],
+    [view, department, urgency, language, district, query],
   )
 
   useEffect(() => {

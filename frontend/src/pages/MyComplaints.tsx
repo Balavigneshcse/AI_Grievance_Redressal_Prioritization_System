@@ -3,7 +3,8 @@ import { Link, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { Building2, ChevronRight, Inbox, Plus, RefreshCw, Users } from "lucide-react"
 import { toast } from "sonner"
-import { api, ApiError } from "@/lib/api"
+import { api } from "@/lib/api"
+import { errorText } from "@/lib/errors"
 import type { ComplaintSummary } from "@/lib/types"
 import { useDepartments } from "@/lib/departments"
 import { formatAge } from "@/lib/format"
@@ -30,7 +31,7 @@ export default function MyComplaints() {
         .catch(() => setSupported([]))
     } catch (err) {
       setItems((prev) => prev ?? [])
-      toast.error(err instanceof ApiError && err.message !== "network_error" ? err.message : t("errors.network"))
+      toast.error(errorText(err))
     } finally {
       setLoading(false)
     }
