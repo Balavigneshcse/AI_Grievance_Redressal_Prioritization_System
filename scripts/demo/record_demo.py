@@ -9,12 +9,16 @@ Playwright for Python with Google Chrome installed; ffmpeg comes from the imagei
                                              vindex_demo_subtitled.mp4 and vindex_demo.srt
   python scripts/demo/record_demo.py --render     re-render the MP4s from the last recording only
   python scripts/demo/record_demo.py --headed     watch the browser while it records
+
+DATABASE_URL, SEED_PASSWORD, API_URL (default http://127.0.0.1:8000) and DEMO_APP_URL (default
+http://localhost:5173) are read from the environment first, then from .env, as in tests/test_api_e2e.py.
 """
 from __future__ import annotations
 
 import argparse
 import io
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -26,24 +30,29 @@ import requests
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-OUT = ROOT / "docs" / "demo"
-RAW = OUT / "raw"
-APP = "http://localhost:5173"
-API = "http://127.0.0.1:8000"
-MAIL = "http://localhost:8025"
-GPS = {"latitude": 11.0183, "longitude": 76.9674}  # Gandhipuram, Coimbatore
-CITIZEN = {"full_name": "Priya Raman", "email": "priya.raman@synapse.local", "mobile": "9876501234",
-           "aadhaar_last4": "5678", "password": "Demo@12345", "preferred_language": "ta"}
-COMPLAINT = "Thanni 3 days ah varala Gandhipuram 5th street la. Veetla 2 kids vomiting, kudikka thanni illa. Please help seekiram."
 
 
 def env(key: str, default: str = "") -> str:
-    for line in (ROOT / ".env").read_text(encoding="utf-8").splitlines():
+    # A variable set in the environment wins over .env, so the demo citizen is removed from the database
+    # the recorded app actually uses.
+    if key in os.environ:
+        return os.environ[key]
+    dotenv = ROOT / ".env"
+    for line in dotenv.read_text(encoding="utf-8").splitlines() if dotenv.exists() else []:
         if line.startswith(key + "="):
             return line.split("=", 1)[1].strip()
     return default
 
 
+OUT = ROOT / "docs" / "demo"
+RAW = OUT / "raw"
+APP = env("DEMO_APP_URL", "http://localhost:5173").rstrip("/")
+API = env("API_URL", "http://127.0.0.1:8000").rstrip("/")
+MAIL = "http://localhost:8025"
+GPS = {"latitude": 11.0183, "longitude": 76.9674}  # Gandhipuram, Coimbatore
+CITIZEN = {"full_name": "Priya Raman", "email": "priya.raman@synapse.local", "mobile": "9876501234",
+           "aadhaar_last4": "5678", "password": "Demo@12345", "preferred_language": "ta"}
+COMPLAINT = "Thanni 3 days ah varala Gandhipuram 5th street la. Veetla 2 kids vomiting, kudikka thanni illa. Please help seekiram."
 SEED_PW = env("SEED_PASSWORD", "Synapse@123")
 
 

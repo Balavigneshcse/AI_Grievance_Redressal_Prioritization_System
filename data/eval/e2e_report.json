@@ -1,6 +1,6 @@
 {
-  "passed": 129,
-  "total": 129,
+  "passed": 148,
+  "total": 148,
   "results": [
     {
       "check": "health: db and ollama up",
@@ -35,7 +35,7 @@
     {
       "check": "citizen completes account details (PATCH /auth/me)",
       "ok": true,
-      "detail": "{\"id\":\"f75f99d2-9bcd-407a-a21d-6238b4f7dc28\",\"email\":\"citizen@synapse.local\",\"ro"
+      "detail": "{\"id\":\"bfc03431-5834-495c-ba92-663093d880b1\",\"email\":\"citizen@synapse.local\",\"ro"
     },
     {
       "check": "five-digit Aadhaar rejected",
@@ -70,7 +70,7 @@
     {
       "check": "account carries the name and Aadhaar digits given at registration",
       "ok": true,
-      "detail": "{'id': '7b3051ac-f83f-4302-8f65-ede39ea37e9f', 'email': 'e2e.1792127581@synapse.local', 'role': 'com"
+      "detail": "{'id': '6163a9ff-c690-4242-be84-cf153909682c', 'email': 'e2e.1792132326@synapse.local', 'role': 'com"
     },
     {
       "check": "password reset with OTP",
@@ -90,7 +90,7 @@
     {
       "check": "case: ta script, water, child sick",
       "ok": true,
-      "detail": "SYN-2026-000001 under_review water/critical lang=ta conf=0.95 rules=['R5', 'R10'] 32s"
+      "detail": "SYN-2026-000001 under_review water/critical lang=ta conf=0.95 rules=['R5', 'R10'] 45s"
     },
     {
       "check": "  evidence spans present and quoted from text",
@@ -120,7 +120,7 @@
     {
       "check": "case: hi script, power cut, oxygen",
       "ok": true,
-      "detail": "SYN-2026-000002 under_review electricity/critical lang=hi conf=0.95 rules=['R2'] 16s"
+      "detail": "SYN-2026-000002 under_review electricity/critical lang=hi conf=0.95 rules=['R2'] 24s"
     },
     {
       "check": "  evidence spans present and quoted from text",
@@ -150,7 +150,7 @@
     {
       "check": "case: en, suggestion, low",
       "ok": true,
-      "detail": "SYN-2026-000003 routed general/low lang=en conf=0.95 rules=[] 16s"
+      "detail": "SYN-2026-000003 routed general/low lang=en conf=0.95 rules=[] 20s"
     },
     {
       "check": "  evidence spans present and quoted from text",
@@ -180,7 +180,7 @@
     {
       "check": "case: hi-en, gas smell",
       "ok": true,
-      "detail": "SYN-2026-000004 under_review safety/critical lang=hi conf=0.95 rules=['R1'] 20s"
+      "detail": "SYN-2026-000004 under_review safety/critical lang=hi conf=0.95 rules=['R1'] 28s"
     },
     {
       "check": "  evidence spans present and quoted from text",
@@ -210,7 +210,7 @@
     {
       "check": "case: ta-en, pothole accident, repeat",
       "ok": true,
-      "detail": "SYN-2026-000005 routed roads/high lang=ta conf=0.9 rules=['R8'] 16s"
+      "detail": "SYN-2026-000005 routed roads/high lang=ta conf=0.9 rules=['R8'] 20s"
     },
     {
       "check": "  evidence spans present and quoted from text",
@@ -275,7 +275,12 @@
     {
       "check": "PII masked and mapped for staff",
       "ok": true,
-      "detail": "['[PHONE_1]', '[AADHAAR_1]']"
+      "detail": "['[PIN_1]', '[PHONE_1]', '[PHONE_2]', '[PHONE_3]', '[PHONE_4]', '[AADHAAR_1]']"
+    },
+    {
+      "check": "PII: mobiles with spaces, dashes or +91 masked as phones, the PIN code masked",
+      "ok": true,
+      "detail": "{\"PHONE\": [\"+91 98765-43211\", \"+919876543212\", \"98765 43210\", \"9876501234\"], \"AADHAAR\": [\"4321 8765 1234\"], \"PIN\": [\"641011\"]}"
     },
     {
       "check": "review queue lists the flagged cases",
@@ -400,7 +405,7 @@
     {
       "check": "health reports outbox, overdue and model latency",
       "ok": true,
-      "detail": "{\"outbox_pending\": 0, \"overdue_open\": 1, \"model_latency_ms\": {\"last\": 11524, \"mean_last_10\": 14842}}"
+      "detail": "{\"outbox_pending\": 0, \"overdue_open\": 1, \"model_latency_ms\": {\"last\": 24816, \"mean_last_10\": 22807}}"
     },
     {
       "check": "queue search by tracking id",
@@ -415,7 +420,7 @@
     {
       "check": "office attaches resolution proof",
       "ok": true,
-      "detail": "{\"ok\":true,\"attachments\":1,\"media\":[{\"id\":\"f6a4aadb-7d56-4168-b86e-c942edd21835\",\"kind\":\"photo\",\"url"
+      "detail": "{\"ok\":true,\"attachments\":1,\"media\":[{\"id\":\"5c1535fe-e278-44b7-969a-708db146d9a8\",\"kind\":\"photo\",\"url"
     },
     {
       "check": "citizen sees the proof photo marked as resolution",
@@ -520,7 +525,7 @@
     {
       "check": "super admin creates a district admin",
       "ok": true,
-      "detail": "{\"user\":{\"id\":\"b74cb133-e786-41c3-8e77-6f41b68b999e\",\"email\":\"district.madurai.2127774@synapse.local\",\"role\":\"district_a"
+      "detail": "{\"user\":{\"id\":\"c635de95-2945-440f-a883-2350686bc05a\",\"email\":\"district.madurai.2132600@synapse.local\",\"role\":\"district_a"
     },
     {
       "check": "district admin cannot create another district admin",
@@ -530,7 +535,7 @@
     {
       "check": "district admin creates a department admin in own district",
       "ok": true,
-      "detail": "{\"user\":{\"id\":\"699a57ad-713f-4356-877a-906303adb282\",\"email\":\"water.madurai.2127774@synapse.local\",\"role\":\"dept_admin\",\""
+      "detail": "{\"user\":{\"id\":\"94885359-4eab-458b-9067-93a36478e207\",\"email\":\"water.madurai.2132600@synapse.local\",\"role\":\"dept_admin\",\""
     },
     {
       "check": "new department admin sees no Coimbatore complaints",
@@ -540,7 +545,7 @@
     {
       "check": "district admin can disable its department admin",
       "ok": true,
-      "detail": "{\"id\":\"699a57ad-713f-4356-877a-906303adb282\",\"email\":\"water.madurai.2127774@synapse.local\",\"role\":\"d"
+      "detail": "{\"id\":\"94885359-4eab-458b-9067-93a36478e207\",\"email\":\"water.madurai.2132600@synapse.local\",\"role\":\"d"
     },
     {
       "check": "disabled account is locked out",
@@ -560,7 +565,7 @@
     {
       "check": "metrics: totals, by status, live accuracy",
       "ok": true,
-      "detail": "{\"complaints\": 8, \"critical_open\": 2, \"review_rate\": 0.625, \"auto_closed\": 0, \"mean_latency_ms\": 14842, \"avg_rating\": 4."
+      "detail": "{\"complaints\": 8, \"critical_open\": 2, \"review_rate\": 0.625, \"auto_closed\": 0, \"mean_latency_ms\": 22807, \"avg_rating\": 4."
     },
     {
       "check": "metrics: auto-closed is zero",
@@ -640,22 +645,112 @@
     {
       "check": "a complaint with no district goes to review with a due time (not routed into nobody's queue)",
       "ok": true,
-      "detail": "under_review / None / outside the mapped area (11836 km from Kanyakumari, Kanyakumari)"
+      "detail": "under_review / None / outside the mapped area (1726 km from Ponneri, Thiruvallur)"
+    },
+    {
+      "check": "coordinates off the globe, NaN or half a pair refused at intake (400), nothing stored",
+      "ok": true,
+      "detail": "[400, 400, 400, 400], 0 stored"
+    },
+    {
+      "check": "seven files in one request refused (400) and nothing stored, six accepted",
+      "ok": true,
+      "detail": "400 Attach at most 6 photos or videos at a time / six: 200"
+    },
+    {
+      "check": "request info on a closed case, reassign on a merged one, staff reopen of an in-progress one: all refused (409)",
+      "ok": true,
+      "detail": "[409, 409, 409]"
+    },
+    {
+      "check": "staff reopen of a closed case still allowed",
+      "ok": true,
+      "detail": "{\"ok\":true,\"status\":\"under_review\"}"
+    },
+    {
+      "check": "two simultaneous closes: one succeeds, the other gets 409, one closed entry",
+      "ok": true,
+      "detail": "[200, 409]"
+    },
+    {
+      "check": "four simultaneous supports by one citizen: all answered, counted once",
+      "ok": true,
+      "detail": "[200, 200, 200, 200] supporters=1 events=1"
+    },
+    {
+      "check": "a photo the model cannot decode: analysed from the text alone with a note, photo kept",
+      "ok": true,
+      "detail": "safety/critical ['photo could not be read by the model; analysed from the text alone']"
+    },
+    {
+      "check": "staff cannot add me-too support (403)",
+      "ok": true,
+      "detail": "403 {\"detail\":\"Only citizens can support a complaint\"}"
+    },
+    {
+      "check": "support needs the citizen's location (400), refused from another city (403), counted from 1 km away",
+      "ok": true,
+      "detail": "400 403 200 {\"ok\":true,\"supporters\":1,\"supported\":true,\"urgency\":\"high\"}"
+    },
+    {
+      "check": "reviewer accept on an already routed case refused (409), no second Routed entry",
+      "ok": true,
+      "detail": "409 routed entries 6 -> 6"
+    },
+    {
+      "check": "department admin's accept on a routed case starts the work",
+      "ok": true,
+      "detail": "{\"ok\":true,\"status\":\"in_progress\"}"
+    },
+    {
+      "check": "nearby with km=100000 and limit=1000 stays within 2 km and 20 items (the Delhi complaint is not listed)",
+      "ok": true,
+      "detail": "200, 4 items, max 1.81 km"
+    },
+    {
+      "check": "nearby refuses a zero radius or a latitude off the globe (422)",
+      "ok": true,
+      "detail": "[422, 422]"
+    },
+    {
+      "check": "a complaint over 5,000 characters refused (400), nothing stored",
+      "ok": true,
+      "detail": "400 {\"detail\":\"Please keep the complaint to 5000 characters or fewer\"}"
+    },
+    {
+      "check": "verify-otp and reset: an unknown email gets the same 400 and message as a wrong code for a real account",
+      "ok": true,
+      "detail": "400 Incorrect or expired code. Check it, or request a new one. / 400 Incorrect or expired code. Check it, or request a new one."
+    },
+    {
+      "check": "tracking-ID lookup: another citizen's or another department's complaint answers 404 like a missing one; the owner gets it",
+      "ok": true,
+      "detail": "404 404 404 200"
+    },
+    {
+      "check": "/health from outside answers only the status, also to a citizen; staff get the details",
+      "ok": true,
+      "detail": "{'status': 'ok'} {'status': 'ok'} staff keys ['db', 'model_latency_ms', 'models', 'ollama', 'outbox_pending', 'overdue_open']"
+    },
+    {
+      "check": "rules test: an old-age pension complaint (English, Hindi, Tamil) matches no at-risk rule; elderly residents and sick children still do",
+      "ok": true,
+      "detail": "{\"Old age pension not re\": [], \"बुजुर्ग पेंशन तीन महीन\": [], \"முதியவர் உதவித்தொகை மூ\": [], \"No water for three day\": [\"R10b\"], \"kids are sick after dr\": [\"R10\"]}"
     },
     {
       "check": "status emails logged for the citizen in Mailpit",
       "ok": true,
-      "detail": "28 emails"
+      "detail": "35 emails"
     }
   ],
   "ids": {
-    "ta script, water, child sick": "fee8d2fd-e8cf-4fdf-8921-f8a95c1e1a91",
-    "hi script, power cut, oxygen": "b4cf03a5-259b-4da1-b549-525292a72cb3",
-    "en, suggestion, low": "f11a99d6-9ffd-4342-9319-fc1aedbadfb4",
-    "hi-en, gas smell": "8ae5f1b3-a680-4dc2-907d-61d263e39f78",
-    "ta-en, pothole accident, repeat": "569bfa5a-0a58-4b34-abb7-ef7970e735da",
-    "photo": "d16943de-3336-42d2-b437-4ee407e80117",
-    "dup": "f2068903-3e6c-4b08-8aeb-6bbd0dac94c3",
-    "pii": "57a0d027-7c84-4be1-a27c-2702bfd25261"
+    "ta script, water, child sick": "3837b6f1-8ff6-4d75-aa01-2b30197fb94c",
+    "hi script, power cut, oxygen": "2e494b62-3b0f-4075-804e-f3e5b6148969",
+    "en, suggestion, low": "fe48a5c2-3ab7-42de-8eca-5278cb69fa54",
+    "hi-en, gas smell": "ba4d90ea-f086-4ffe-8b67-4cabb3cc0890",
+    "ta-en, pothole accident, repeat": "17bcfe7b-d51b-457e-a898-a41051ed60ea",
+    "photo": "38742174-00b7-40ea-9f43-8f2cce42d311",
+    "dup": "16b6294c-8724-4de2-a24b-0e6bcd979ab3",
+    "pii": "686d504c-5d18-455d-9756-29c15b902b41"
   }
 }

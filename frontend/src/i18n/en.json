@@ -186,6 +186,7 @@
     "submit": "Submit complaint",
     "submitHint": "You will get a tracking id right away.",
     "tooShort": "Please describe the problem in at least {{min}} characters.",
+    "tooLong": "Please keep the complaint to {{max}} characters or fewer.",
     "tooMany": "You can attach up to {{max}} files.",
     "successTitle": "Complaint received",
     "successHint": "Save this tracking id. Analysis starts now.",

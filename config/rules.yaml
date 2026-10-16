@@ -7,6 +7,7 @@
 # keywords must start a word, and short ones (three letters or fewer, e.g. தீ, आग, नाग, பட்டா)
 # must be the whole word or take a case ending (தீயில், சாலையில், सांपों), so தீர்வு, आगे, आग्रह,
 # नागरिक and பட்டாசு no longer match. List other inflected forms explicitly when a stem changes.
+# match.unless (optional) lists words, matched the same way, that switch the rule off when present.
 
 rules:
   - id: R1
@@ -99,10 +100,23 @@ rules:
       department: revenue
 
   - id: R10
-    name: Child or elderly at risk
+    name: Child or pregnant woman at risk
     enabled: true
     match:
-      keywords: ["kids are sick", "children sick", "child fell", "குழந்தை", "குழந்தைகள்", "बच्चे बीमार", "बच्चा गिर", "elderly", "old age", "முதியவர்", "बुजुर्ग", "pregnant", "கர்ப்பிணி", "गर्भवती"]
+      keywords: ["kids are sick", "children sick", "child fell", "குழந்தை", "குழந்தைகள்", "बच्चे बीमार", "बच्चा गिर", "pregnant", "கர்ப்பிணி", "गर्भवती"]
+    action:
+      urgency_floor: high
+      force_review: true
+
+  - id: R10b
+    name: Elderly person affected
+    enabled: true
+    match:
+      # Elderly residents hit by an outage or a hazard: urgency at least high. A routine pension or allowance
+      # request is not a risk because it mentions old age: "old age" is not a keyword (it is mostly "old age
+      # pension" or "old age home"), and a text that mentions a pension or allowance skips this rule (unless).
+      keywords: ["elderly", "முதியவர்", "बुजुर्ग"]
+      unless: ["pension", "pensions", "pensioner", "allowance", "ஓய்வூதிய", "உதவித்தொகை", "பென்ஷன்", "पेंशन", "पेन्शन", "भत्ता"]
     action:
       urgency_floor: high
       force_review: true

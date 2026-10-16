@@ -51,6 +51,7 @@ export default function Register() {
     },
   })
   const password = watch("password")
+  const aadhaarField = register("aadhaar_last4")
   const langItems = LANGS.map((l) => ({ value: l.code, label: l.nativeLabel }))
 
   const onSubmit = async (values: FormValues) => {
@@ -142,12 +143,16 @@ export default function Register() {
                 inputMode="numeric"
                 autoComplete="off"
                 placeholder="1234"
-                maxLength={4}
                 className="pl-8 font-mono tracking-widest"
                 aria-invalid={!!errors.aadhaar_last4}
-                {...register("aadhaar_last4", {
-                  setValueAs: (v: string) => (v ?? "").replace(/\D/g, "").slice(0, 4),
-                })}
+                {...aadhaarField}
+                onChange={(e) => {
+                  // Digits only while typing or pasting, as on the complaint form's card: a letter never shows.
+                  // No maxLength: the browser would cut a paste such as "XXXX XXXX 1234" to four characters
+                  // before the letters are removed; the cut to four digits happens here instead.
+                  e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4)
+                  return aadhaarField.onChange(e)
+                }}
               />
             </div>
             <FieldDescription>{t("auth.aadhaarHint")}</FieldDescription>

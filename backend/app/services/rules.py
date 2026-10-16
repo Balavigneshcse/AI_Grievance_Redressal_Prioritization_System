@@ -70,6 +70,8 @@ def evaluate(text: str, language: str | None = None, ward: str | None = None) ->
             hit = False
         if hit and m.get("ward") and ward not in m["ward"]:
             hit = False
+        if hit and any(keyword_in(k, low) for k in m.get("unless", [])):
+            hit = False  # e.g. a routine pension request that mentions an elderly person (R10b)
         if not hit:
             continue
         a = r.get("action", {})

@@ -57,11 +57,12 @@ const ACTION_KEY: Record<DecisionAction, string> = {
 
 const OPEN = new Set(["under_review", "routed", "in_progress", "awaiting_info"])
 
-/** Which decisions the API accepts in each status (mirrors review.py), so the bar never offers a 409. */
-function allowedActions(status: string): Set<DecisionAction> {
+/** Which decisions the API accepts in each status (mirrors review.py), so the bar never offers a 409.
+ *  Accept on a routed case is only the department admin's Start work: for a reviewer it is routed already. */
+function allowedActions(status: string, startsWork: boolean): Set<DecisionAction> {
   const open = OPEN.has(status)
   const a = new Set<DecisionAction>()
-  if (status === "under_review" || status === "routed") a.add("accept")
+  if (status === "under_review" || (status === "routed" && startsWork)) a.add("accept")
   if (open) {
     a.add("reassign")
     a.add("merge")
@@ -126,9 +127,9 @@ export function DecisionBar({ complaint, onDecided }: Props) {
   const deptItems = departments.map((d) => ({ value: d.id, label: name(d.id) }))
   const urgencyItems = URGENCY_ORDER.map((u) => ({ value: u, label: t(`urgency.${u}`) }))
 
-  const can = allowedActions(complaint.status)
   // A department admin's accept starts the work; a reviewer's accept confirms the routing.
   const startsWork = user?.role === "dept_admin"
+  const can = allowedActions(complaint.status, startsWork)
   // The main button: accept while the case waits for one, then resolve, then close or reopen.
   const primary: DecisionAction | null = can.has("accept")
     ? "accept"

@@ -17,6 +17,9 @@ from .deps import current_user, user_out
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 AADHAAR4_RE = re.compile(r"[0-9]{4}")
+# One answer for a wrong, expired or missing code and for an email with no account, so verify-otp and
+# reset never tell whether an address is registered (forgot and resend-otp are generic for the same reason).
+BAD_CODE = "Incorrect or expired code. Check it, or request a new one."
 
 
 def _issue_otp(db: Session, user: models.User, purpose: str) -> None:
@@ -30,21 +33,21 @@ def _issue_otp(db: Session, user: models.User, purpose: str) -> None:
     notify(db, user, "otp", code=code, minutes=settings.OTP_EXPIRE_MINUTES)
 
 
-def _check_otp(db: Session, user: models.User, purpose: str, code: str) -> None:
+def _check_otp(db: Session, user: models.User | None, purpose: str, code: str) -> None:
+    if user is None:
+        raise HTTPException(400, BAD_CODE)
     otp = db.execute(
         select(models.Otp).where(models.Otp.user_id == user.id, models.Otp.purpose == purpose, models.Otp.consumed_at.is_(None))
         .order_by(models.Otp.created_at.desc()).limit(1)
     ).scalar_one_or_none()
-    if otp is None:
-        raise HTTPException(400, "No active code. Request a new one.")
-    if otp.expires_at < datetime.now(timezone.utc):
-        raise HTTPException(400, "Code expired. Request a new one.")
+    if otp is None or otp.expires_at < datetime.now(timezone.utc):
+        raise HTTPException(400, BAD_CODE)
     if otp.attempts >= settings.OTP_MAX_ATTEMPTS:
         raise HTTPException(429, "Too many attempts. Request a new code.")
     otp.attempts += 1
     if not otp_matches(code, otp.code_hash):
         db.commit()
-        raise HTTPException(400, "Incorrect code")
+        raise HTTPException(400, BAD_CODE)
     otp.consumed_at = datetime.now(timezone.utc)
 
 
@@ -109,8 +112,6 @@ def register(body: schemas.RegisterIn, request: Request, db: Session = Depends(g
 def verify_otp(body: schemas.VerifyOtpIn, request: Request, db: Session = Depends(get_db)):
     hit(f"verify:{body.email.strip().lower()}", 10, 600)
     user = db.execute(select(models.User).where(models.User.email == body.email.strip().lower())).scalar_one_or_none()
-    if user is None:
-        raise HTTPException(404, "No account for this email")
     _check_otp(db, user, "register", body.code)
     user.is_verified = True
     user.last_login_at = datetime.now(timezone.utc)
@@ -158,12 +159,10 @@ def forgot(body: schemas.ForgotIn, request: Request, db: Session = Depends(get_d
 
 @router.post("/reset")
 def reset(body: schemas.ResetIn, db: Session = Depends(get_db)):
-    user = db.execute(select(models.User).where(models.User.email == body.email.strip().lower())).scalar_one_or_none()
-    if user is None:
-        raise HTTPException(404, "No account for this email")
-    problems = password_problems(body.new_password)
+    problems = password_problems(body.new_password)  # before the account lookup: the same answer either way
     if problems:
         raise HTTPException(400, "Password needs " + ", ".join(problems))
+    user = db.execute(select(models.User).where(models.User.email == body.email.strip().lower())).scalar_one_or_none()
     _check_otp(db, user, "reset", body.code)
     user.password_hash = hash_password(body.new_password)
     user.password_version += 1  # invalidates every existing token

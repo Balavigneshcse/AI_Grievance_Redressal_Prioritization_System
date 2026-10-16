@@ -9,7 +9,9 @@ feature built up to Checkpoint 4 against the live server:
   forgot/reset invalidating old tokens), media access control, email logging.
 
 Needs: API on :8000, Postgres, Ollama with gemma3:4b and bge-m3, Mailpit on :8025
-(SMTP_HOST=localhost in .env, so OTPs can be read back).
+(SMTP_HOST=localhost in .env, so OTPs can be read back). Settings are read from the environment
+first, then .env: API_URL points the suite at another API (e.g. a test API on :8100 with its own
+DATABASE_URL, which the suite also uses for its direct database updates).
 
 Run from the project root:  python tests/test_api_e2e.py
 Writes data/eval/e2e_report.json. Exit code 1 if any check fails.
@@ -21,6 +23,7 @@ import os
 import json
 import re
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -28,7 +31,7 @@ import requests
 from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[1]
-API = "http://127.0.0.1:8000"
+API = os.environ.get("API_URL", "http://127.0.0.1:8000").rstrip("/")
 MAIL = "http://localhost:8025"
 URG = {"critical": 3, "high": 2, "medium": 1, "low": 0}
 
@@ -110,6 +113,22 @@ def wait_analysed(H: dict, cid: str, limit: int = 300) -> dict:
             return d
         time.sleep(4)
     raise RuntimeError("analysis timed out for " + cid)
+
+
+def at_once(fn, n: int) -> list:
+    """Call fn from n threads released at the same moment (double clicks, two officers) and return the results."""
+    barrier, out = threading.Barrier(n), [None] * n
+
+    def run(i: int) -> None:
+        barrier.wait()
+        out[i] = fn()
+
+    threads = [threading.Thread(target=run, args=(i,)) for i in range(n)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    return out
 
 
 def test_image_with_gps() -> bytes:
@@ -252,13 +271,19 @@ def main() -> int:
     ids["dup"] = acc["id"]
     reasons = (d["decision"] or {}).get("reasons", [])
     check("duplicate of the Tamil water complaint flagged", any("duplicate" in r for r in reasons) and d["status"] == "under_review", "; ".join(r for r in reasons if "duplicate" in r)[:100])
-    pii_text = "my aadhaar is 4321 8765 1234 and phone 9876501234, water bill wrong for house 12, Saibaba Colony"
+    pii_text = ("my aadhaar is 4321 8765 1234 and phone 9876501234, also 98765 43210 or +91 98765-43211, office +919876543212, "
+                "water bill wrong for house 12, Saibaba Colony, Coimbatore 641011")
     acc = submit(HC, pii_text, lat=11.03, lng=76.945, location_source="browser")
     d = wait_analysed(HC, acc["id"])
     ids["pii"] = acc["id"]
     off = requests.get(f"{API}/review/{acc['id']}", headers=HA, timeout=30).json()["analysis"]
     check("PII hidden from complainant", d["analysis"].get("pii_map") in (None, {}))
     check("PII masked and mapped for staff", off.get("pii_map") and any(k.startswith("[PHONE") for k in off["pii_map"]) and any(k.startswith("[AADHAAR") for k in off["pii_map"]) and "9876501234" not in (off.get("masked_text") or ""), str(list((off.get("pii_map") or {}).keys())))
+    pm = off.get("pii_map") or {}
+    found = {label: sorted(v for k, v in pm.items() if k.startswith(f"[{label}_")) for label in ("PHONE", "AADHAAR", "PIN")}
+    check("PII: mobiles with spaces, dashes or +91 masked as phones, the PIN code masked",
+          found == {"PHONE": sorted(["9876501234", "98765 43210", "+91 98765-43211", "+919876543212"]), "AADHAAR": ["4321 8765 1234"], "PIN": ["641011"]}
+          and not re.search(r"\d{5}", off.get("masked_text") or ""), json.dumps(found, ensure_ascii=False)[:160])
 
     print("\n== officer decisions ==")
     q = requests.get(f"{API}/review/queue?view=review", headers=HA, timeout=30).json()
@@ -374,11 +399,12 @@ def main() -> int:
         check("officer note translated into Tamil in the status mail", found is not None, (found or "")[:80])
 
     if H_new:
-        r = requests.post(f"{API}/complaints/{water_id}/support", headers=H_new, timeout=30)
+        here = {"lat": 11.0183, "lng": 76.9674}  # where the supporter stands: next to the water complaint
+        r = requests.post(f"{API}/complaints/{water_id}/support", headers=H_new, json=here, timeout=30)
         check("another citizen supports the water complaint", r.status_code == 200 and r.json()["supporters"] == 1, r.text[:100])
-        r = requests.post(f"{API}/complaints/{water_id}/support", headers=H_new, timeout=30)
+        r = requests.post(f"{API}/complaints/{water_id}/support", headers=H_new, json=here, timeout=30)
         check("supporting twice does not double count", r.status_code == 200 and r.json()["supporters"] == 1)
-        r = requests.post(f"{API}/complaints/{water_id}/support", headers=HC, timeout=30)
+        r = requests.post(f"{API}/complaints/{water_id}/support", headers=HC, json=here, timeout=30)
         check("the complainant cannot support their own complaint", r.status_code == 400, str(r.status_code))
         nb = requests.get(f"{API}/complaints/nearby?lat=11.0183&lng=76.9674&limit=20", headers=H_new, timeout=30).json()
         mine = next((i for i in nb if i["id"] == water_id), None)
@@ -454,7 +480,7 @@ def main() -> int:
     t = requests.post(f"{API}/admin/rules/test", headers=HA, json={"text": "வீட்டில் தீ பிடித்தது, தீயில் பொருட்கள் எரிகின்றன"}, timeout=30).json()
     check("rules test: a real Tamil fire still matches the fire rule", "R4" in t["matched"] and t.get("department") == "safety", str(t["matched"]))
     tamil_addr = submit(HC, "எங்கள் தெருவில் மூன்று நாட்களாக குடிநீர் வரவில்லை", manual_address="கோயம்புத்தூர், காந்திபுரம் 5வது தெரு", location_source="manual")
-    nowhere = submit(HC, "Garbage dumped near the park for a week, please clear it", lat=999, lng=999, location_source="browser")
+    nowhere = submit(HC, "Garbage dumped near the park for a week, please clear it", lat=28.6139, lng=77.2090, location_source="browser")  # Delhi
     for acc in (tamil_addr, nowhere):
         wait_analysed(HC, acc["id"])
     d = requests.get(f"{API}/review/{tamil_addr['id']}", headers=HA, timeout=30).json()
@@ -463,6 +489,126 @@ def main() -> int:
     reasons = " ".join((d.get("decision") or {}).get("reasons") or [])
     check("a complaint with no district goes to review with a due time (not routed into nobody's queue)",
           d.get("district") is None and d.get("status") == "under_review" and "district unknown" in reasons and bool(d.get("due_at")), f"{d.get('status')} / {d.get('district')} / {d.get('resolved_place')}")
+
+    print("\n== fixes for the medium bugs (16 Oct) ==")
+    # Filed first so the worker analyses it while the checks below run: a JPEG header with nothing readable behind it.
+    unreadable = submit(HC, "The street light pole near the bus stand is bent and hanging over the road, photo attached", lat=11.0168, lng=76.9558,
+                        location_source="browser", files=[("files", ("pole.jpg", b"\xff\xd8\xff\xe0" + b"not really a jpeg " * 60, "image/jpeg"))])
+    mine = lambda: len(requests.get(f"{API}/complaints/mine", headers=HC, timeout=30).json())
+    before = mine()
+    codes = [requests.post(f"{API}/complaints", headers=HC, data={"text": "Garbage dumped near the park for a week, please clear it", "location_source": "browser", **ll}, timeout=30).status_code
+             for ll in ({"lat": 999, "lng": 76.96}, {"lat": 11.0, "lng": 181}, {"lat": "nan", "lng": 76.96}, {"lat": 11.0})]
+    check("coordinates off the globe, NaN or half a pair refused at intake (400), nothing stored", codes == [400] * 4 and mine() == before, f"{codes}, {mine() - before} stored")
+    r = requests.post(f"{API}/complaints", headers=HC, data={"text": "pothole photos attached, please check the road"},
+                      files=[("files", (f"p{i}.jpg", img, "image/jpeg")) for i in range(7)], timeout=60)
+    r6 = requests.post(f"{API}/review/{water_id}/attachments", headers=HA, files=[("files", (f"after{i}.jpg", img, "image/jpeg")) for i in range(6)], timeout=60)
+    check("seven files in one request refused (400) and nothing stored, six accepted", r.status_code == 400 and mine() == before and r6.status_code == 200 and r6.json().get("attachments") == 6,
+          f"{r.status_code} {r.json().get('detail', '')[:50]} / six: {r6.status_code}")
+
+    decide = lambda cid, action, **extra: requests.post(f"{API}/review/{cid}/decision", headers=HA, json={"action": action, "reason": "status machine check", **extra}, timeout=30)
+    benches = ids[cases[2][0]]  # closed above; the duplicate is merged and the photo complaint is in progress again after the citizen's reopen
+    codes = [decide(benches, "request_info").status_code, decide(ids["dup"], "reassign", department="roads").status_code, decide(photo_id, "reopen").status_code]
+    check("request info on a closed case, reassign on a merged one, staff reopen of an in-progress one: all refused (409)", codes == [409, 409, 409], str(codes))
+    r = decide(benches, "reopen")
+    check("staff reopen of a closed case still allowed", r.status_code == 200 and r.json()["status"] == "under_review", r.text[:80])
+    gas = ids[cases[3][0]]
+    decide(gas, "resolve")
+    codes = sorted(r.status_code for r in at_once(lambda: decide(gas, "close"), 2))
+    tl = requests.get(f"{API}/complaints/{gas}/timeline", headers=HC, timeout=30).json()
+    check("two simultaneous closes: one succeeds, the other gets 409, one closed entry", codes == [200, 409] and [e["to_status"] for e in tl].count("closed") == 1, str(codes))
+
+    if H_new:
+        res = at_once(lambda: requests.post(f"{API}/complaints/{ids['pii']}/support", headers=H_new, json={"lat": 11.03, "lng": 76.945}, timeout=30), 4)
+        d = requests.get(f"{API}/review/{ids['pii']}", headers=HA, timeout=30).json()
+        backed = [e for e in d["timeline"] if (e["note"] or "").startswith("supported by")]
+        check("four simultaneous supports by one citizen: all answered, counted once", [r.status_code for r in res] == [200] * 4 and d["supporters"] == 1 and len(backed) == 1,
+              f"{[r.status_code for r in res]} supporters={d['supporters']} events={len(backed)}")
+
+    wait_analysed(HC, unreadable["id"])
+    d = requests.get(f"{API}/review/{unreadable['id']}", headers=HA, timeout=30).json()
+    a, reasons = d.get("analysis") or {}, (d.get("decision") or {}).get("reasons") or []
+    check("a photo the model cannot decode: analysed from the text alone with a note, photo kept",
+          bool(a.get("department")) and bool(a.get("urgency")) and any(r.startswith("photo could not be read") for r in reasons)
+          and not any(r.startswith("awaiting analysis") for r in reasons) and len(d["media"]) == 1, f"{a.get('department')}/{a.get('urgency')} {reasons[:1]}")
+
+    print("\n== fixes for the low-severity bugs (16 Oct) ==")
+    near_km = float(env("NEARBY_KM", "2.0"))
+    # 13: me-too support is for citizens, sent from near the complaint (the photo complaint sits at its EXIF point in Gandhipuram).
+    r = requests.post(f"{API}/complaints/{photo_id}/support", headers=HO_water, json={"lat": 11.0183, "lng": 76.9675}, timeout=30)
+    check("staff cannot add me-too support (403)", r.status_code == 403, f"{r.status_code} {r.text[:60]}")
+    if H_new:
+        none = requests.post(f"{API}/complaints/{photo_id}/support", headers=H_new, timeout=30)
+        far = requests.post(f"{API}/complaints/{photo_id}/support", headers=H_new, json={"lat": 13.0827, "lng": 80.2707}, timeout=30)  # Chennai
+        near = requests.post(f"{API}/complaints/{photo_id}/support", headers=H_new, json={"lat": 11.0273, "lng": 76.9675}, timeout=30)  # 1 km north
+        check("support needs the citizen's location (400), refused from another city (403), counted from 1 km away",
+              none.status_code == 400 and far.status_code == 403 and near.status_code == 200 and near.json()["supporters"] == 1,
+              f"{none.status_code} {far.status_code} {near.status_code} {near.text[:60]}")
+
+    # 14: a reviewer's accept on a routed case is refused; the department admin's starts the work.
+    routed_before = [e["to_status"] for e in requests.get(f"{API}/complaints/{water_id}/timeline", headers=HC, timeout=30).json()].count("routed")
+    r = decide(water_id, "accept")
+    routed_after = [e["to_status"] for e in requests.get(f"{API}/complaints/{water_id}/timeline", headers=HC, timeout=30).json()].count("routed")
+    check("reviewer accept on an already routed case refused (409), no second Routed entry", r.status_code == 409 and routed_after == routed_before, f"{r.status_code} routed entries {routed_before} -> {routed_after}")
+    r = requests.post(f"{API}/review/{water_id}/decision", headers=HO_water, json={"action": "accept", "reason": "repair team on the way"}, timeout=30)
+    check("department admin's accept on a routed case starts the work", r.status_code == 200 and r.json()["status"] == "in_progress", r.text[:80])
+
+    # 15: the nearby list never reaches past NEARBY_KM or 20 items, whatever the caller asks for.
+    r = requests.get(f"{API}/complaints/nearby?lat=11.0183&lng=76.9674&km=100000&limit=1000", headers=HA, timeout=30)
+    nb = r.json() if r.status_code == 200 else []
+    check(f"nearby with km=100000 and limit=1000 stays within {near_km:g} km and 20 items (the Delhi complaint is not listed)",
+          r.status_code == 200 and len(nb) <= 20 and all(i["distance_km"] <= near_km for i in nb) and not any(i["id"] == nowhere["id"] for i in nb),
+          f"{r.status_code}, {len(nb)} items, max {max([i['distance_km'] for i in nb], default=0)} km")
+    codes = [requests.get(f"{API}/complaints/nearby?{q}", headers=HA, timeout=30).status_code for q in ("lat=11.0&lng=76.9&km=0", "lat=999&lng=76.9")]
+    check("nearby refuses a zero radius or a latitude off the globe (422)", codes == [422, 422], str(codes))
+
+    # 16: a maximum complaint length.
+    before = mine()
+    long_text = "Garbage has not been collected on our street for two weeks and it smells. " * 70  # 5,179 characters
+    r = requests.post(f"{API}/complaints", headers=HC, data={"text": long_text, "location_source": "none"}, timeout=30)
+    check("a complaint over 5,000 characters refused (400), nothing stored", r.status_code == 400 and mine() == before, f"{r.status_code} {r.text[:70]}")
+
+    # 17: no account enumeration through verify-otp, reset or the tracking-ID lookup.
+    ghost = f"nobody.{stamp}@synapse.local"
+    real_email = new_email if mail_ok else "citizen@synapse.local"
+    wrong = "000000"
+    if mail_ok:  # a live reset code for the real account, so its wrong-code answer is compared with the unknown address
+        seen = mail_count(new_email)
+        requests.post(f"{API}/auth/forgot", json={"email": new_email}, timeout=60)
+        wrong = "000000" if latest_otp(new_email, seen) != "000000" else "111111"
+    real_v = requests.post(f"{API}/auth/verify-otp", json={"email": "citizen@synapse.local", "code": wrong}, timeout=30)
+    ghost_v = requests.post(f"{API}/auth/verify-otp", json={"email": ghost, "code": wrong}, timeout=30)
+    real_r = requests.post(f"{API}/auth/reset", json={"email": real_email, "code": wrong, "new_password": "Another@12345"}, timeout=30)
+    ghost_r = requests.post(f"{API}/auth/reset", json={"email": ghost, "code": wrong, "new_password": "Another@12345"}, timeout=30)
+    check("verify-otp and reset: an unknown email gets the same 400 and message as a wrong code for a real account",
+          ghost_v.status_code == real_v.status_code == 400 and ghost_v.json() == real_v.json() and ghost_r.status_code == real_r.status_code == 400 and ghost_r.json() == real_r.json(),
+          f"{ghost_v.status_code} {ghost_v.json().get('detail')} / {ghost_r.status_code} {ghost_r.json().get('detail')}")
+    if H_new:
+        other = requests.get(f"{API}/complaints/track/{water_tid}", headers=H_new, timeout=30)
+        missing = requests.get(f"{API}/complaints/track/SYN-2026-999999", headers=H_new, timeout=30)
+        outside = requests.get(f"{API}/complaints/track/{water_tid}", headers=HO_roads, timeout=30)
+        own = requests.get(f"{API}/complaints/track/{water_tid}", headers=HC, timeout=30)
+        check("tracking-ID lookup: another citizen's or another department's complaint answers 404 like a missing one; the owner gets it",
+              other.status_code == missing.status_code == outside.status_code == 404 and other.json() == missing.json() and own.status_code == 200,
+              f"{other.status_code} {missing.status_code} {outside.status_code} {own.status_code}")
+
+    # 18: /health details only for staff or a caller on the API's own machine.
+    proxied = {"X-Forwarded-For": "203.0.113.9"}  # as if from another machine through a proxy
+    h_pub = requests.get(f"{API}/health", headers=proxied, timeout=20).json()
+    h_cit = requests.get(f"{API}/health", headers={**proxied, **HC}, timeout=20).json()
+    h_staff = requests.get(f"{API}/health", headers={**proxied, **HA}, timeout=20).json()
+    check("/health from outside answers only the status, also to a citizen; staff get the details",
+          h_pub == {"status": "ok"} and h_cit == {"status": "ok"} and {"queue_depth", "outbox_pending", "model_latency_ms", "models"} <= set(h_staff),
+          f"{h_pub} {h_cit} staff keys {sorted(h_staff)[:6]}")
+
+    # 22: a routine old-age pension complaint is not an at-risk case; elderly residents and sick children still are.
+    got = {}
+    for text in ("Old age pension not received for three months, please check my application",
+                 "बुजुर्ग पेंशन तीन महीने से नहीं मिली", "முதியவர் உதவித்தொகை மூன்று மாதமாக வரவில்லை",
+                 "No water for three days in our street, elderly residents are struggling", "kids are sick after drinking the tap water"):
+        t = requests.post(f"{API}/admin/rules/test", headers=HA, json={"text": text}, timeout=30).json()
+        got[text[:22]] = sorted({"R10", "R10b"} & set(t["matched"]))
+    check("rules test: an old-age pension complaint (English, Hindi, Tamil) matches no at-risk rule; elderly residents and sick children still do",
+          list(got.values()) == [[], [], [], ["R10b"], ["R10"]], json.dumps(got, ensure_ascii=False))
 
     print("\n== notifications ==")
     n = mail_count("citizen@synapse.local")

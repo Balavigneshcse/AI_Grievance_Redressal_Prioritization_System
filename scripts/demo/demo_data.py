@@ -13,11 +13,16 @@
 
 --reset talks to Postgres directly; --districts, --staff and --seed need the API on :8000 with Ollama.
 Seed accounts (backend/seed.py) are never removed.
+
+DATABASE_URL, MEDIA_DIR, SEED_PASSWORD and API_URL (default http://127.0.0.1:8000) are read from the
+environment first, then from .env, as in tests/test_api_e2e.py; set the database and the API together to
+work on a test copy, e.g. DATABASE_URL=...:5434/synapse_test API_URL=http://127.0.0.1:8100.
 """
 from __future__ import annotations
 
 import argparse
 import io
+import os
 import shutil
 import sys
 import time
@@ -27,14 +32,21 @@ import requests
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-API = "http://127.0.0.1:8000"
 
 
 def env(key: str, default: str = "") -> str:
-    for line in (ROOT / ".env").read_text(encoding="utf-8").splitlines():
+    # A variable set in the environment wins over .env, so a reset can never fall back to the demo
+    # database while the rest of a test run points elsewhere.
+    if key in os.environ:
+        return os.environ[key]
+    dotenv = ROOT / ".env"
+    for line in dotenv.read_text(encoding="utf-8").splitlines() if dotenv.exists() else []:
         if line.startswith(key + "="):
             return line.split("=", 1)[1].strip()
     return default
+
+
+API = env("API_URL", "http://127.0.0.1:8000").rstrip("/")
 
 
 def login(email: str, password: str) -> dict:

@@ -30,6 +30,7 @@ interface Attachment {
 
 const MAX_FILES = 6
 const MIN_TEXT = 10
+const MAX_TEXT = 5000 // as MAX_COMPLAINT_CHARS on the server; the model reads about 2,048 tokens
 
 export default function NewComplaint() {
   const { t, i18n } = useTranslation()
@@ -155,6 +156,11 @@ export default function NewComplaint() {
       textarea.current?.focus()
       return
     }
+    if (body.length > MAX_TEXT) {
+      toast.error(t("new.tooLong", { max: MAX_TEXT }))
+      textarea.current?.focus()
+      return
+    }
     if (!hasIdentity) {
       toast.error(t("new.completeFirst"))
       return
@@ -199,10 +205,13 @@ export default function NewComplaint() {
             className="min-h-32 resize-none text-base leading-relaxed"
             lang={i18n.language}
             rows={4}
+            maxLength={MAX_TEXT}
           />
           <div className="flex flex-wrap items-center justify-between gap-2">
             <Badge variant={script === "latin" ? "outline" : "secondary"}>{t(`new.script.${script}`)}</Badge>
-            <span className="text-xs text-muted-foreground">{text.trim().length}</span>
+            <span className={text.length >= MAX_TEXT ? "text-xs font-medium text-destructive" : "text-xs text-muted-foreground"}>
+              {text.trim().length} / {MAX_TEXT}
+            </span>
           </div>
         </CardContent>
       </Card>

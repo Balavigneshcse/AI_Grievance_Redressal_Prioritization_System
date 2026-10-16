@@ -25,6 +25,18 @@ VIEWS = {
     "all": None,
 }
 ROLE_LABEL = {"super_admin": "super admin", "district_admin": "district admin", "dept_admin": "department admin"}
+WORKABLE = ("under_review", "routed", "in_progress", "awaiting_info")
+# The statuses each decision may be taken from; DecisionBar.tsx allowedActions offers the same. Received and
+# analysing cases wait for the model, closed and merged ones take no more work, only a finished case reopens.
+ALLOWED_FROM = {
+    "accept": ("under_review", "routed"),
+    "reassign": WORKABLE,
+    "merge": WORKABLE,
+    "resolve": WORKABLE,
+    "request_info": ("under_review", "routed", "in_progress"),
+    "close": ("resolved",),
+    "reopen": ("resolved", "closed"),
+}
 
 
 def _flags(c: models.Complaint) -> list[str]:
@@ -64,8 +76,9 @@ def _item(c: models.Complaint) -> schemas.QueueItem:
     )
 
 
-def _load(db: Session, complaint_id: str, user: models.User) -> models.Complaint:
-    c = db.get(models.Complaint, as_uuid(complaint_id))
+def _load(db: Session, complaint_id: str, user: models.User, lock: bool = False) -> models.Complaint:
+    # lock: hold the row until commit, so a second decision on the same case waits and sees the new status
+    c = db.get(models.Complaint, as_uuid(complaint_id), with_for_update=True if lock else None)
     if c is None:
         raise HTTPException(404, "Complaint not found")
     if not can_access(c, user):
@@ -123,7 +136,13 @@ def review_detail(complaint_id: str, user: models.User = Depends(require_role(*S
 
 @router.post("/review/{complaint_id}/decision")
 def decide(complaint_id: str, body: schemas.DecisionIn, user: models.User = Depends(require_role(*STAFF_ROLES)), db: Session = Depends(get_db)):
-    c = _load(db, complaint_id, user)
+    c = _load(db, complaint_id, user, lock=True)
+    if c.status not in ALLOWED_FROM[body.action]:
+        raise HTTPException(409, f"Cannot {body.action.replace('_', ' ')} from status {c.status}")
+    if body.action == "accept" and c.status == "routed" and user.role != "dept_admin":
+        # Accept on a routed case is the department admin's Start work. A reviewer's would only add a second
+        # Routed entry and send the routed mails again (DecisionBar.tsx offers it to department admins only).
+        raise HTTPException(409, "Already routed: the department admin starts the work")
     owner = db.get(models.User, c.user_id)
     ov = models.Override(
         complaint_id=c.id, officer_id=user.id, action=body.action, from_department=c.department_id, to_department=c.department_id,
@@ -132,8 +151,6 @@ def decide(complaint_id: str, body: schemas.DecisionIn, user: models.User = Depe
     note = f"{body.action} by {ROLE_LABEL.get(user.role, 'officer')}: {body.reason}"
 
     if body.action == "accept":
-        if c.status not in ("under_review", "routed"):
-            raise HTTPException(409, f"Cannot accept from status {c.status}")
         # A department admin's accept starts the work (from routed, or straight from review); a
         # reviewer's accept confirms the routing and hands the case to the department.
         target = "in_progress" if user.role == "dept_admin" else "routed"
@@ -169,8 +186,6 @@ def decide(complaint_id: str, body: schemas.DecisionIn, user: models.User = Depe
     elif body.action == "resolve":
         _set_status(db, c, "resolved", "officer", user.id, note)
     elif body.action == "close":
-        if c.status != "resolved":
-            raise HTTPException(409, "Only resolved complaints can be closed")
         _set_status(db, c, "closed", "officer", user.id, note)
     elif body.action == "reopen":
         _set_status(db, c, "under_review", "officer", user.id, note)

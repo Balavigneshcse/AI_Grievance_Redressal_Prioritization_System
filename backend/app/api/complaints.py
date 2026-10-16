@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse
 from datetime import timedelta
 
@@ -84,13 +84,14 @@ async def _save_uploads(db: Session, c: models.Complaint, files: list[UploadFile
                         role: str = "evidence", uploaded_by=None) -> int:
     """Validate and stream photos and videos to disk, one Media row each. Returns how many were saved.
     Any refused file refuses the whole request, and files already written for it are removed."""
+    files = [f for f in files or [] if f.filename]
+    if len(files) > settings.MAX_FILES:
+        raise HTTPException(400, f"Attach at most {settings.MAX_FILES} photos or videos at a time")
     folder = settings.MEDIA_DIR / str(c.id)
     written: list[Path] = []
     saved = 0
     try:
-        for f in files or []:
-            if not f.filename:
-                continue
+        for f in files:
             first = await f.read(1024 * 1024)
             mime = _sniff(first[:16])
             if mime is None:
@@ -140,8 +141,14 @@ async def create_complaint(
     text = (text or "").strip()
     if len(text) < 10:
         raise HTTPException(400, "Please describe the problem in at least a few words")
+    if len(text) > settings.MAX_COMPLAINT_CHARS:
+        raise HTTPException(400, f"Please keep the complaint to {settings.MAX_COMPLAINT_CHARS} characters or fewer")
     if location_source not in ("camera_gps", "exif", "browser", "manual", "none"):
         location_source = "none"
+    if (lat is None) != (lng is None):
+        raise HTTPException(400, "Send both lat and lng, or neither")
+    if lat is not None and not (-90 <= lat <= 90 and -180 <= lng <= 180):  # written this way it also refuses NaN
+        raise HTTPException(400, "lat must be between -90 and 90 and lng between -180 and 180")
     # Name and Aadhaar last 4 are taken once, at registration (or PATCH /auth/me); every complaint carries them for the office.
     if not (user.full_name and user.aadhaar_last4):
         raise HTTPException(400, "Add your name and the last 4 digits of your Aadhaar number to your account first")
@@ -237,10 +244,17 @@ def _load_for(db: Session, complaint_id: str, user: models.User) -> models.Compl
     return c
 
 
+NEARBY_MAX_ITEMS = 20
+
+
 @router.get("/complaints/nearby", response_model=list[schemas.NearbyItem])
-def nearby(lat: float, lng: float, km: float | None = None, limit: int = 5, user: models.User = Depends(current_user), db: Session = Depends(get_db)):
-    """Open complaints with coordinates within km of a point, nearest first, without any personal data."""
-    radius = km or settings.NEARBY_KM
+def nearby(lat: float = Query(ge=-90, le=90), lng: float = Query(ge=-180, le=180), km: float | None = Query(None, gt=0), limit: int = 5,
+           user: models.User = Depends(current_user), db: Session = Depends(get_db)):
+    """Open complaints with coordinates near a point, nearest first, without any personal data. The radius is
+    at most NEARBY_KM (the distance from which a citizen may support a complaint) and the list at most
+    NEARBY_MAX_ITEMS long, whatever the caller asks for: never a statewide list of summaries."""
+    radius = min(km or settings.NEARBY_KM, settings.NEARBY_KM)
+    limit = max(1, min(limit, NEARBY_MAX_ITEMS))
     span = radius / 100.0  # rough degree box; the haversine below does the real filtering
     rows = db.execute(
         select(models.Complaint).where(
@@ -263,7 +277,7 @@ def nearby(lat: float, lng: float, km: float | None = None, limit: int = 5, user
         ))
     # nearest first; at the same spot the most supported, then the newest
     out.sort(key=lambda i: (i.distance_km, -i.supporters, -i.created_at.timestamp()))
-    return out[:max(1, min(limit, 20))]
+    return out[:limit]
 
 
 @router.get("/complaints/supported", response_model=list[schemas.ComplaintSummary])
@@ -285,10 +299,12 @@ def supported(user: models.User = Depends(current_user), db: Session = Depends(g
 
 @router.get("/complaints/track/{tracking_id}", response_model=schemas.ComplaintDetail)
 def track(tracking_id: str, user: models.User = Depends(current_user), db: Session = Depends(get_db)):
+    # Tracking IDs are sequential: someone else's complaint answers exactly like a missing one, so the
+    # lookup never confirms that an ID exists.
     c = db.execute(select(models.Complaint).where(models.Complaint.tracking_id == tracking_id.upper())).scalar_one_or_none()
-    if c is None:
+    if c is None or not can_access(c, user):
         raise HTTPException(404, "Complaint not found")
-    return complaint_detail(db, _load_for(db, str(c.id), user), user)
+    return complaint_detail(db, c, user)
 
 
 @router.get("/complaints/{complaint_id}", response_model=schemas.ComplaintDetail)
@@ -382,15 +398,24 @@ def feedback(complaint_id: str, body: schemas.FeedbackIn, user: models.User = De
 
 
 @router.post("/complaints/{complaint_id}/support")
-def support(complaint_id: str, user: models.User = Depends(current_user), db: Session = Depends(get_db)):
-    """'Me too': back an existing open complaint instead of filing a duplicate. Enough supporters raise its urgency one level."""
-    c = db.get(models.Complaint, as_uuid(complaint_id))
+def support(complaint_id: str, body: schemas.SupportIn | None = None, user: models.User = Depends(current_user), db: Session = Depends(get_db)):
+    """'Me too': back an existing open complaint instead of filing a duplicate. Enough supporters raise its urgency one level.
+    Citizens only, and only from near the complaint: the point they send must be within NEARBY_KM of it, as in the nearby list."""
+    if user.role != "complainant":
+        raise HTTPException(403, "Only citizens can support a complaint")
+    # Row lock until commit: simultaneous clicks queue up here, so the second sees the first's support row
+    # (no unique-constraint error) and two citizens' counts never overwrite each other.
+    c = db.get(models.Complaint, as_uuid(complaint_id), with_for_update=True)
     if c is None:
         raise HTTPException(404, "Complaint not found")
     if c.user_id == user.id:
         raise HTTPException(400, "You filed this complaint")
     if c.status not in OPEN_FOR_SUPPORT:
         raise HTTPException(409, "This complaint is no longer open")
+    if body is None:
+        raise HTTPException(400, "Send your location: only complaints near you can be supported")
+    if c.lat is None or c.lng is None or _haversine_km(body.lat, body.lng, c.lat, c.lng) > settings.NEARBY_KM:
+        raise HTTPException(403, f"Only complaints within {settings.NEARBY_KM:g} km of you can be supported")
     exists = db.execute(select(models.Support).where(models.Support.complaint_id == c.id, models.Support.user_id == user.id)).scalar_one_or_none()
     if exists is None:
         db.add(models.Support(complaint_id=c.id, user_id=user.id))

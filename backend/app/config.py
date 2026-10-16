@@ -46,6 +46,8 @@ class Settings:
     MAX_PHOTO_MB = int(os.getenv("MAX_PHOTO_MB", "25"))
     MAX_VIDEO_MB = int(os.getenv("MAX_VIDEO_MB", "100"))
     MAX_VIDEO_SECONDS = int(os.getenv("MAX_VIDEO_SECONDS", "300"))
+    MAX_FILES = int(os.getenv("MAX_FILES", "6"))  # photos and videos per request, as on the complaint form
+    MAX_COMPLAINT_CHARS = int(os.getenv("MAX_COMPLAINT_CHARS", "5000"))  # complaint text; the model reads about 2,048 tokens
     LLM_KEEP_ALIVE = os.getenv("LLM_KEEP_ALIVE", "2h")  # keep Gemma loaded between complaints
     APP_URL = os.getenv("APP_URL", "http://localhost:5173")
     REOPEN_WINDOW_DAYS = int(os.getenv("REOPEN_WINDOW_DAYS", "7"))  # citizen may reopen or rate within this

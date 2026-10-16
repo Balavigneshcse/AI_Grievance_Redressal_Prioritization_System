@@ -17,7 +17,7 @@ Date: 15 October 2026 | Status: backend and frontend complete and tested end to 
 | Auth | `backend/app/api/auth.py`, `backend/app/security.py`: register with mobile + email + strong password, email OTP (hashed, 10 min, 5 attempts), login, forgot/reset by OTP, JWT with password-version invalidation | complete |
 | Complaint intake | `backend/app/api/complaints.py`: multipart text + photos/videos + GPS or manual address, EXIF GPS fallback, tracking ID, acknowledgement email, media served through an authenticated route | complete |
 | Analysis worker | `backend/app/services/worker.py` + `pipeline.py`: one background thread; language hint, PII mask, offline geocode, Gemma 3 (text + first photo) with JSON schema, bge-m3 embedding, pgvector duplicate search, NumPy second opinion, YAML rules, decision, status event, email | complete |
-| Rules engine | `backend/app/services/rules.py`, `config/rules.yaml`: 12 rules in English, Tamil, Hindi and romanised forms (gas leak, medical dependency on power, exposed wires, fire or collapse, water supply, street lights, sewage into homes, disease clusters, repeat complaints, revenue papers, children or elderly at risk, rescue of a person or animal from a well, borewell, pit or lift, and snakes, bee hives or wild animals inside a home, the last two added 16 Oct for Fire & Rescue); hot reload; admin test endpoint | complete |
+| Rules engine | `backend/app/services/rules.py`, `config/rules.yaml`: 14 rules in English, Tamil, Hindi and romanised forms (gas leak, medical dependency on power, exposed wires, fire or collapse, water supply, street lights, sewage into homes, disease clusters, repeat complaints, revenue papers, children or pregnant women at risk, elderly people affected (not for a pension or allowance request, since 16 Oct), rescue of a person or animal from a well, borewell, pit or lift, and snakes, bee hives or wild animals inside a home, the last two added 16 Oct for Fire & Rescue); hot reload; admin test endpoint | complete |
 | District office routing | `config/tn_mapping.json` from the team's Tamil Nadu spreadsheet (38 districts, 20 departments mapped onto our 8 categories, 760 offices with SLA, 41 keyword hints): each complaint gets a district, a named office and a due time | complete |
 | Officer review | `backend/app/api/review.py`: review queue sorted by urgency then age with flags, department queues, accept / reassign / merge / request info / resolve / close / reopen with mandatory reason, override log, status emails | complete |
 | Admin | `backend/app/api/admin.py`: read/write rules with change log, rule tester, metrics (totals, by status, by department, live accuracy per language from officer corrections, eval runs, second-opinion report) | complete |
@@ -51,22 +51,22 @@ Open `http://localhost:8000/docs` for the API, `http://localhost:8025` for the m
 | Method | Path | Role | Purpose |
 |---|---|---|---|
 | POST | `/auth/register` | public | name, Aadhaar last 4, mobile, email, password, language; sends OTP |
-| POST | `/auth/verify-otp` | public | activates the account, returns JWT |
+| POST | `/auth/verify-otp` | public | activates the account, returns JWT; a wrong, expired or missing code and an unknown email all get the same 400 |
 | POST | `/auth/resend-otp` | public | new registration code |
 | POST | `/auth/login` | public | JWT; 403 if unverified |
-| POST | `/auth/forgot`, `/auth/reset` | public | password reset by OTP; invalidates old sessions |
+| POST | `/auth/forgot`, `/auth/reset` | public | password reset by OTP; invalidates old sessions; neither tells whether an email has an account |
 | GET | `/auth/me` | any | current user |
 | PATCH | `/auth/me` | any | change name, Aadhaar last 4 or mail language; accounts from before 16 Oct complete their details here |
 | GET | `/departments` | public | ids and names in three languages |
-| POST | `/complaints` | complainant | multipart intake, returns 202 + tracking ID, queues analysis |
+| POST | `/complaints` | complainant | multipart intake, returns 202 + tracking ID, queues analysis; text of 10 to `MAX_COMPLAINT_CHARS` (5,000) characters, at most 6 photos or videos, coordinates must be a valid pair |
 | GET | `/complaints/mine` | complainant | own complaints |
-| GET | `/complaints/{id}`, `/complaints/track/{tracking_id}`, `/complaints/{id}/timeline` | owner or staff | detail with analysis, decision, timeline; PII and second opinion only for staff |
+| GET | `/complaints/{id}`, `/complaints/track/{tracking_id}`, `/complaints/{id}/timeline` | owner or staff | detail with analysis, decision, timeline; PII and second opinion only for staff; a tracking ID outside the caller's reach answers 404, like a missing one |
 | GET | `/media/{id}` | owner or staff | photo or video file |
 | POST | `/geo/reverse` | public | lat/lng to nearest locality |
 | GET | `/review/queue` | staff | complaints in the caller's scope; `view=review|active|resolved|all`, filters by department, urgency, language, district, `q` text search; sorted by urgency then supporters |
 | GET | `/departments/{dept}/queue` | staff (own department for department admins) | routed, in-progress and awaiting-info complaints |
 | GET | `/review/{id}` | staff, inside scope | full detail including masked text, PII map, complainant name and Aadhaar last 4 |
-| POST | `/review/{id}/decision` | staff, inside scope | accept, reassign, merge, request_info, resolve, close, reopen; reason required |
+| POST | `/review/{id}/decision` | staff, inside scope | accept, reassign, merge, request_info, resolve, close, reopen; reason required; only from the statuses the decision bar offers, 409 otherwise; accept on a routed case only by a department admin (Start work) |
 | GET, POST | `/admin/users` | super admin, district admin | list and create staff accounts (district admin: department admins of own district only); the generated password is returned once |
 | PATCH | `/admin/users/{id}` | super admin, district admin | enable or disable, rename, move department, reset password |
 | GET | `/admin/districts` | staff | the 38 Tamil Nadu districts with staff counts |
@@ -74,8 +74,8 @@ Open `http://localhost:8000/docs` for the API, `http://localhost:8025` for the m
 | POST | `/complaints/{id}/reply` | complainant (owner) | answer a request for information or add details, with photos or videos; an awaiting-info case resumes; the office is emailed |
 | POST | `/admin/sla/check` | super admin | escalate overdue complaints now (the worker does it every minute) |
 | POST | `/complaints/{id}/feedback` | complainant | after resolution: rating 1-5 with a note, or reopen (back to in progress, department emailed); allowed for `REOPEN_WINDOW_DAYS` |
-| POST | `/complaints/{id}/support` | any citizen but the owner | "me too" on an open complaint; `SUPPORT_BOOST_AT` supporters raise urgency one level |
-| GET | `/complaints/nearby?lat&lng` | citizen | open complaints within `NEARBY_KM`, nearest first, no personal data |
+| POST | `/complaints/{id}/support` | any citizen but the owner (staff 403) | "me too" on an open complaint; body `{lat, lng}`, where the citizen is, within `NEARBY_KM` of the complaint; `SUPPORT_BOOST_AT` supporters raise urgency one level |
+| GET | `/complaints/nearby?lat&lng` | citizen | open complaints within `NEARBY_KM` (a larger `km` is capped), at most 20, nearest first, no personal data |
 | GET | `/complaints/supported` | citizen | complaints the caller supports |
 | POST | `/review/{id}/attachments` | staff, inside scope | resolution proof photos or videos (media role `resolution`) |
 | GET | `/admin/map?view=open|all` | staff | located complaints in scope for the map |
@@ -83,7 +83,7 @@ Open `http://localhost:8000/docs` for the API, `http://localhost:8025` for the m
 | POST | `/admin/rules/test` | staff | run the rules against a text |
 | POST | `/admin/models/reload` | super admin | pick up a newly trained second-opinion model |
 | GET | `/admin/metrics` | staff | dashboard data |
-| GET | `/health` | public | db, Ollama, models, queue depth |
+| GET | `/health` | public: `{"status": "ok"}` or `"degraded"` only | db, Ollama, models, queue depth, outbox, overdue count and model latency for a staff login or a caller on the API's own machine |
 
 ---
 
@@ -219,6 +219,36 @@ The five high-severity bugs from section 13 of the test report:
 | GPS covered 13 of 38 districts | `config/places_tn.csv` grew from 47 to 137 places: all 38 district headquarters and the major towns. A point more than `MAX_PLACE_KM` (30 km) from every place, such as Bengaluru, Palakkad or a bad coordinate, gets no district instead of the nearest wrong one |
 | Addresses in Tamil script resolved to no district | `district_for` reads district names as whole words in English, Tamil (with case endings: கோயம்புத்தூரில், சேலத்தில்) and Hindi, plus common names (Trichy, Kovai, Ooty, Tuticorin, Madras), from the new `config/district_names.json`; "eroded" is no longer Erode. A complaint whose district is still unknown goes to review (the super admins' queue) with a default 24-hour SLA scaled by urgency, instead of being routed into nobody's queue |
 | Complaints lost on restart | The worker tracks what it has queued; at start-up it re-queues every complaint left in Received or Analysing, and the minute check re-queues any stuck for more than 10 minutes and restarts the worker thread if it died |
+
+### Fixes for the medium-severity bugs (16 Oct 2026, 11:20-12:00)
+
+Bugs 6, 7 and 9 to 12 from section 13 of the test report (bug 8 was fixed with the district names above):
+
+| Bug | Fix |
+|---|---|
+| The server did not enforce the status machine | `ALLOWED_FROM` in `api/review.py` lists the statuses each decision may be taken from, the same rules as `allowedActions` in `DecisionBar.tsx`: accept from under review or routed; reassign, merge and resolve while the case is open; request info unless it already awaits a reply; close only when resolved; staff reopen only from resolved or closed. Anything else answers 409 "Cannot request info from status closed". A case still received or analysing takes no decision until the model has placed it. The decision locks the complaint row (`SELECT ... FOR UPDATE`), so of two officers or a double click the second waits, sees the new status and is refused. `_set_status` stays a plain writer: its other callers (the worker, the citizen's reply and reopen) only make their own fixed transitions |
+| Coordinates were not checked | `create_complaint` answers 400 for a latitude outside -90 to 90 or a longitude outside -180 to 180 (NaN and infinity included) and for a latitude without a longitude or the reverse, before anything is stored. The other half of the bug, a valid point outside Tamil Nadu, was fixed with the 30 km limit above |
+| A photo the model cannot decode failed the whole analysis | When the model call with photos fails with an error from the model server (Ollama answers 400 "Failed to load image or audio file"), `run_analysis` asks once more with the text alone. The case gets the model's department and urgency, the reasons say "photo could not be read by the model; analysed from the text alone", `error` keeps the original message for staff, and the photo stays on the case for the office. A timeout or an unreachable model server is not retried, so a stuck server does not double the wait |
+| PII masking missed mobiles, mislabelled +91 and skipped PIN codes | `services/pii.py`: a mobile is ten digits from 6-9 with a space or dash anywhere (98765 43210, 98765-43210, 9876 543 210), after +91, 0091, "91 " or 0; "+919876543210" is now a phone because the Aadhaar pattern no longer starts right after a "+", while every Aadhaar grouping stays Aadhaar; six-digit PIN codes (641012, 641 012) become `[PIN_n]` once the longer numbers are masked. Landline numbers are still not masked, and any other six-digit number, an amount for example, is masked as a PIN code |
+| No server-side file-count limit | `_save_uploads` refuses more than `MAX_FILES` (6, as on the complaint form) photos and videos in one request with 400 before writing anything; this covers intake, the citizen's reply and resolution proof. The 5-minute video limit is still checked only in the browser |
+| Simultaneous "Support" clicks gave a 500 | `support` locks the complaint row before it looks for an existing support, so simultaneous clicks queue: the first inserts the row, the others find it and answer with the same count. Two citizens supporting at once can no longer overwrite each other's count, so the urgency boost at `SUPPORT_BOOST_AT` fires exactly once |
+
+### Fixes for the low-severity bugs and notes (16 Oct 2026, 11:30-12:20)
+
+Bugs 13 to 20 and notes 21 and 22 from section 13 of the test report:
+
+| Bug | Fix |
+|---|---|
+| 13 Staff could add "me too" support, and anyone could support any complaint by its ID | `support` (`api/complaints.py`) answers 403 to staff and takes the citizen's location as a body `{lat, lng}` (`SupportIn`): without it 400; more than `NEARBY_KM` (2 km) from the complaint, or a complaint without coordinates, 403. `NearbyCard.tsx` sends the point the nearby list was loaded for and shows staff no Support button |
+| 14 A reviewer's Accept on a routed case added a second "Routed" entry and sent the routed mails again | `decide` (`api/review.py`) answers 409 "Already routed: the department admin starts the work" when a district or super admin accepts a routed case; a department admin's accept there is Start work, as before. `DecisionBar.tsx` offers Accept on a routed case to department admins only |
+| 15 The nearby list took any radius | `nearby` caps the radius at `NEARBY_KM` (the distance from which a citizen may support) and the list at 20 (`NEARBY_MAX_ITEMS`), whatever `km` and `limit` ask for; a radius of zero or less and a latitude or longitude off the globe answer 422 |
+| 16 No maximum complaint length | `MAX_COMPLAINT_CHARS` (5,000; the model reads about 2,048 tokens): intake answers 400 above it. The complaint form stops typing at 5,000, shows "n / 5000" (red at the limit) and refuses longer text with a translated message (`new.tooLong`) |
+| 17 Account enumeration | verify-otp and reset (`api/auth.py`) give one answer, 400 "Incorrect or expired code. Check it, or request a new one.", for a wrong, expired or missing code and for an email with no account; reset checks the new password before it looks up the account. What still differs is the 429 after `OTP_MAX_ATTEMPTS` wrong tries on a code that exists, which first needs a code mailed to the real owner. The tracking-ID lookup answers 404 for a complaint outside the caller's reach (another citizen's, another department's), exactly like a missing ID. `/complaints/{uuid}` keeps its 403, since a random UUID cannot be guessed, and registration still says an email or mobile is taken (409), as most sign-up forms do |
+| 18 `/health` was public with queue depth, outbox backlog and latency | Anyone gets `{"status": "ok"}` or `{"status": "degraded"}` (database and Ollama both up, or not). The details go to a staff login (the Metrics page sends its token) or to a caller on the API's own machine: a loopback address and no `X-Forwarded-For` or `Forwarded` header, so a proxy on the same machine does not make outside callers local |
+| 19 The registration Aadhaar field took letters while typing | `Register.tsx` cleans the field inside its change event, as the complaint form's card does: only digits stay, cut to four, so a letter never appears. The field has no `maxLength`, which would cut a paste such as "XXXX XXXX 1234" to four characters before the letters are removed; that paste now gives 1234 |
+| 20 One 1 MB JavaScript bundle | `App.tsx` loads the four admin pages (staff, rules, metrics, map), the two officer pages and the complaint form with `React.lazy`, each in its own chunk behind a skeleton; Leaflet (153 kB) comes only with the complaint form or the map. JavaScript at start: 779 kB (249 kB gzipped) instead of 1,013 kB (311 kB); CSS 96 kB instead of 111 kB; no chunk is over 500 kB, so the build warning is gone. The four admin pages alone would have saved under 3 kB gzipped: they are small and share nearly everything with the rest of the app |
+| 21 The demo scripts read the database only from `.env` | `demo_data.py` and `record_demo.py` read their settings from the environment first, then `.env`, as the suite does: `DATABASE_URL`, `MEDIA_DIR`, `SEED_PASSWORD`, the new `API_URL` (default `http://127.0.0.1:8000`) and, for the recording, `DEMO_APP_URL` (default `http://localhost:5173`). A reset and a seed aimed at a test copy now reach its database and its API together. The suite reads `API_URL` too |
+| 22 Rule R10 treated "old age" as a risk | R10 keeps children and pregnancy ("Child or pregnant woman at risk"). The elderly keywords move to R10b "Elderly person affected", without "old age" (mostly "old age pension" or "old age home"), and R10b has an `unless` list (pension, allowance, ஓய்வூதிய, உதவித்தொகை, पेंशन, भत्ता and more) that switches it off for a pension or allowance request. `match.unless` is a new optional rule field (`services/rules.py`). On the 2,837 labelled synthetic and gold complaints, R10 and R10b together match exactly what the old R10 matched: outages that hit elderly residents stay High with review, and none of them is a pension request |
 
 ### Operating note: one model server, one request at a time
 

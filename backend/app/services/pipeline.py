@@ -129,7 +129,20 @@ def run_analysis(db: Session, complaint_id) -> models.Analysis:
     try:
         llm, analysis.latency_ms = _llm_analyse(masked, image_paths, hint)
     except Exception as exc:
+        import ollama
+
         analysis.error = f"LLM failed: {exc}"[:500]
+        # A photo the model cannot decode fails the whole call (Ollama answers 400 "Failed to load image or audio file").
+        # The text alone still gives a department and urgency, so ask once more without the photos; a timeout or a
+        # model server that is down is not retried.
+        if image_paths and isinstance(exc, ollama.ResponseError):
+            try:
+                llm, analysis.latency_ms = _llm_analyse(masked, None, hint)
+                analysis.error = f"photos skipped, the model could not read them: {exc}"[:500]
+                reasons.append("photo could not be read by the model; analysed from the text alone")
+                image_paths = []
+            except Exception as exc2:
+                analysis.error = f"{analysis.error} | retry without photos failed: {exc2}"[:800]
 
     if llm:
         analysis.language_primary = llm.get("language_primary")

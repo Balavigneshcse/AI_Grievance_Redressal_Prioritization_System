@@ -137,6 +137,12 @@ class FeedbackIn(BaseModel):
     reopen: bool = False
 
 
+class SupportIn(BaseModel):
+    """Where the supporting citizen is: only a complaint within NEARBY_KM of this point can be supported."""
+    lat: float = Field(ge=-90, le=90)
+    lng: float = Field(ge=-180, le=180)
+
+
 class NearbyItem(BaseModel):
     id: UUID
     tracking_id: str
