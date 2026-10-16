@@ -29,6 +29,7 @@ from scripts.common import (
 log = logging.getLogger("synapse.pipeline")
 
 URGENCY_RANK = rules_engine.URGENCY_RANK
+DEFAULT_SLA_HOURS = 24  # when no district office is known yet; scaled by urgency like the office SLAs
 OPEN_STATUSES = ("received", "analysing", "under_review", "routed", "in_progress", "awaiting_info")
 
 _second = {"loaded": False, "dept": None, "urg": None}
@@ -114,10 +115,13 @@ def run_analysis(db: Session, complaint_id) -> models.Analysis:
                 break
     if c.lat is not None and c.lng is not None:
         place = nearest_place(c.lat, c.lng)
-        c.resolved_place = f"{place['name']}, {place['area']}" + (f" (~{place['distance_km']} km)" if place["distance_km"] > 1 else "")
-        c.district = district_for(place["area"]) or district_for(place["name"])
+        if place["distance_km"] <= settings.MAX_PLACE_KM:
+            c.resolved_place = f"{place['name']}, {place['area']}" + (f" (~{place['distance_km']} km)" if place["distance_km"] > 1 else "")
+            c.district = district_for(place["area"]) or district_for(place["name"])
+        else:  # outside Tamil Nadu, or a bad coordinate: no district rather than the nearest wrong one
+            c.resolved_place = f"outside the mapped area ({place['distance_km']:.0f} km from {place['name']}, {place['area']})"
     if not c.district:
-        c.district = district_for(c.manual_address) or district_for(c.raw_text)
+        c.district = district_for(c.manual_address) or district_for(c.raw_text, free_text=True)
 
     # 4. LLM (up to three photos go in as images; videos are evidence for the office only)
     image_paths = [m.file_path for m in c.media if m.kind == "photo"][:3]
@@ -224,6 +228,10 @@ def run_analysis(db: Session, complaint_id) -> models.Analysis:
         review = True
     if c.contact_incomplete:
         reasons.append("contact details incomplete")
+    if c.district is None:
+        # No district means no office and no district admin: a person must place it, never "routed" into nobody's queue.
+        review = True
+        reasons.append("district unknown: no office assigned, a reviewer must confirm the location")
 
     db.add(analysis)
     db.flush()
@@ -247,8 +255,11 @@ def run_analysis(db: Session, complaint_id) -> models.Analysis:
         default_office = office_for(c.district, department)
         if hint and hint["department_id"] == office["department_id"] and default_office and hint["department_id"] != default_office["department_id"]:
             reasons.append(f"keyword rule {hint['rule_id']} picked the {office['department_name']} office")
-    elif c.district is None:
-        reasons.append("district unknown: no office assigned, officer to confirm location")
+    else:
+        # Still give it a due time, so the SLA watch escalates it (to the super admins when the district is unknown).
+        hours = DEFAULT_SLA_HOURS * URGENCY_SLA_FACTOR.get(urgency, 1.0)
+        c.due_at = datetime.now(timezone.utc) + timedelta(hours=hours)
+        reasons.append(f"due in {hours:g} h (default SLA until an office is assigned)")
     decision.reasons = list(reasons)
 
     new_status = "under_review" if review else "routed"

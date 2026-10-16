@@ -440,6 +440,30 @@ def main() -> int:
     r = requests.post(f"{API}/admin/models/reload", headers=HA, timeout=30)
     check("model reload endpoint", r.status_code == 200)
 
+    print("\n== fixes from the A-to-Z pass (16 Oct) ==")
+    svg = b'<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"><script>alert(1)</script></svg>'
+    r = requests.post(f"{API}/complaints", headers=HC, data={"text": "pothole photo attached, please check the road"}, files=[("files", ("x.svg", svg, "image/svg+xml"))], timeout=60)
+    check("an SVG photo is refused (it can carry script)", r.status_code == 400, f"{r.status_code} {r.text[:80]}")
+    r = requests.post(f"{API}/complaints", headers=HC, data={"text": "pothole photo attached, please check the road"}, files=[("files", ("x.png", b"plain text, not a picture", "image/png"))], timeout=60)
+    check("a text file declared as PNG is refused (file signature checked)", r.status_code == 400, f"{r.status_code} {r.text[:80]}")
+    for text, rid, label in (("எங்கள் தெருவில் குப்பை ஒரு வாரமாக எடுக்கவில்லை, பிரச்சனையை உடனே தீர்க்கவும்", "R4", "Tamil 'please solve' is not the fire rule"),
+                             ("मेरे घर के आगे सड़क पर बड़ा गड्ढा है, आपसे आग्रह है कि ठीक करें", "R4", "Hindi 'in front of' / 'request' are not the fire rule"),
+                             ("एक नागरिक होने के नाते शिकायत: स्ट्रीट लाइट बंद है", "R12", "Hindi 'citizen' is not the cobra rule")):
+        t = requests.post(f"{API}/admin/rules/test", headers=HA, json={"text": text}, timeout=30).json()
+        check(f"rules test: {label}", rid not in t["matched"], str(t["matched"]))
+    t = requests.post(f"{API}/admin/rules/test", headers=HA, json={"text": "வீட்டில் தீ பிடித்தது, தீயில் பொருட்கள் எரிகின்றன"}, timeout=30).json()
+    check("rules test: a real Tamil fire still matches the fire rule", "R4" in t["matched"] and t.get("department") == "safety", str(t["matched"]))
+    tamil_addr = submit(HC, "எங்கள் தெருவில் மூன்று நாட்களாக குடிநீர் வரவில்லை", manual_address="கோயம்புத்தூர், காந்திபுரம் 5வது தெரு", location_source="manual")
+    nowhere = submit(HC, "Garbage dumped near the park for a week, please clear it", lat=999, lng=999, location_source="browser")
+    for acc in (tamil_addr, nowhere):
+        wait_analysed(HC, acc["id"])
+    d = requests.get(f"{API}/review/{tamil_addr['id']}", headers=HA, timeout=30).json()
+    check("address typed in Tamil script resolves to its district, office and due time", d.get("district") == "Coimbatore" and bool(d.get("office_name")) and bool(d.get("due_at")), f"{d.get('district')} / {d.get('office_name')}")
+    d = requests.get(f"{API}/review/{nowhere['id']}", headers=HA, timeout=30).json()
+    reasons = " ".join((d.get("decision") or {}).get("reasons") or [])
+    check("a complaint with no district goes to review with a due time (not routed into nobody's queue)",
+          d.get("district") is None and d.get("status") == "under_review" and "district unknown" in reasons and bool(d.get("due_at")), f"{d.get('status')} / {d.get('district')} / {d.get('resolved_place')}")
+
     print("\n== notifications ==")
     n = mail_count("citizen@synapse.local")
     check("status emails logged for the citizen in Mailpit", n >= 8, f"{n} emails") if mail_ok else None

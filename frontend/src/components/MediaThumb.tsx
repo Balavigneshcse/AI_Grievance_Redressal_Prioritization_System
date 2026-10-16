@@ -26,6 +26,8 @@ export function MediaThumb({ media, className }: { media: Media; className?: str
     let objectUrl: string | null = null
     setSrc(null)
     setFailed(false)
+    // Only known photo and video types come back as a URL; anything else (an old SVG upload, say)
+    // fails here and shows the "could not load" tile instead of being rendered or opened.
     fetchMediaObjectUrl(media.url, ac.signal)
       .then((u) => {
         objectUrl = u

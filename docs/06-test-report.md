@@ -169,3 +169,59 @@ Preparation for the final review: `scripts/demo_data.py --districts` now creates
 **Found by the user on a closed case (08:50).** The timeline drew its newest entry as the hollow "current step" ring whatever the status, so a closed complaint ended with an open ring after the citizen's rating. The ring is now reserved for cases that are still open; once a case is resolved, closed or merged every entry is a green check. Checked on the demo data: closed and resolved cases end green, an in-progress case keeps the ring.
 
 **Rescue rules (09:05).** Two rules added so that rescue situations always reach Fire & Rescue whatever the model says: R11, a person or animal fallen into a well, borewell, pit or drain or stuck in a lift (Fire and Safety, Critical, human review), and R12, a snake, bee hive or wild animal inside a home (Fire and Safety, High, human review), each with English, Tamil, Hindi and romanised keywords; the taxonomy examples carry the same cases for the model. Checked with the rules engine on ten complaints across the five language forms: all route to safety with the expected floor and review; a broken borewell stays a water complaint and a pothole matches nothing. The office dry run gives the district's Fire & Rescue office (24 h SLA, so 6 h for a Critical case). Three checks added to the suite.
+
+## 13. Full A-to-Z pass (16 Oct 2026, 09:20-09:45): every feature, security probes, bug list
+
+Run on an isolated copy so the demo data stayed untouched: a separate database `synapse_test`, a test API on port 8100 with its own media folder, a second app on 5174, mail to Mailpit under a test sender (removed afterwards). The demo database was checked before and after (13 complaints, 50 users, 118 notifications, unchanged).
+
+| Area | Result |
+|---|---|
+| Production build (`npm run build`) | passes; one warning: a single 1 MB JavaScript bundle |
+| Translations | English, Tamil and Hindi have identical key sets; no key used in code is missing |
+| API suite (`test_api_e2e.py`) | **121 of 121** |
+| Gold set (`run_eval.py`) | system with rules unchanged: department 1.00, urgency 0.92, critical recall 1.00, language ID 0.92, 15.4 s per complaint; the model alone 0.75 on department this run (0.83 last run: run-to-run variation) |
+| Browser walkthrough (Playwright, Chrome, every role) | 45 of 53 steps pass; 5 failures were artefacts of the test script (a stale toast read, e-mail addresses read as translation keys), 3 are real (below) |
+| Security and edge probes | 15 pass, 18 bugs, 5 notes (below) |
+
+What works end to end: registration with OTP (mail in the chosen language), forgot and reset password, the complaint form (validation, script badge, photo, 26 MB refusal, in-app video, GPS, nearby list), tracking that updates itself, district review, department Start work and Request info, citizen reply with a photo, resolution proof, rating, reopen, close, the green timeline, queue search and filters, the map, staff accounts (super admin and district admin scopes), the rule tester, classifier reload, metrics, refusals outside a role's scope, role redirects, the Tamil interface, phone width without horizontal scrolling. Probes that passed: a Karur district admin is fully fenced off from Coimbatore, unsigned tokens are refused, CORS is closed to outside origins, SQL metacharacters in search are harmless, role fields are ignored at registration, media of another department is refused, three simultaneous complaints get distinct tracking IDs, a resolve sent during analysis is not overwritten.
+
+### Bugs found
+
+| # | Severity | Bug | Evidence | Where |
+|---|---|---|---|---|
+| 1 | High | Stored XSS through an SVG attachment: a citizen attaches an SVG with a script; when staff click the photo, it opens as a same-origin blob and the script reads the stored login token | new tab title "XSS-ONLOAD eyJhbGciOiJIUzI1..." | `api/complaints.py` `_save_uploads` (any `image/*` accepted by declared type); `components/MediaThumb.tsx` (opens the blob in a new tab) |
+| 2 | High | Tamil and Hindi rule keywords match inside other words, so ordinary complaints go to Fire and Safety as Critical with forced review: "தீர்வு / தீர்க்க" (solution, solve) contain "தீ" (fire), "आग्रह" (request) and "आगे" (in front) contain "आग", "नागरिक" (citizen) contains "नाग" (cobra, rule R12 added 16 Oct), "பட்டாசு" (crackers) contains "பட்டா" (patta) | on 1,641 labelled synthetic complaints: 38 of 297 non-safety Tamil (12.8%) and 13 of 272 Hindi sent to Fire and Safety; the rule tester shows R4 for a Tamil garbage complaint | `services/rules.py` `keyword_in` (substring for non-ASCII); `config/rules.yaml` |
+| 3 | High | The offline place table covers 13 of 38 districts, so GPS complaints from the other 25 go to a neighbouring district's office and admins | Ariyalur to Thanjavur, Ramanathapuram to Madurai, Dharmapuri to Salem, Tenkasi to Tirunelveli | `config/places_tn.csv`, `scripts/common.py` `nearest_place` |
+| 4 | High | An address typed in Tamil script (and common names such as Trichy, Kovai, Ooty, Tuticorin, Madras) gives no district: no office, no due time, status Routed, visible only to the super admin, never escalated | "கோயம்புத்தூர், காந்திபுரம் 5வது தெரு" routed with district, office and due time all empty | `scripts/common.py` `district_for` |
+| 5 | High | Complaints stay "Analysing" forever after an API restart: the work queue lives in memory and nothing re-queues received or analysing complaints at start-up, so they never reach any queue | SYN-2026-000019 still analysing with no analysis 95 s after a restart, queue depth 0 | `services/worker.py` |
+| 6 | Medium | The server does not enforce the status machine: request info on a closed complaint reopens it, reassign on a merged complaint routes it, staff reopen on an in-progress case sends it back to review (the app hides these, the API accepts them) | all three answered 200 | `api/review.py` `decide`, `services/pipeline.py` `_set_status` |
+| 7 | Medium | No coordinate check or distance limit: lat 999 is accepted and routed to Tirunelveli; a pin in Delhi becomes a Chennai water complaint with an SLA | probes P05a, P05b | `api/complaints.py` intake, `common.nearest_place` |
+| 8 | Medium | District names are matched as substrings of the text: "eroded" makes a complaint Erode district's | routed to Erode Roads & Highways Office | `common.district_for` |
+| 9 | Medium | One image the model cannot decode makes the whole analysis fail ("Failed to load image"): no department or urgency suggestion, straight to review; phone formats such as HEIC are likely affected (not tested) | SYN-2026-000020 | `services/pipeline.py` (no retry without images) |
+| 10 | Medium | PII masking misses mobile numbers written with spaces or dashes ("98765 43210", "+91 98765 43210", "98765-43210"); PIN codes are not masked although the docs say so; "+919876543210" is masked but labelled Aadhaar | direct calls to `mask_pii` | `services/pii.py` |
+| 11 | Medium | Uploads trust the declared type (plain text accepted as image/png), there is no server-side file-count limit (10 accepted, the app allows 6), and the 5-minute video limit exists only in the browser | probes P04b, P04c | `api/complaints.py` `_save_uploads` |
+| 12 | Medium | Four simultaneous "Support" clicks by one citizen: one answers 500 (unique-constraint race) | [200, 500, 200, 200] | `api/complaints.py` `support` |
+| 13 | Low | Staff accounts can add "me too" support, and any citizen can support any complaint by ID, not only nearby ones | department admin support answered 200 | `api/complaints.py` `support` |
+| 14 | Low | Reviewer Accept is offered on an already routed case: it adds a duplicate "Routed" entry and re-sends the routed mail | timeline entries 7 to 8, citizen mails 44 to 45 | `components/DecisionBar.tsx` `allowedActions`, `api/review.py` |
+| 15 | Low | The nearby list accepts any radius (km=100000) and returns open complaints statewide with summaries | 12 items, 2 over 50 km away | `api/complaints.py` `nearby` |
+| 16 | Low | No maximum complaint length: 15,000 characters accepted while the model reads about 2,048 tokens | probe P06 | `api/complaints.py` intake |
+| 17 | Low | Account enumeration: verify-otp and reset answer "No account for this email" (forgot is generic); tracking-ID lookup answers 403 for someone else's complaint and 404 for a missing one | probes P09, P15 | `api/auth.py`, `api/complaints.py` |
+| 18 | Low | `/health` is public and shows queue depth, outbox backlog and latency | probe P16 | `api/misc.py` |
+| 19 | Low | The registration Aadhaar field accepts letters while typing (refused only on submit); the complaint-form card strips them live | browser step B01b | `pages/Register.tsx` |
+| 20 | Low | One 1 MB JavaScript bundle (311 KB gzipped), no code splitting | build warning | `frontend` build |
+| 21 | Note | `demo_data.py` and `record_demo.py` read the database only from `.env`, so a reset always targets the demo database, even when testing elsewhere | code reading | `scripts/demo_data.py`, `scripts/record_demo.py` |
+| 22 | Note | Rule R10 treats "old age" as at-risk, so a routine pension complaint gets High urgency and forced review | rules engine | `config/rules.yaml` |
+
+### Fixes for bugs 1-5 and retest (16 Oct 2026, 09:50-10:40)
+
+What changed is described in `docs/05-implementation.md` ("Fixes after the A-to-Z test pass"). Retest on the isolated stack:
+
+| Bug | Retest |
+|---|---|
+| 1 SVG script attack | an SVG upload and a text file declared as PNG both answer 400 (suite); the SVG planted before the fix now shows as an unreadable tile, cannot be opened, and no script ran (browser); real JPEG uploads, in-app camera photos and the WebM video from the in-app recorder still pass |
+| 2 Tamil and Hindi keywords | the rule tester no longer matches the fire rule for "தீர்க்கவும்" or "आगे / आग्रह", nor the cobra rule for "नागरिक", while a real Tamil fire still matches (suite); on the 1,641 labelled complaints, non-safety Tamil complaints sent to Fire and Safety fell from 39 to 3 and Hindi from 23 to 10, all remaining ones mentioning a real fire or hanging wire; no genuine safety match was lost |
+| 3 district coverage | all 38 district headquarters resolve to their own district; Ariyalur town now goes to the Ariyalur office; Bengaluru, Palakkad, Chittoor, Thiruvananthapuram, Tirupati and Delhi get no district and go to review. Two rows needed care: the headquarters of Ramanathapuram (Coimbatore also has a Ramanathapuram locality) and Tambaram, moved from Chennai to Chengalpattu district |
+| 4 addresses in Tamil script | "கோயம்புத்தூர், காந்திபுரம் 5வது தெரு" resolves to Coimbatore with its office and due time; a complaint at lat 999 or with "eroded" and no location gets no district and goes to review with a due time instead of being routed into nobody's queue (suite and probes) |
+| 5 complaints lost on restart | the complaint left in Analysing by the earlier restart was picked up as soon as the fixed API started ("re-queued 1 unfinished complaint") and moved to Under review |
+
+**Suite: 129 of 129** on a fresh test database (121 earlier checks plus 8 for these fixes). A run on the reused database showed 127 of 129: a leftover open "benches" complaint from the first run made the new one a possible duplicate, the known effect of re-running without a reset. **Browser walkthrough: 45 of 52 steps pass**; the failures are bug 19 (not in this round) and the same test-script artefacts as before (stale toasts, e-mail addresses read as keys, a rule-tester check that also reads the rules table). Bugs 6-20 are still open.

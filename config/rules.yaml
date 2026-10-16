@@ -3,6 +3,10 @@
 # force_review sends the complaint to a human regardless of confidence.
 # Keywords are matched case-insensitively against the original text, so include
 # Tamil script, Devanagari and romanised spellings. Hot-reloaded on save.
+# Matching is by word: English keywords match whole words ('fire' not 'fired'); Tamil and Hindi
+# keywords must start a word, and short ones (three letters or fewer, e.g. தீ, आग, नाग, பட்டா)
+# must be the whole word or take a case ending (தீயில், சாலையில், सांपों), so தீர்வு, आगे, आग्रह,
+# नागरिक and பட்டாசு no longer match. List other inflected forms explicitly when a stem changes.
 
 rules:
   - id: R1
@@ -38,7 +42,7 @@ rules:
     name: Fire or collapse
     enabled: true
     match:
-      keywords: ["fire", "on fire", "தீ", "தீப்பிடித்த", "आग", "aag lag", "collapse", "collapsing", "இடிந்து", "गिरने वाला", "building crack", "wall falling"]
+      keywords: ["fire", "on fire", "தீ", "தீப்பிடித்த", "आग", "aag lag", "collapse", "collapsing", "இடிந்து", "गिरने वाला", "building crack", "wall falling", "आगजनी", "தீயணைப்பு"]
     action:
       department: safety
       urgency_floor: critical
@@ -117,7 +121,7 @@ rules:
     name: Snake, bee hive or wild animal inside a home
     enabled: true
     match:
-      keywords: ["snake", "snakes", "cobra", "viper", "krait", "பாம்பு", "பாம்புகள்", "நாகம்", "நல்ல பாம்பு", "सांप", "साँप", "नाग", "कोबरा", "paambu", "pambu", "paamboo", "saamp", "saanp", "samp", "sanp", "bee hive", "beehive", "honeycomb", "wasp nest", "hornets", "தேனீக்கூடு", "தேனீ கூடு", "குளவி கூடு", "मधुमक्खी का छत्ता", "मधुमक्खियों का छत्ता", "madhumakkhi", "leopard", "சிறுத்தை", "तेंदुआ", "wild animal", "monkey attack"]
+      keywords: ["snake", "snakes", "cobra", "viper", "krait", "பாம்பு", "பாம்புகள்", "பாம்பை", "பாம்பின்", "நாகம்", "நல்ல பாம்பு", "सांप", "साँप", "नाग", "कोबरा", "paambu", "pambu", "paamboo", "saamp", "saanp", "samp", "sanp", "bee hive", "beehive", "honeycomb", "wasp nest", "hornets", "தேனீக்கூடு", "தேனீ கூடு", "குளவி கூடு", "मधुमक्खी का छत्ता", "मधुमक्खियों का छत्ता", "madhumakkhi", "leopard", "சிறுத்தை", "तेंदुआ", "wild animal", "monkey attack"]
     action:
       department: safety
       urgency_floor: high

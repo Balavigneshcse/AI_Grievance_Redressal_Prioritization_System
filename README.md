@@ -43,7 +43,7 @@ Phases 1 to 4 complete. Backend (FastAPI + PostgreSQL + local models) and fronte
 
 All measured on the build laptop (RTX 3050, 4 GB) against the live stack; details and every run are in `docs/06-test-report.md`.
 
-**End-to-end suite** (`scripts/test_api_e2e.py`, run against a Mailpit-backed API): **118 of 118 checks pass** (16 Oct 2026, 02:40, straight after a reset). The suite grew with the product: 61 checks on day 1, then 77, 91, 114 and 118.
+**End-to-end suite** (`scripts/test_api_e2e.py`, run against a Mailpit-backed API): **129 of 129 checks pass** (16 Oct 2026, 10:30, on a fresh database after the fixes from the A-to-Z pass). The suite grew with the product: 61 checks on day 1, then 77, 91, 114, 118, 121 and 129. The A-to-Z pass, its bug list and the fixes are in section 13 of `docs/06-test-report.md`.
 
 | Area | What the checks prove |
 |---|---|
@@ -91,7 +91,7 @@ Passwords come from `SEED_PASSWORD` in `.env`. Staff accounts are created from t
 
 ## Evidence limits
 
-Photos up to 25 MB, videos up to 100 MB and 5 minutes (in-app recording stops automatically). The complainant's name and the last four digits of their Aadhaar number are taken once at registration; every complaint carries them for the office, and the model never sees them.
+Photos (JPEG, PNG or WebP) up to 25 MB, videos (WebM, MP4 or MOV) up to 100 MB and 5 minutes (in-app recording stops automatically); the server checks each file's signature, so an SVG, an HTML page or a renamed file is refused. The complainant's name and the last four digits of their Aadhaar number are taken once at registration; every complaint carries them for the office, and the model never sees them.
 
 ## One-command start and demo data
 

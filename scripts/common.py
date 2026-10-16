@@ -11,6 +11,7 @@ import json
 import math
 import os
 import re
+import unicodedata
 from pathlib import Path
 
 import numpy as np
@@ -238,28 +239,115 @@ def load_tn_mapping() -> dict:
     return _tn
 
 
-def district_for(text: str | None) -> str | None:
-    """District name if the text (a locality area or a manual address) mentions one."""
-    if not text:
-        return None
-    low = text.lower()
-    for d in load_tn_mapping().get("districts", []):
-        if d["name"].lower() in low:
-            return d["name"]
-    return None
+def _word_char(ch: str) -> bool:
+    """Letters, combining marks (Tamil and Devanagari vowel signs, pulli, virama) and digits."""
+    return unicodedata.category(ch)[0] in ("L", "M", "N")
+
+
+def _base_letters(word: str) -> int:
+    return sum(1 for ch in word if unicodedata.category(ch)[0] in ("L", "N"))
+
+
+# Grammatical endings a short Tamil or Hindi keyword may carry and still count as that word:
+# Tamil plural and case endings after a vowel (குப்பைகள், தீயில், பள்ளிக்கு, டெங்குவால்) and the
+# Hindi oblique plural (सांपों). Anything else glued on makes it a different word:
+# தீர்வு (solution) is not தீ (fire), आगे / आग्रह are not आग, नागरिक (citizen) is not नाग (cobra).
+INDIC_SUFFIXES = (
+    "கள்", "களை", "களில்", "களுக்கு", "களின்", "களால்", "களும்",
+    "யை", "யில்", "யின்", "யால்", "யும்", "யிலும்", "க்கு", "வை", "வில்", "வின்", "வால்", "வும்", "வுக்கு",
+    "ों", "ें",
+)
 
 
 def keyword_in(keyword: str, text_lower: str) -> bool:
-    """Whole-word match for ASCII keywords ('bus' must not match 'bus stand'
-    ... it still does as a word, but 'land' must not match 'landmark', 'fire'
-    not 'fired'); plain substring for Tamil / Devanagari keywords, where word
-    boundaries are unreliable because of suffixes."""
+    """Does the keyword occur in the (lower-cased) text as a word?
+
+    ASCII keywords match whole words only ('fire' not 'fired', 'land' not 'landmark').
+    Tamil and Devanagari keywords must start a word. A short one-word keyword (three letters or
+    fewer, e.g. தீ, आग, नाग, பட்டா) must be the whole word, optionally with one of INDIC_SUFFIXES;
+    longer keywords and phrases may run on into the suffixes Tamil and Hindi attach
+    (குழந்தைகள், தண்ணீரே, बच्चा गिरा)."""
     k = (keyword or "").strip().lower()
     if not k:
         return False
     if k.isascii():
         return re.search(r"(?<![a-z0-9])" + re.escape(k) + r"(?![a-z0-9])", text_lower) is not None
-    return k in text_lower
+    short_word = " " not in k and _base_letters(k) <= 3
+    start = 0
+    while (i := text_lower.find(k, start)) >= 0:
+        start = i + 1
+        if i > 0 and _word_char(text_lower[i - 1]):
+            continue  # inside another word
+        if not short_word:
+            return True
+        j = i + len(k)
+        end = j
+        while end < len(text_lower) and _word_char(text_lower[end]):
+            end += 1
+        if text_lower[j:end] in ("",) + INDIC_SUFFIXES:
+            return True
+    return False
+
+
+# ------------------------------------------------------------ district names ---
+_district_names: list[tuple[str, str]] | None = None
+COMMON_WORD_DISTRICTS = {"erode"}  # also an English verb: in free text only "Erode" with a capital counts
+
+
+def _district_patterns() -> list[tuple[str, str]]:
+    """(name as written, district) for every district name and alias: English names and aliases
+    from config/district_names.json and the Tamil and Hindi spellings there. Town names are left
+    out on purpose: many are also people's names (Palani, Bhavani) or exist in every district
+    (Anna Nagar); towns are only used for GPS through config/places_tn.csv."""
+    global _district_names
+    if _district_names is None:
+        pats: list[tuple[str, str]] = []
+        p = CONFIG / "district_names.json"
+        names = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
+        for d in load_tn_mapping().get("districts", []):
+            entry = names.get(d["name"], {})
+            for n in [d["name"], *entry.get("en", []), *entry.get("ta", []), *entry.get("hi", [])]:
+                pats.append((n.lower(), d["name"]))
+        _district_names = pats
+    return _district_names
+
+
+def _tamil_stems(name: str) -> list[str]:
+    """Match forms for a Tamil place name: the name without its final pulli or u-sign, so case
+    endings still match (கோயம்புத்தூர் -> கோயம்புத்தூரில், ஈரோடு -> ஈரோட்டில்), plus the -த்
+    stem of names ending in -ம் (சேலம் -> சேலத்தில்)."""
+    stems = [name.rstrip("்ு") or name]
+    if name.endswith("ம்"):
+        stems.append(name[:-2] + "த்")
+    return stems
+
+
+def district_for(text: str | None, free_text: bool = False) -> str | None:
+    """District that a district name in the text (a resolved place, a typed address or, with
+    free_text=True, the complaint itself) refers to, or None. Names match as whole words in
+    English, Tamil or Hindi, so 'eroded' is not Erode and an address typed in Tamil script still
+    resolves. When several districts are named, the last one counts: addresses end with it."""
+    if not text:
+        return None
+    low = text.lower()
+    best: tuple[int, str | None] = (-1, None)
+    for name, district in _district_patterns():
+        if name.isascii():
+            for m in re.finditer(r"(?<![a-z0-9])" + re.escape(name) + r"(?![a-z0-9])", low):
+                if free_text and name in COMMON_WORD_DISTRICTS and not text[m.start()].isupper():
+                    continue
+                if m.start() >= best[0]:
+                    best = (m.start(), district)
+        else:
+            for stem in _tamil_stems(name) if re.search(r"[஀-௿]", name) else [name]:
+                start = 0
+                while (i := low.find(stem, start)) >= 0:
+                    start = i + 1
+                    if i > 0 and _word_char(low[i - 1]):
+                        continue
+                    if i >= best[0]:
+                        best = (i, district)
+    return best[1]
 
 
 def office_hint(text: str) -> dict | None:

@@ -33,7 +33,7 @@ Five minutes of clicks, in order. Everything runs on the laptop; nothing leaves 
 
 ## If something goes wrong
 
-- Analysis stuck on "Analysing": `http://localhost:8000/health` shows `queue_depth`; Ollama may be loading, wait 20 s. A model error never loses a complaint: it lands in the review queue as "awaiting analysis".
+- Analysis stuck on "Analysing": `http://localhost:8000/health` shows `queue_depth`; Ollama may be loading, wait 20 s. Complaints left in Received or Analysing by a restart are picked up again automatically when the API starts, and any stuck for more than 10 minutes is re-queued by the minute check. A model error never loses a complaint: it lands in the review queue as "awaiting analysis".
 - No email: the API console prints `email ... sent` or `FAILED ... reason`. Switch to Mailpit by setting `SMTP_HOST=localhost`, `SMTP_PORT=1025`, `SMTP_TLS=false`, empty user and password, then restart the API.
 - Phone camera does not open: the page must be `https://` (use `-Https`) and the certificate warning must have been accepted for both ports.
 - Model stuck or every call takes a minute: a cancelled generator run or timed-out requests leave Ollama replaying a queue. Run `taskkill /IM llama-server.exe /F` then `taskkill /IM ollama.exe /F`; the tray app starts it again (otherwise run `ollama serve`). Never run `make_synthetic.py` during the demo: Ollama serves one request at a time and the generator takes it for 25 s per call.

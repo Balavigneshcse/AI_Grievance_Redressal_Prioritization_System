@@ -103,13 +103,19 @@ export async function api<T = unknown>(path: string, opts: RequestOptions = {}):
   return JSON.parse(text) as T
 }
 
-/** Fetch a protected media file as a blob and return an object URL (caller revokes). */
+/** The only media types the app renders. A blob URL is same-origin, so a file that can carry script
+ *  (SVG, HTML) opened from one could read the login; anything off this list is refused here. */
+export const SAFE_MEDIA_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "video/webm", "video/mp4", "video/quicktime"])
+
+/** Fetch a protected media file as a blob and return an object URL (caller revokes).
+ *  Throws ApiError("unsupported_media", 415) for any type outside SAFE_MEDIA_TYPES. */
 export async function fetchMediaObjectUrl(url: string, signal?: AbortSignal): Promise<string> {
   const headers: Record<string, string> = {}
   const token = getToken()
   if (token) headers.Authorization = `Bearer ${token}`
   const res = await fetch(resolveApiUrl(url), { headers, signal })
   if (!res.ok) throw new ApiError(await parseError(res), res.status)
-  const blob = await res.blob()
-  return URL.createObjectURL(blob)
+  const type = (res.headers.get("content-type") || "").split(";")[0].trim().toLowerCase()
+  if (!SAFE_MEDIA_TYPES.has(type)) throw new ApiError("unsupported_media", 415)
+  return URL.createObjectURL(new Blob([await res.arrayBuffer()], { type }))
 }

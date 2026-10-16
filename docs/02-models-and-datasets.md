@@ -111,7 +111,7 @@ Caveats:
 | PII masking | Regex: Aadhaar (12 digits), PAN, 10-digit mobile, email, PIN code, plus LLM entity list | yes | No Presidio; its spaCy model is 500 MB for English only |
 | Photo GPS | `Pillow` (EXIF) | yes | In-app camera capture sends GPS from the browser instead |
 | Current location button | Browser Geolocation API | yes (device) | Needs HTTPS or localhost |
-| Reverse geocoding (lat/lng to place) | Nearest locality from `config/places_tn.csv` (haversine, offline, pure Python) | yes | 45 Coimbatore localities and major Tamil Nadu cities; add rows freely. `reverse_geocoder` needs scipy, which is blocked here. OpenStreetMap Nominatim is a free non-AI web service and can be switched on by a flag if street-level addresses are wanted for the demo |
+| Reverse geocoding (lat/lng to place) | Nearest locality from `config/places_tn.csv` (haversine, offline, pure Python) | yes | 137 places: Coimbatore localities, all 38 district headquarters and the major towns; a point more than 30 km (`MAX_PLACE_KM`) from every place gets no district and goes to review; add rows freely. `reverse_geocoder` needs scipy, which is blocked here. OpenStreetMap Nominatim is a free non-AI web service and can be switched on by a flag if street-level addresses are wanted for the demo |
 | Map display | Leaflet.js | yes (library) | Tiles come from OpenStreetMap over the web; offline fallback is a plain coordinate display |
 | Email for OTP and status | **Mailpit** (local SMTP server with a web inbox) | yes | Perfect for the demo: OTP emails appear in a local inbox at `localhost:8025`. Switch to a real SMTP server by env var for production |
 | Password hashing | `argon2-cffi` | yes | 8+ chars, mixed case, digit, symbol |

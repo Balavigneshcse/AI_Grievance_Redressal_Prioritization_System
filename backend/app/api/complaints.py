@@ -53,40 +53,75 @@ def departments(db: Session = Depends(get_db)):
     return [dept_out(d) for d in db.execute(select(models.Department).where(models.Department.is_active)).scalars()]
 
 
+# The only media the API stores, recognised by their first bytes, never by the name or type the
+# browser declares: an SVG or HTML file carries script, and a renamed text file breaks the model.
+MEDIA_TYPES = {
+    "image/jpeg": ("photo", ".jpg"), "image/png": ("photo", ".png"), "image/webp": ("photo", ".webp"),
+    "video/webm": ("video", ".webm"), "video/mp4": ("video", ".mp4"), "video/quicktime": ("video", ".mov"),
+}
+SAFE_MEDIA_TYPES = set(MEDIA_TYPES)
+
+
+def _sniff(head: bytes) -> str | None:
+    """Media type from the file signature, or None for anything not on the list."""
+    if head[:3] == b"\xff\xd8\xff":
+        return "image/jpeg"
+    if head[:8] == b"\x89PNG\r\n\x1a\n":
+        return "image/png"
+    if head[:4] == b"RIFF" and head[8:12] == b"WEBP":
+        return "image/webp"
+    if head[:4] == b"\x1a\x45\xdf\xa3":
+        return "video/webm"
+    if head[4:8] == b"ftyp":
+        brand = head[8:12]
+        if brand in (b"heic", b"heix", b"hevc", b"hevx", b"heim", b"heis", b"mif1", b"msf1", b"avif", b"avis"):
+            return None  # HEIC / AVIF stills share the container but neither the model nor most browsers read them
+        return "video/quicktime" if brand.startswith(b"qt") else "video/mp4"
+    return None
+
+
 async def _save_uploads(db: Session, c: models.Complaint, files: list[UploadFile] | None, captured_in_app: bool,
                         role: str = "evidence", uploaded_by=None) -> int:
-    """Validate and stream photos and videos to disk, one Media row each. Returns how many were saved."""
+    """Validate and stream photos and videos to disk, one Media row each. Returns how many were saved.
+    Any refused file refuses the whole request, and files already written for it are removed."""
     folder = settings.MEDIA_DIR / str(c.id)
+    written: list[Path] = []
     saved = 0
-    for f in files or []:
-        if not f.filename:
-            continue
-        mime = f.content_type or ""
-        if not (mime.startswith("image/") or mime.startswith("video/")):
-            raise HTTPException(400, f"Unsupported file type {mime}")
-        kind = "photo" if mime.startswith("image/") else "video"
-        limit_mb = settings.MAX_PHOTO_MB if kind == "photo" else settings.MAX_VIDEO_MB
-        folder.mkdir(parents=True, exist_ok=True)
-        ext = Path(f.filename).suffix.lower() or (".jpg" if kind == "photo" else (".webm" if "webm" in mime else ".mp4"))
-        path = folder / f"{uuid.uuid4().hex}{ext}"
-        # Stream to disk in 1 MB pieces: a 100 MB video never sits in memory.
-        size = 0
-        with path.open("wb") as fh:
-            while chunk := await f.read(1024 * 1024):
-                size += len(chunk)
-                if size > limit_mb * 1024 * 1024:
-                    fh.close()
-                    path.unlink(missing_ok=True)
-                    raise HTTPException(413, f"{f.filename} is larger than {limit_mb} MB ({kind} limit)")
-                fh.write(chunk)
-        exif_lat, exif_lng = _exif_gps(path) if kind == "photo" else (None, None)
-        db.add(
-            models.Media(
-                complaint_id=c.id, kind=kind, file_path=str(path), mime=mime, size_bytes=size,
-                exif_lat=exif_lat, exif_lng=exif_lng, captured_in_app=captured_in_app, role=role, uploaded_by=uploaded_by,
+    try:
+        for f in files or []:
+            if not f.filename:
+                continue
+            first = await f.read(1024 * 1024)
+            mime = _sniff(first[:16])
+            if mime is None:
+                raise HTTPException(400, f"{f.filename}: only JPEG, PNG or WebP photos and WebM, MP4 or MOV videos are accepted")
+            kind, ext = MEDIA_TYPES[mime]
+            limit_mb = settings.MAX_PHOTO_MB if kind == "photo" else settings.MAX_VIDEO_MB
+            folder.mkdir(parents=True, exist_ok=True)
+            path = folder / f"{uuid.uuid4().hex}{ext}"
+            written.append(path)
+            # Stream to disk in 1 MB pieces: a 100 MB video never sits in memory.
+            size = 0
+            with path.open("wb") as fh:
+                chunk = first
+                while chunk:
+                    size += len(chunk)
+                    if size > limit_mb * 1024 * 1024:
+                        raise HTTPException(413, f"{f.filename} is larger than {limit_mb} MB ({kind} limit)")
+                    fh.write(chunk)
+                    chunk = await f.read(1024 * 1024)
+            exif_lat, exif_lng = _exif_gps(path) if kind == "photo" else (None, None)
+            db.add(
+                models.Media(
+                    complaint_id=c.id, kind=kind, file_path=str(path), mime=mime, size_bytes=size,
+                    exif_lat=exif_lat, exif_lng=exif_lng, captured_in_app=captured_in_app, role=role, uploaded_by=uploaded_by,
+                )
             )
-        )
-        saved += 1
+            saved += 1
+    except BaseException:
+        for p in written:
+            p.unlink(missing_ok=True)
+        raise
     return saved
 
 
@@ -273,7 +308,12 @@ def media(media_id: str, user: models.User = Depends(current_user), db: Session 
     if m is None:
         raise HTTPException(404, "Media not found")
     _load_for(db, str(m.complaint_id), user)
-    return FileResponse(m.file_path, media_type=m.mime)
+    # Files stored before the upload check existed may be anything: hand those out as a download only.
+    safe = m.mime in SAFE_MEDIA_TYPES
+    headers = {"X-Content-Type-Options": "nosniff", "Content-Security-Policy": "default-src 'none'; sandbox"}
+    if not safe:
+        headers["Content-Disposition"] = "attachment"
+    return FileResponse(m.file_path, media_type=m.mime if safe else "application/octet-stream", headers=headers)
 
 
 @router.post("/complaints/{complaint_id}/reply")
