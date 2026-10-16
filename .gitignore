@@ -18,6 +18,7 @@ dist/
 # Data, models and media (downloaded or generated, not committed)
 data/raw/
 data/synthetic/
+data/corrections/
 models/
 media/
 *.db

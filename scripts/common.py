@@ -393,20 +393,24 @@ class SoftmaxRegression:
         self.b: np.ndarray | None = None
         self.labels: list[str] = []
 
-    def fit(self, X: np.ndarray, y: list[str], labels: list[str]) -> "SoftmaxRegression":
+    def fit(self, X: np.ndarray, y: list[str], labels: list[str], sample_weight=None) -> "SoftmaxRegression":
+        """sample_weight: optional weight per row (officer-confirmed rows above synthetic ones); classes
+        stay balanced on the weighted counts. Without it every row weighs 1."""
         self.labels = list(labels)
         idx = {l: i for i, l in enumerate(self.labels)}
         yi = np.array([idx[v] for v in y])
         n, d, k = X.shape[0], X.shape[1], len(self.labels)
         Y = np.zeros((n, k), dtype=np.float32)
         Y[np.arange(n), yi] = 1.0
-        counts = np.bincount(yi, minlength=k).astype(np.float32)
-        w = (n / (k * np.maximum(counts, 1)))[yi][:, None]  # balanced sample weights
+        sw = np.ones(n, dtype=np.float32) if sample_weight is None else np.asarray(sample_weight, dtype=np.float32)
+        total = float(sw.sum())
+        counts = np.bincount(yi, weights=sw, minlength=k).astype(np.float32)
+        w = (sw * total / (k * np.maximum(counts, 1e-6))[yi])[:, None]  # balanced classes, row weights within them
         self.W = np.zeros((d, k), dtype=np.float32)
         self.b = np.zeros(k, dtype=np.float32)
         for _ in range(self.epochs):
             P = self._softmax(X @ self.W + self.b)
-            G = (P - Y) * w / n
+            G = (P - Y) * w / total
             self.W -= self.lr * (X.T @ G + self.l2 * self.W)
             self.b -= self.lr * G.sum(axis=0)
         return self

@@ -250,6 +250,36 @@ Bugs 13 to 20 and notes 21 and 22 from section 13 of the test report:
 | 21 The demo scripts read the database only from `.env` | `demo_data.py` and `record_demo.py` read their settings from the environment first, then `.env`, as the suite does: `DATABASE_URL`, `MEDIA_DIR`, `SEED_PASSWORD`, the new `API_URL` (default `http://127.0.0.1:8000`) and, for the recording, `DEMO_APP_URL` (default `http://localhost:5173`). A reset and a seed aimed at a test copy now reach its database and its API together. The suite reads `API_URL` too |
 | 22 Rule R10 treated "old age" as a risk | R10 keeps children and pregnancy ("Child or pregnant woman at risk"). The elderly keywords move to R10b "Elderly person affected", without "old age" (mostly "old age pension" or "old age home"), and R10b has an `unless` list (pension, allowance, ஓய்வூதிய, உதவித்தொகை, पेंशन, भत्ता and more) that switches it off for a pension or allowance request. `match.unless` is a new optional rule field (`services/rules.py`). On the 2,837 labelled synthetic and gold complaints, R10 and R10b together match exactly what the old R10 matched: outages that hit elderly residents stay High with review, and none of them is a pension request |
 
+### Officer corrections as training labels (16 Oct 2026, 12:30-13:55)
+
+After four synthetic rounds the second opinion settled at 0.85 to 0.88 on department with the general catch-all near 0.34 (test report section 9). Officers already label every case they decide, so their decisions now feed the next training run:
+
+```
+officer decision ──> overrides row ──> export_corrections.py ──> data/corrections/officer_labels.jsonl
+                                                                        │
+          POST /admin/models/reload <── models/second_opinion_*.npz <── train_second_opinion.py --corrections
+```
+
+| Step | What happens |
+|---|---|
+| What counts as a label | An `overrides` row with action accept (the routing was right) or reassign (the officer set the department, the urgency or both). The latest of these per complaint gives the department and urgency; resolve, close, request info, merge and reopen say nothing about the department and are not labels |
+| Export (`scripts/training/export_corrections.py`) | One JSONL row per confirmed complaint in the format of `data/synthetic/*.jsonl`: the complaint's own text as the citizen wrote it, with mobiles, emails, Aadhaar, PAN and PIN codes masked by the pipeline's `mask_pii`; the confirmed department and urgency; the language in the training codes, where Tamil script and Devanagari decide by themselves (the model has called Hindi in Devanagari Tamil) and for text in English letters the latest analysis decides (primary ta or hi becomes ta-en or hi-en; without an analysis, the script hint); `source` officer, plus `action`, `group` (the original complaint, so a merged duplicate stays with it), `confirmed_at`, what the model and the second opinion had said, and `pipeline_text`, the English summary and place that the pipeline embeds for the second opinion at runtime. One row per complaint and one per text (the same words filed twice keep the later decision). Below `--min-rows` (30) it writes nothing. The database is opened read-only (`default_transaction_read_only`); `DATABASE_URL` comes from the environment first, then `.env`, as in the suite. The output folder `data/corrections/` is git-ignored: it holds real complaint text |
+| Retrain (`train_second_opinion.py --corrections`) | Officer rows join the synthetic, gold and NYC rows with `--officer-weight` 3: `SoftmaxRegression.fit` takes a weight per row and keeps the classes balanced on the weighted counts. A synthetic or gold row with the same text as an officer row is dropped, the officer label wins. Fewer than 10 officer rows stops the run |
+| Held out by complaint | The officer rows are split into 5 folds by `group`; each fold is predicted by a model trained on the synthetic training split plus the other four folds ("after"), and the same synthetic training split alone gives "before". Every officer row is therefore scored by a model that never saw its complaint, and before and after differ only by the officer rows. Each row is scored twice: on its complaint text, which is what training embeds, and on its `pipeline_text`, which is what the API embeds at runtime (pipeline step 5 reuses the duplicate-search embedding of the English summary and place). The synthetic held-out split is scored by both models as well, to show what the officer rows cost on generated text |
+| Report | `second_opinion_report.json` keeps the keys the metrics page reads (`held_out_accuracy`, `per_language`, `recall_per_class`, `n`, now for the model trained with the officer rows) and adds `officer`: rows, weight, folds, and accuracy overall, per language and per class before and after, on the complaint text and (`pipeline_input`) on the runtime input. The saved model is trained on every row |
+| Embedding cache | Vectors are cached by model and text in `models/embeddings_cache.npz`, so a retrain after a new export embeds only the new rows: seconds on the model server instead of minutes. `--no-cache` embeds everything again |
+| Deploy | `--out` writes the models and the report to another folder, so a candidate can be compared before it replaces `models/`; the running API keeps its model until a super admin calls `POST /admin/models/reload` (the Rules page has the button) |
+
+```bash
+python scripts/training/export_corrections.py
+```
+
+```bash
+python scripts/training/train_second_opinion.py --corrections --cpu
+```
+
+`--cpu` embeds on the CPU, the same way the API does at runtime, so Gemma keeps the GPU. The numbers from a test run with 100 complaints and simulated officers are in section 14 of the test report.
+
 ### Operating note: one model server, one request at a time
 
 Ollama on the 4 GB card runs with `OLLAMA_NUM_PARALLEL=1`, so the analysis worker, the outbox translation, the generator and the training scripts share one queue. A generator run in parallel with the app makes every complaint wait behind 25-second calls, and requests that time out on the client keep running on the server, which can wedge it for minutes. Every model call in the API now carries a timeout (chat 180 s, embedding 120 s, translation 45 s); a stuck server is cleared by restarting `ollama.exe`. Do not run `make_synthetic.py` or `train_second_opinion.py` while the app is being used.

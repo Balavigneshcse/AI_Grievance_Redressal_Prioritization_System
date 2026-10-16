@@ -134,7 +134,7 @@ Reading: the larger held-out split is a harder, more varied set, so the departme
 
 Round 3 (16 Oct, 00:30-01:10) was cut short at 79 of 160 combinations when the generator had to be stopped for the test run; its 229 rows were cleaned and appended, and the retrain on 1,392 rows lifted department accuracy to 0.875 with Hinglish at 0.93; Tamil script remains the weakest language (0.78 on 49 rows) and the general catch-all the weakest class (0.50).
 
-Round 4 (16 Oct, 01:30-02:50) completed all 160 combinations (475 rows, none dropped) and the synthetic set reached 1,644 rows. The retrain on 1,867 rows gives department 0.845 and urgency 0.563: urgency keeps creeping up, department has settled in the 0.85 to 0.88 band across four rounds and the general catch-all got harder (0.34) as the data grew more varied. The reading is that more synthetic data from the same generator has stopped helping; the next gain has to come from real labelled complaints and the officer corrections the system already records.
+Round 4 (16 Oct, 01:30-02:50) completed all 160 combinations (475 rows, none dropped) and the synthetic set reached 1,644 rows. The retrain on 1,867 rows gives department 0.845 and urgency 0.563: urgency keeps creeping up, department has settled in the 0.85 to 0.88 band across four rounds and the general catch-all got harder (0.34) as the data grew more varied. The reading is that more synthetic data from the same generator has stopped helping; the next gain has to come from real labelled complaints and the officer corrections the system already records. Section 14 runs that loop on 100 test complaints.
 
 ---
 
@@ -259,3 +259,54 @@ What changed is described in `docs/05-implementation.md` ("Fixes for the low-sev
 | 22 rule R10 | the rule tester: an old-age pension complaint in English, Hindi ("बुजुर्ग पेंशन") and Tamil ("முதியவர் உதவித்தொகை") matches neither R10 nor R10b, elderly residents without water match R10b, sick children R10 (suite); on the 2,837 labelled synthetic and gold complaints, R10 and R10b together match the same 136 complaints as the old R10 |
 
 **Suite: 148 of 148** on a fresh test database (137 earlier checks plus 11 for these fixes). The earlier support checks now send the supporter's location: the three support calls before the nearby check and the four simultaneous supports of the medium-severity checks. Still open from section 13: the server-side video length from bug 11.
+
+---
+
+## 14. Officer corrections as training labels (16 Oct 2026, 12:45-13:50)
+
+Does training on what officers confirm move the second opinion where more synthetic data stopped helping (section 9)? The loop is described in `docs/05-implementation.md` ("Officer corrections as training labels"). Run on an isolated copy: database `synapse_labels`, a test API on port 8130 with its own media folder, mail to Mailpit under a test sender (removed afterwards). The demo database was only read and had the same counts before and after (15 complaints, 50 users, 127 notifications, 82 status events, 26 overrides). Training wrote to a scratch folder (`--out`, `--cache`): `models/` still holds the round-4 classifier.
+
+**Set-up.** `demo_data.py --seed` filed the ten showcase complaints, and its staff actions confirmed two of them. Then 100 complaints written for this test, not by the generator: 20 in each language form, with two per department, four general cases (noise, an information request, thanks, a suggestion), a leaning electric pole (Fire and Safety, where rule R3 sends it) and a dengue cluster, all in Coimbatore localities. None of the texts is in the training data. They went through the real pipeline one at a time, 19.9 s each. A script played the officers: when the routed department and urgency matched the label it accepted (the district admin on a review case, the department admin's Start work on a routed one); otherwise the district admin reassigned the department, the urgency or both.
+
+**What the officers found.**
+
+| | en | ta | hi | ta-en | hi-en | All |
+|---|---|---|---|---|---|---|
+| Department routed right | 0.80 | 0.85 | 0.75 | 0.75 | 0.85 | 0.80 |
+| Urgency right | 0.55 | 0.65 | 0.70 | 0.30 | 0.60 | 0.56 |
+| Both right (accepted) | 0.50 | 0.60 | 0.55 | 0.30 | 0.50 | 0.49 |
+
+49 accepts and 51 reassigns. 20 reassigns changed the department: general complaints sent to five other departments (6), health to water or roads (5), safety to electricity, roads, health or water (5), sanitation to roads or water (3), and one roads complaint to safety. The other 31 changed only the urgency.
+
+**Export.** `export_corrections.py` on `synapse_labels`: 102 rows (the 100 plus the two the seed confirmed), 20 or 21 per language, every department. Gemma's department agreed with the officers on 0.824 of them and the deployed second opinion on 0.833. On the demo database (read-only) it found 6 confirmed complaints and wrote nothing (`--min-rows` 30). One finding: the analysis gave primary `ta` for 10 of the 22 Devanagari complaints on the test stack (9 of the 20 Hindi test complaints) despite the script hint. The export therefore takes Tamil and Devanagari from the script and the analysis language only for text in English letters; the pipeline itself is unchanged.
+
+**Retrain** (`train_second_opinion.py --corrections --cpu`, officer weight 3, five folds by complaint). Without officer rows the run reproduces round 4: department 0.847 and urgency 0.563 on the synthetic held-out split, against 0.845 and 0.563 with GPU embeddings. Accuracy on the 102 officer rows, each predicted by a model that never saw its complaint:
+
+| Model | Input | | en | ta | hi | ta-en | hi-en | All | General recall |
+|---|---|---|---|---|---|---|---|---|---|
+| Department | complaint text (what training embeds) | before | 0.95 | 0.71 | 0.90 | 0.80 | 0.50 | 0.775 | 0.80 |
+| | | after | 0.95 | 0.81 | 0.95 | 0.70 | 0.50 | 0.784 | 0.80 |
+| | English summary + place (what the API embeds) | before | 0.90 | 0.76 | 0.90 | 0.80 | 0.80 | 0.833 | 0.85 |
+| | | after | 0.90 | 0.81 | 0.95 | 0.80 | 0.90 | **0.873** | 0.90 |
+| Urgency | complaint text | before | 0.30 | 0.48 | 0.52 | 0.20 | 0.20 | 0.343 | |
+| | | after | 0.55 | 0.62 | 0.71 | 0.65 | 0.45 | 0.598 | |
+| | English summary + place | before | 0.45 | 0.52 | 0.57 | 0.55 | 0.60 | 0.539 | |
+| | | after | 0.60 | 0.67 | 0.67 | 0.60 | 0.60 | **0.627** | |
+
+On the synthetic held-out split, department stays at 0.847 and urgency goes from 0.563 to 0.536. Officer weight (accuracy on the 102 rows, text / API input, then the synthetic split):
+
+| Weight | Department | Urgency |
+|---|---|---|
+| none (before) | 0.775 / 0.833, synthetic 0.847 | 0.343 / 0.539, synthetic 0.563 |
+| 1 | 0.765 / 0.853, synthetic 0.845 | 0.500 / 0.588, synthetic 0.569 |
+| **3 (default)** | **0.784 / 0.873, synthetic 0.847** | **0.598 / 0.627, synthetic 0.536** |
+| 5 | 0.784 / 0.863, synthetic 0.839 | 0.647 / 0.637, synthetic 0.536 |
+| 10 | 0.775 / 0.853, synthetic 0.836 | 0.706 / 0.706, synthetic 0.512 |
+
+The first run embedded 1,822 texts on the CPU in 15 minutes, sharing the model server with another training run. With the cache, every later run took 5 to 20 s, including the first embedding of the 102 rows' runtime input.
+
+Reading:
+- Department: on the complaint text the officer rows change one complaint in 102. On the input the API really uses, they lift the second opinion from 0.833 to 0.873: Hinglish 0.80 to 0.90, Tamil 0.76 to 0.81, Hindi 0.90 to 0.95, no language lower, and no cost on the synthetic split. On these complaints the general catch-all is not the weak class (0.85 before); its 0.34 on the synthetic split does not carry over to them.
+- Urgency gains most: 0.34 to 0.60 on the text and 0.54 to 0.63 on the API's input, with medium recall from 0.17 to 0.63 (text). The officer rows teach the officers' scale and the synthetic split pays a little (0.563 to 0.536); a higher weight follows the officers further and the generator less (weight 10: 0.71 and 0.51). Weight 3 gives the best department result on both inputs (tied with 5 on the text), so it stays the default. The routing decision only uses the department vote; the urgency vote is stored for staff.
+- The classifier is trained on complaint text, but at runtime it reads the English summary and place. On these complaints that is the better input for the deployed model (0.833 against 0.765; Hinglish 0.80 against 0.50), which is why the report now scores both and the export keeps each row's runtime input.
+- Limits: one author wrote the labels and a script that never errs applied them, so they are cleaner and more consistent than real officers' decisions will be. With 20 complaints per language, one complaint moves a language by 0.05. This shows the loop working end to end, not a production gain; the candidate model was not deployed.
