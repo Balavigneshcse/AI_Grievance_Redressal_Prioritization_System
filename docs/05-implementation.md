@@ -200,6 +200,10 @@ The seeded staff accounts live on `synapse.local`, a domain that does not exist,
 | Queue search | `q` matches tracking ID, complainant name, complaint text, address or resolved place; the queue page has a debounced search box |
 | Rate limiting | In-memory limiter (`services/ratelimit.py`): login 30 per minute per IP and 10 per minute per email, register 20 per 10 minutes per IP, OTP resend and forgot-password 3 per 10 minutes per email and 10 per IP, OTP verify 10 per 10 minutes per email; 429 with Retry-After |
 
+### Sessions are per browser tab (16 Oct 2026, 03:30)
+
+The front end kept the JWT in `localStorage`, which every tab of a browser shares: logging in as a second role in another tab replaced the first tab's token while that tab still showed the first role's screens, and every request from it answered 403 ("Not allowed for this role"). The token and user now live in `sessionStorage`, so each tab keeps the login it made; `localStorage` only remembers the last login so that a new tab or a restarted browser starts as that user (the first read pins it to the tab). Logging out clears both; other tabs keep their own sessions.
+
 ### Operating note: one model server, one request at a time
 
 Ollama on the 4 GB card runs with `OLLAMA_NUM_PARALLEL=1`, so the analysis worker, the outbox translation, the generator and the training scripts share one queue. A generator run in parallel with the app makes every complaint wait behind 25-second calls, and requests that time out on the client keep running on the server, which can wedge it for minutes. Every model call in the API now carries a timeout (chat 180 s, embedding 120 s, translation 45 s); a stuck server is cleared by restarting `ollama.exe`. Do not run `make_synthetic.py` or `train_second_opinion.py` while the app is being used.

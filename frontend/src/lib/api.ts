@@ -3,9 +3,20 @@ export const API_URL: string =
 
 export const TOKEN_KEY = "synapse_token"
 
+/**
+ * The login lives in sessionStorage, so every browser tab keeps its own user: the demo runs
+ * the citizen, the department admin, the district admin and the super admin in four tabs of
+ * one browser, and a login in one tab must not replace the token the other tabs send.
+ * localStorage only remembers the last login, so a new tab or a restarted browser starts as
+ * that user; the first read pins it to the tab.
+ */
 export function getToken(): string | null {
   try {
-    return localStorage.getItem(TOKEN_KEY)
+    const own = sessionStorage.getItem(TOKEN_KEY)
+    if (own) return own
+    const last = localStorage.getItem(TOKEN_KEY)
+    if (last) sessionStorage.setItem(TOKEN_KEY, last)
+    return last
   } catch {
     return null
   }

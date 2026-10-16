@@ -25,12 +25,31 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
+// Per-tab session with the last login as the fallback for new tabs; see getToken() in api.ts.
 function readStoredUser(): User | null {
   try {
-    const raw = localStorage.getItem(USER_KEY)
+    const own = sessionStorage.getItem(USER_KEY)
+    const raw = own ?? localStorage.getItem(USER_KEY)
+    if (raw && !own) sessionStorage.setItem(USER_KEY, raw)
     return raw ? (JSON.parse(raw) as User) : null
   } catch {
     return null
+  }
+}
+
+function storeSession(token: string | null, user: User | null) {
+  try {
+    for (const store of [sessionStorage, localStorage]) {
+      if (token && user) {
+        store.setItem(TOKEN_KEY, token)
+        store.setItem(USER_KEY, JSON.stringify(user))
+      } else {
+        store.removeItem(TOKEN_KEY)
+        store.removeItem(USER_KEY)
+      }
+    }
+  } catch {
+    /* storage unavailable - keep in memory only */
   }
 }
 
@@ -40,30 +59,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false)
 
   const login = useCallback((nextToken: string, nextUser: User) => {
-    try {
-      localStorage.setItem(TOKEN_KEY, nextToken)
-      localStorage.setItem(USER_KEY, JSON.stringify(nextUser))
-    } catch {
-      /* storage unavailable - keep in memory only */
-    }
+    storeSession(nextToken, nextUser)
     setToken(nextToken)
     setUser(nextUser)
   }, [])
 
   const logout = useCallback(() => {
-    try {
-      localStorage.removeItem(TOKEN_KEY)
-      localStorage.removeItem(USER_KEY)
-    } catch {
-      /* ignore */
-    }
+    storeSession(null, null)
     setToken(null)
     setUser(null)
   }, [])
 
   const updateUser = useCallback((nextUser: User) => {
     try {
-      localStorage.setItem(USER_KEY, JSON.stringify(nextUser))
+      for (const store of [sessionStorage, localStorage]) {
+        if (store.getItem(USER_KEY)) store.setItem(USER_KEY, JSON.stringify(nextUser))
+      }
     } catch {
       /* ignore */
     }
@@ -82,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (cancelled) return
         setUser(me)
         try {
-          localStorage.setItem(USER_KEY, JSON.stringify(me))
+          sessionStorage.setItem(USER_KEY, JSON.stringify(me))
         } catch {
           /* ignore */
         }
