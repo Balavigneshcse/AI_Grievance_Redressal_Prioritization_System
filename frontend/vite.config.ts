@@ -4,7 +4,7 @@ import react from "@vitejs/plugin-react"
 import tailwindcss from "@tailwindcss/vite"
 import { defineConfig } from "vite"
 
-// HTTPS for phone demos: `VITE_HTTPS=1` with certs/ from scripts/make_cert.py
+// HTTPS for phone demos: `VITE_HTTPS=1` with certs/ from scripts/setup/make_cert.py
 // (browsers allow the camera and GPS only on localhost or HTTPS).
 const certDir = fileURLToPath(new URL("../certs", import.meta.url))
 const https =

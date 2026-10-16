@@ -1,15 +1,15 @@
 """Demo data for the jury review.
 
-  python scripts/demo_data.py --reset           wipe every complaint (media, analyses, decisions, events,
+  python scripts/demo/demo_data.py --reset           wipe every complaint (media, analyses, decisions, events,
                                                 notifications) and the accounts created by the test suites
-  python scripts/demo_data.py --districts       one district admin for each of the 38 Tamil Nadu districts,
+  python scripts/demo/demo_data.py --districts       one district admin for each of the 38 Tamil Nadu districts,
                                                 district.<district>@synapse.local (password = SEED_PASSWORD)
-  python scripts/demo_data.py --staff           add district admins for Chennai and Madurai and a Chennai
+  python scripts/demo/demo_data.py --staff           add district admins for Chennai and Madurai and a Chennai
                                                 electricity department admin (password = SEED_PASSWORD)
-  python scripts/demo_data.py --seed            file ten showcase complaints as the demo citizen through the
+  python scripts/demo/demo_data.py --seed            file ten showcase complaints as the demo citizen through the
                                                 API (the real pipeline runs), then act on a few as staff so
                                                 every queue view has something in it
-  python scripts/demo_data.py --reset --districts --staff --seed     the full demo set in one go
+  python scripts/demo/demo_data.py --reset --districts --staff --seed     the full demo set in one go
 
 --reset talks to Postgres directly; --districts, --staff and --seed need the API on :8000 with Ollama.
 Seed accounts (backend/seed.py) are never removed.
@@ -25,7 +25,7 @@ from pathlib import Path
 
 import requests
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 API = "http://127.0.0.1:8000"
 

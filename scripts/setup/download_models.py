@@ -5,7 +5,7 @@
 
 Then it smoke-tests embeddings, the language hint and the offline geocoder.
 
-Run:  python scripts/download_models.py
+Run:  python scripts/setup/download_models.py
 """
 from __future__ import annotations
 
@@ -14,6 +14,10 @@ import time
 
 import ollama
 
+import sys as _sys
+from pathlib import Path as _Path
+
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))  # scripts/, home of the shared common.py
 from common import DEFAULT_LLM, EMBED_MODEL, detect_language, embed, nearest_place
 
 

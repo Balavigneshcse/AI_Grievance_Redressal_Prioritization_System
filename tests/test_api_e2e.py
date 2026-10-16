@@ -11,7 +11,7 @@ feature built up to Checkpoint 4 against the live server:
 Needs: API on :8000, Postgres, Ollama with gemma3:4b and bge-m3, Mailpit on :8025
 (SMTP_HOST=localhost in .env, so OTPs can be read back).
 
-Run from the project root:  python scripts/test_api_e2e.py
+Run from the project root:  python tests/test_api_e2e.py
 Writes data/eval/e2e_report.json. Exit code 1 if any check fails.
 """
 from __future__ import annotations

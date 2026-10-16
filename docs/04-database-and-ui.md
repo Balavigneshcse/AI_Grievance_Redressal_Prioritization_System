@@ -575,7 +575,7 @@ Four constraints shaped every choice: all inference stays on our own machine (pr
 | Auth | **PyJWT + argon2-cffi + email OTP** | Standard, no third-party identity provider, OTP hashed with expiry | OAuth providers (cloud) |
 | Email | **Mailpit from Docker Compose in the demo, SMTP by env var** | OTP and status mails visible in a local inbox at `localhost:8025`; runs beside Postgres in the same compose file | SendGrid etc. (cloud) |
 | Config | **YAML files hot-reloaded** | Taxonomy, urgency scale and routing rules editable without a redeploy and diffable in git | Rules in the database (needs an editor UI first) |
-| Tests | **pytest + `scripts/run_eval.py`** | Pipeline stages unit-tested; the eval runner doubles as the dashboard's data source | none |
+| Tests | **pytest + `scripts/evaluation/run_eval.py`** | Pipeline stages unit-tested; the eval runner doubles as the dashboard's data source | none |
 
 ### 5.3 Why this is defensible to the jury
 

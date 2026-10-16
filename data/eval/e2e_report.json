@@ -35,7 +35,7 @@
     {
       "check": "citizen completes account details (PATCH /auth/me)",
       "ok": true,
-      "detail": "{\"id\":\"35911f03-7100-442d-a1c8-d0a2dc8798ba\",\"email\":\"citizen@synapse.local\",\"ro"
+      "detail": "{\"id\":\"f75f99d2-9bcd-407a-a21d-6238b4f7dc28\",\"email\":\"citizen@synapse.local\",\"ro"
     },
     {
       "check": "five-digit Aadhaar rejected",
@@ -70,7 +70,7 @@
     {
       "check": "account carries the name and Aadhaar digits given at registration",
       "ok": true,
-      "detail": "{'id': 'b87e8a5c-b07b-41c6-aa23-7e3fe02ba87e', 'email': 'e2e.1792125310@synapse.local', 'role': 'com"
+      "detail": "{'id': '7b3051ac-f83f-4302-8f65-ede39ea37e9f', 'email': 'e2e.1792127581@synapse.local', 'role': 'com"
     },
     {
       "check": "password reset with OTP",
@@ -400,7 +400,7 @@
     {
       "check": "health reports outbox, overdue and model latency",
       "ok": true,
-      "detail": "{\"outbox_pending\": 0, \"overdue_open\": 1, \"model_latency_ms\": {\"last\": 11846, \"mean_last_10\": 15005}}"
+      "detail": "{\"outbox_pending\": 0, \"overdue_open\": 1, \"model_latency_ms\": {\"last\": 11524, \"mean_last_10\": 14842}}"
     },
     {
       "check": "queue search by tracking id",
@@ -415,7 +415,7 @@
     {
       "check": "office attaches resolution proof",
       "ok": true,
-      "detail": "{\"ok\":true,\"attachments\":1,\"media\":[{\"id\":\"5fa13ec2-4d05-4eeb-a23c-4e54ff5e4c30\",\"kind\":\"photo\",\"url"
+      "detail": "{\"ok\":true,\"attachments\":1,\"media\":[{\"id\":\"f6a4aadb-7d56-4168-b86e-c942edd21835\",\"kind\":\"photo\",\"url"
     },
     {
       "check": "citizen sees the proof photo marked as resolution",
@@ -520,7 +520,7 @@
     {
       "check": "super admin creates a district admin",
       "ok": true,
-      "detail": "{\"user\":{\"id\":\"faf09d87-8f19-413a-8f62-8b396942f357\",\"email\":\"district.madurai.2125504@synapse.local\",\"role\":\"district_a"
+      "detail": "{\"user\":{\"id\":\"b74cb133-e786-41c3-8e77-6f41b68b999e\",\"email\":\"district.madurai.2127774@synapse.local\",\"role\":\"district_a"
     },
     {
       "check": "district admin cannot create another district admin",
@@ -530,7 +530,7 @@
     {
       "check": "district admin creates a department admin in own district",
       "ok": true,
-      "detail": "{\"user\":{\"id\":\"041dec8c-ca1e-4d7e-9b38-d230c5262ce2\",\"email\":\"water.madurai.2125504@synapse.local\",\"role\":\"dept_admin\",\""
+      "detail": "{\"user\":{\"id\":\"699a57ad-713f-4356-877a-906303adb282\",\"email\":\"water.madurai.2127774@synapse.local\",\"role\":\"dept_admin\",\""
     },
     {
       "check": "new department admin sees no Coimbatore complaints",
@@ -540,7 +540,7 @@
     {
       "check": "district admin can disable its department admin",
       "ok": true,
-      "detail": "{\"id\":\"041dec8c-ca1e-4d7e-9b38-d230c5262ce2\",\"email\":\"water.madurai.2125504@synapse.local\",\"role\":\"d"
+      "detail": "{\"id\":\"699a57ad-713f-4356-877a-906303adb282\",\"email\":\"water.madurai.2127774@synapse.local\",\"role\":\"d"
     },
     {
       "check": "disabled account is locked out",
@@ -560,7 +560,7 @@
     {
       "check": "metrics: totals, by status, live accuracy",
       "ok": true,
-      "detail": "{\"complaints\": 8, \"critical_open\": 2, \"review_rate\": 0.625, \"auto_closed\": 0, \"mean_latency_ms\": 15005, \"avg_rating\": 4."
+      "detail": "{\"complaints\": 8, \"critical_open\": 2, \"review_rate\": 0.625, \"auto_closed\": 0, \"mean_latency_ms\": 14842, \"avg_rating\": 4."
     },
     {
       "check": "metrics: auto-closed is zero",
@@ -649,13 +649,13 @@
     }
   ],
   "ids": {
-    "ta script, water, child sick": "d72a37e5-82f5-422b-95a9-b7c0f43204b1",
-    "hi script, power cut, oxygen": "91cd615e-3529-433f-9c89-a60031a75529",
-    "en, suggestion, low": "b0e5737c-169d-4bf0-94a8-b4f196c6310e",
-    "hi-en, gas smell": "f54dd637-a8d4-4488-b483-8652f0835ae9",
-    "ta-en, pothole accident, repeat": "f18bac1f-7a32-4c9e-9de3-9e167de89874",
-    "photo": "b5d9d0a5-baa2-4495-9942-aae7ea008bbc",
-    "dup": "abe13f8f-af87-47a1-96b6-ba2bd0e74bfa",
-    "pii": "ff38e8aa-0070-4689-b9a8-188604671e7f"
+    "ta script, water, child sick": "fee8d2fd-e8cf-4fdf-8921-f8a95c1e1a91",
+    "hi script, power cut, oxygen": "b4cf03a5-259b-4da1-b549-525292a72cb3",
+    "en, suggestion, low": "f11a99d6-9ffd-4342-9319-fc1aedbadfb4",
+    "hi-en, gas smell": "8ae5f1b3-a680-4dc2-907d-61d263e39f78",
+    "ta-en, pothole accident, repeat": "569bfa5a-0a58-4b34-abb7-ef7970e735da",
+    "photo": "d16943de-3336-42d2-b437-4ee407e80117",
+    "dup": "f2068903-3e6c-4b08-8aeb-6bbd0dac94c3",
+    "pii": "57a0d027-7c84-4be1-a27c-2702bfd25261"
   }
 }

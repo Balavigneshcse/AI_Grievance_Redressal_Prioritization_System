@@ -2,9 +2,9 @@
 per department and per urgency, plus latency. This is the fairness dashboard's
 data source.
 
-Run:  python scripts/run_eval.py                       (gemma3:4b, whole gold set)
-      python scripts/run_eval.py --model qwen3:4b-instruct-2507-q4_K_M
-      python scripts/run_eval.py --limit 5             (quick check)
+Run:  python scripts/evaluation/run_eval.py                       (gemma3:4b, whole gold set)
+      python scripts/evaluation/run_eval.py --model qwen3:4b-instruct-2507-q4_K_M
+      python scripts/evaluation/run_eval.py --limit 5             (quick check)
 
 Outputs:
   data/eval/results_<model>.jsonl    one row per complaint with prediction and truth
@@ -21,6 +21,10 @@ from collections import defaultdict
 
 import ollama
 
+import sys as _sys
+from pathlib import Path as _Path
+
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))  # scripts/, home of the shared common.py
 from common import DATA, DEFAULT_LLM, ROOT, analysis_system_prompt, complaint_user_message, language_hint_code, load_schema, read_jsonl
 
 # The rules layer is part of the system: report accuracy with and without it.

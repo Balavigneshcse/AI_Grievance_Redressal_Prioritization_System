@@ -11,9 +11,9 @@ Outputs:
   models/second_opinion_urgency.npz
   models/second_opinion_report.json   held-out accuracy overall and per language
 
-Run:  python scripts/train_second_opinion.py
-      python scripts/train_second_opinion.py --no-nyc
-      python scripts/train_second_opinion.py --cpu      (leave the GPU alone while embedding)
+Run:  python scripts/training/train_second_opinion.py
+      python scripts/training/train_second_opinion.py --no-nyc
+      python scripts/training/train_second_opinion.py --cpu      (leave the GPU alone while embedding)
 """
 from __future__ import annotations
 
@@ -23,6 +23,10 @@ from collections import Counter, defaultdict
 
 import numpy as np
 
+import sys as _sys
+from pathlib import Path as _Path
+
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))  # scripts/, home of the shared common.py
 from common import DATA, MODELS, SoftmaxRegression, department_ids, embed, read_jsonl, urgency_ids
 
 NYC_MAP = {
@@ -127,7 +131,7 @@ def main() -> None:
 
     rows = load_rows(use_nyc=not args.no_nyc)
     if len(rows) < 40:
-        raise SystemExit("Not enough data. Run scripts/make_synthetic.py first.")
+        raise SystemExit("Not enough data. Run scripts/training/make_synthetic.py first.")
     n_syn = sum(1 for r in rows if str(r.get("source", "")).startswith("synthetic"))
     depts_syn = {r["department"] for r in rows if str(r.get("source", "")).startswith("synthetic")}
     if n_syn < 200 or len(depts_syn) < 8:

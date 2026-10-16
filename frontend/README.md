@@ -1,32 +1,27 @@
-# React + TypeScript + Vite
+# Vindex frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React 18 + Vite + TypeScript app for every role: citizens file and track complaints; department, district and super admins work the queues, the map, staff accounts, rules and metrics.
 
-Currently, two official plugins are available:
+- UI: Tailwind CSS v4, shadcn/ui on Base UI, lucide-react icons
+- Forms: react-hook-form + zod; maps: react-leaflet with OpenStreetMap tiles
+- Languages: i18next with `src/i18n/en.json`, `ta.json` and `hi.json`
+- API: `src/lib/api.ts` talks to `VITE_API_URL` (default `http://localhost:8000`); copy `.env.example` to `.env` to change it
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Commands
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev
+npm run build
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+`npm run dev` serves the app on http://localhost:5173. Set `VITE_HTTPS=1` to serve over HTTPS with the certificates from `scripts/setup/make_cert.py`, which phones need for the camera and GPS. `npm run build` type-checks and bundles into `dist/`.
+
+## Layout
+
+```
+src/pages/        one file per screen (citizen, staff and admin pages)
+src/components/   shared parts: camera, location, decision bar, timeline, media, cards; ui/ holds the shadcn components
+src/lib/          API client, auth context, formatting, labels, translations set-up
+src/i18n/         English, Tamil and Hindi strings
+```

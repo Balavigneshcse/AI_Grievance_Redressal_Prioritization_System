@@ -15,7 +15,35 @@ Built in 24 hours at SYNAPSE '26, V.S.B. Engineering College.
 | 2. System architecture | [docs/03-system-architecture.md](docs/03-system-architecture.md) |
 | 3. Database and UI/UX design, tech stack | [docs/04-database-and-ui.md](docs/04-database-and-ui.md) |
 | 4. Technical implementation | [docs/05-implementation.md](docs/05-implementation.md) |
-| Training and evaluation commands | [docs/training-commands.md](docs/training-commands.md) |
+| Testing: every run, bugs found and fixed | [docs/06-test-report.md](docs/06-test-report.md) |
+| Demo runbook for the jury review | [docs/07-demo-runbook.md](docs/07-demo-runbook.md) |
+| Complete project report (Word, PDF) | [docs/report/](docs/report/) |
+| Submission deck | [docs/sample.pptx](docs/sample.pptx) |
+| Demo video, with and without subtitles | [docs/demo/](docs/demo/) |
+| Training and evaluation commands | [docs/guides/training-commands.md](docs/guides/training-commands.md) |
+
+## Repository layout
+
+```
+backend/                FastAPI service: app/api (routes), app/services (pipeline, worker, rules,
+                        notifier, SLA, translation, PII), app/models.py, seed.py
+frontend/               React + Vite + shadcn/ui app for citizens, department, district and super admins
+config/                 routing rules, taxonomy, urgency scale, Tamil Nadu offices and districts,
+                        district names in English / Tamil / Hindi, offline place table
+data/eval/              gold set, evaluation results, latest end-to-end report
+data/reference/         Tamil Nadu district and department spreadsheet
+prompts/                system prompt for the local model
+scripts/                common.py (shared helpers) and start.ps1 (one-command start)
+  setup/                models, datasets, office mapping import, certificates, GPU settings, mail check
+  training/             synthetic data generation and cleaning, second-opinion classifier training
+  evaluation/           gold-set replay, model smoke test
+  demo/                 demo data reset and seeding, scripted demo recording
+tests/                  end-to-end API and AI suite (test_api_e2e.py)
+docs/                   phase documents 01-07, report/, guides/, demo/, submission deck
+docker-compose.yml      PostgreSQL 17 + pgvector, Mailpit
+```
+
+Not in git: `.env` (copy `.env.example`), `data/raw`, `data/synthetic`, `models/` (trained classifier), `media/` (uploads), `certs/`, local credentials workbooks.
 
 ## Run
 
@@ -43,7 +71,7 @@ Phases 1 to 4 complete. Backend (FastAPI + PostgreSQL + local models) and fronte
 
 All measured on the build laptop (RTX 3050, 4 GB) against the live stack; details and every run are in `docs/06-test-report.md`.
 
-**End-to-end suite** (`scripts/test_api_e2e.py`, run against a Mailpit-backed API): **129 of 129 checks pass** (16 Oct 2026, 10:30, on a fresh database after the fixes from the A-to-Z pass). The suite grew with the product: 61 checks on day 1, then 77, 91, 114, 118, 121 and 129. The A-to-Z pass, its bug list and the fixes are in section 13 of `docs/06-test-report.md`.
+**End-to-end suite** (`tests/test_api_e2e.py`, run against a Mailpit-backed API): **129 of 129 checks pass** (16 Oct 2026, 10:30, on a fresh database after the fixes from the A-to-Z pass). The suite grew with the product: 61 checks on day 1, then 77, 91, 114, 118, 121 and 129. The A-to-Z pass, its bug list and the fixes are in section 13 of `docs/06-test-report.md`.
 
 | Area | What the checks prove |
 |---|---|
@@ -55,7 +83,7 @@ All measured on the build laptop (RTX 3050, 4 GB) against the live stack; detail
 | Decisions | accept, reassign, merge, request info, resolve, close with mandatory reasons; citizen reply resumes an awaiting-info case; resolution proof; rating, reopen; me-too support with priority boost; queue search; map scope |
 | Mail and SLA | citizen, department admin and district admin mails for routing, review, reply, resolution and overdue; an English resolve note reaches a Tamil citizen translated; overdue cases escalate exactly once |
 
-**Gold set** (`scripts/run_eval.py`, 12 hand-labelled complaints, replayed after every training round):
+**Gold set** (`scripts/evaluation/run_eval.py`, 12 hand-labelled complaints, replayed after every training round):
 
 | Metric | Gemma 3 4B alone | Whole system (model + rules) |
 |---|---|---|
@@ -83,7 +111,7 @@ Department accuracy has settled between 85% and 88%: more synthetic data from th
 | Role | Scope | Seed account |
 |---|---|---|
 | Super admin | everything, creates district admins | `admin@synapse.local` |
-| District admin | one district: review queue, map, adds department admins | `district.coimbatore@synapse.local`; `scripts\demo_data.py --districts` adds one for each of the 38 districts (`district.<district>@synapse.local`) |
+| District admin | one district: review queue, map, adds department admins | `district.coimbatore@synapse.local`; `scripts\demo\demo_data.py --districts` adds one for each of the 38 districts (`district.<district>@synapse.local`) |
 | Department admin | one department in one district: works only those complaints | `officer.water@synapse.local`, `officer.roads@synapse.local` |
 | Citizen | own complaints | `citizen@synapse.local` |
 
@@ -99,17 +127,17 @@ Photos (JPEG, PNG or WebP) up to 25 MB, videos (WebM, MP4 or MOV) up to 100 MB a
 powershell -ExecutionPolicy Bypass -File scripts\start.ps1
 ```
 
-Starts Postgres and Mailpit, the API on :8000 and the app on :5173 in their own windows. Add `-Https` to serve both over HTTPS on the laptop's LAN address so phones can use the camera and GPS (self-signed certificate from `scripts\make_cert.py`; accept the warning once on `https://<ip>:8000/health`).
+Starts Postgres and Mailpit, the API on :8000 and the app on :5173 in their own windows. Add `-Https` to serve both over HTTPS on the laptop's LAN address so phones can use the camera and GPS (self-signed certificate from `scripts\setup\make_cert.py`; accept the warning once on `https://<ip>:8000/health`).
 
 ```bash
-python scripts\demo_data.py --reset --districts --staff --seed
+python scripts\demo\demo_data.py --reset --districts --staff --seed
 ```
 
 Wipes complaints and test accounts, creates a district admin for every Tamil Nadu district plus the Chennai and Madurai demo staff, files ten showcase complaints through the real pipeline and sets one past its due time so the escalation shows. The demo click path is in `docs/07-demo-runbook.md`.
 
 ## Demo video
 
-`docs/demo/vindex_demo_subtitled.mp4` walks through every feature with captions; `docs/demo/vindex_demo.mp4` is the same recording without them, and `docs/demo/vindex_demo.srt` the caption track. Re-record with `python scripts\record_demo.py` (Playwright drives Chrome through the real app; ffmpeg renders both files).
+`docs/demo/vindex_demo_subtitled.mp4` walks through every feature with captions; `docs/demo/vindex_demo.mp4` is the same recording without them, and `docs/demo/vindex_demo.srt` the caption track. Re-record with `python scripts\demo\record_demo.py` (Playwright drives Chrome through the real app; ffmpeg renders both files).
 
 ## What happens after filing
 

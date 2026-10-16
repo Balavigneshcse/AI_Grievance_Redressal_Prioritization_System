@@ -230,7 +230,7 @@ URGENCY_SLA_FACTOR = {"critical": 0.25, "high": 0.5, "medium": 1.0, "low": 3.0}
 
 
 def load_tn_mapping() -> dict:
-    """config/tn_mapping.json produced by scripts/import_tn_mapping.py from the
+    """config/tn_mapping.json produced by scripts/setup/import_tn_mapping.py from the
     Tamil Nadu district / department spreadsheet. Empty dict if absent."""
     global _tn
     if _tn is None:

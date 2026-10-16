@@ -6,7 +6,7 @@ The spreadsheet's 20 departments are mapped onto SYNAPSE's 8 model categories,
 so the LLM, prompt, rules and training data stay unchanged. The spreadsheet
 itself says its routing categories are demo values to be verified.
 
-Run:  python scripts/import_tn_mapping.py
+Run:  python scripts/setup/import_tn_mapping.py
 """
 from __future__ import annotations
 
@@ -15,6 +15,10 @@ import sys
 
 import pandas as pd
 
+import sys as _sys
+from pathlib import Path as _Path
+
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))  # scripts/, home of the shared common.py
 from common import CONFIG, DATA
 
 SRC = DATA / "reference" / "tn_district_department_mapping.xlsx"

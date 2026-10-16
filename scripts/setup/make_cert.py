@@ -1,7 +1,7 @@
 """Self-signed certificate for demoing on phones: browsers only allow the camera and GPS on
 localhost or HTTPS, so the app and the API are served over HTTPS on the laptop's LAN address.
 
-  python scripts/make_cert.py            -> certs/key.pem, certs/cert.pem (localhost + every local IPv4)
+  python scripts/setup/make_cert.py            -> certs/key.pem, certs/cert.pem (localhost + every local IPv4)
 
 Then start with  powershell -ExecutionPolicy Bypass -File scripts\\start.ps1 -Https
 and on the phone open https://<laptop-ip>:8000/health once (accept the warning), then https://<laptop-ip>:5173.
@@ -18,7 +18,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 CERTS = ROOT / "certs"
 
 

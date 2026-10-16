@@ -1,5 +1,5 @@
 # Ollama settings for a 4 GB RTX 3050: keep every Gemma layer on the GPU.
-# Run once in PowerShell:  powershell -ExecutionPolicy Bypass -File scripts\set_ollama_gpu.ps1
+# Run once in PowerShell:  powershell -ExecutionPolicy Bypass -File scripts\setup\set_ollama_gpu.ps1
 # Then Ollama is restarted so the settings take effect.
 
 setx OLLAMA_FLASH_ATTENTION 1 | Out-Null     # less VRAM for attention, faster prompt processing

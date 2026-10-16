@@ -2,7 +2,7 @@
 
 Everything built up to Checkpoint 4, tested on the build laptop (RTX 3050 4 GB) on 15 October 2026 between 15:00 and 15:30, against the live stack: PostgreSQL 17 + pgvector, Ollama with gemma3:4b and bge-m3, Mailpit, FastAPI on :8000, Vite dev server on :5173.
 
-Scripts: `scripts/test_api_e2e.py` (API and AI, 61 checks), `scripts/run_eval.py` (gold-set replay), `scripts/train_second_opinion.py` (classifier), browser walk-through by hand.
+Scripts: `tests/test_api_e2e.py` (API and AI, 61 checks), `scripts/evaluation/run_eval.py` (gold-set replay), `scripts/training/train_second_opinion.py` (classifier), browser walk-through by hand.
 
 ---
 
@@ -17,7 +17,7 @@ Scripts: `scripts/test_api_e2e.py` (API and AI, 61 checks), `scripts/run_eval.py
 
 ---
 
-## 2. End-to-end API and AI suite (`scripts/test_api_e2e.py`)
+## 2. End-to-end API and AI suite (`tests/test_api_e2e.py`)
 
 First run: 58 of 61 checks passed. Of the three failures, two were test bugs (negative tests sent a one-character reason, which fails validation with 422 before the business rule is reached) and one was a model weakness (a Hinglish complaint labelled Tamil). Second run after the fixes below: see section 5.
 
@@ -93,7 +93,7 @@ Everything built up to Checkpoint 4 works end to end on the build laptop. The AI
 
 ## 7. Evening run (15 Oct 2026, 19:00-19:40): roles, identity fields, video limits, async mail
 
-Suite grown to 77 checks (`scripts/test_api_e2e.py`), run against a Mailpit-backed API instance while `.env` points at Gmail (`SMTP_HOST=localhost` exported for both processes).
+Suite grown to 77 checks (`tests/test_api_e2e.py`), run against a Mailpit-backed API instance while `.env` points at Gmail (`SMTP_HOST=localhost` exported for both processes).
 
 **Result: 77 of 77 checks passed.** New checks: complaint without name and Aadhaar digits rejected; name and digits stored and visible to staff; roads department admin gets 403 on a water complaint; a department admin's queue holds only its department; super admin creates a district admin; that district admin cannot create another district admin (403) but creates a department admin in its own district; the new department admin sees no Coimbatore complaints; disabling the account locks it out; department admins cannot list staff; 38 districts listed.
 
@@ -154,13 +154,13 @@ The name and the last four digits of the Aadhaar number moved from the complaint
 
 ## 12. Pre-jury run (16 Oct 2026, 02:15-02:50): district admins, clean reset, two full passes
 
-Preparation for the final review: `scripts/demo_data.py --districts` now creates one district admin for each of the 38 Tamil Nadu districts (`district.<district>@synapse.local`, idempotent), and `--seed` sets one showcase complaint past its due time so the Overdue badge, the escalation note and the district admin's mail are always on screen. Every old complaint was wiped and the suite was run on the new code twice.
+Preparation for the final review: `scripts/demo/demo_data.py --districts` now creates one district admin for each of the 38 Tamil Nadu districts (`district.<district>@synapse.local`, idempotent), and `--seed` sets one showcase complaint past its due time so the Overdue badge, the escalation note and the district admin's mail are always on screen. Every old complaint was wiped and the suite was run on the new code twice.
 
 **Defects found and fixed.** `--reset` failed with a foreign-key error: the me-too `supports` table (added on the night run) still referenced complaints; the reset now clears it first. The second pass ended 117 of 118: the one failure, "district admin emailed about the overdue complaint", was a test-harness bug, not a product one. The suite counted an address's mails inside Mailpit's newest-200 window; once the inbox held more than 200 messages (365 after a night of runs) a new mail pushed an old one out of the window and the count never moved, although the API log shows the overdue mail sent 10 seconds after the escalation. The helpers now use Mailpit's search endpoint, which counts across the whole inbox.
 
 **Result: 118 of 118 checks passed** on the third pass, straight after a reset, with the 38 district admins in place (the suite's own Madurai district admin and department admin are created and removed as before). The demo inbox is emptied before the showcase data is seeded, so the jury sees only the demo's mails.
 
-**Demo recording.** `scripts/record_demo.py` drives Chrome through every feature with Playwright (registration with the OTP mail, a Tanglish complaint with in-app video, a photo and GPS, the AI result and timeline, district review, department work with request-info and the citizen's reply, resolution proof, rating, me-too support, search, the overdue badge, the map, staff creation, metrics, rule testing, classifier reload, the Tamil interface and the mail trail) and renders `docs/demo/vindex_demo_subtitled.mp4`, `docs/demo/vindex_demo.mp4` and `docs/demo/vindex_demo.srt`.
+**Demo recording.** `scripts/demo/record_demo.py` drives Chrome through every feature with Playwright (registration with the OTP mail, a Tanglish complaint with in-app video, a photo and GPS, the AI result and timeline, district review, department work with request-info and the citizen's reply, resolution proof, rating, me-too support, search, the overdue badge, the map, staff creation, metrics, rule testing, classifier reload, the Tamil interface and the mail trail) and renders `docs/demo/vindex_demo_subtitled.mp4`, `docs/demo/vindex_demo.mp4` and `docs/demo/vindex_demo.srt`.
 
 **Found by the user on the Karur district admin (03:20).** Every button answered 403 and "Not allowed for this role" although a fresh login for the same account passed every staff endpoint. The cause was in the browser, not the API: the token lived in `localStorage`, shared by all tabs, so logging in as a citizen in a second tab replaced the admin tab's token while that tab still showed the admin screens. Sessions are now per tab (`sessionStorage`, with the last login kept in `localStorage` for new tabs). Checked with Playwright: two tabs of one browser logged in as the Karur admin and the citizen, the admin tab keeps its token, no 401 or 403 during the queue's auto-refresh, the staff page still renders, and a third tab starts as the last login.
 
@@ -209,7 +209,7 @@ What works end to end: registration with OTP (mail in the chosen language), forg
 | 18 | Low | `/health` is public and shows queue depth, outbox backlog and latency | probe P16 | `api/misc.py` |
 | 19 | Low | The registration Aadhaar field accepts letters while typing (refused only on submit); the complaint-form card strips them live | browser step B01b | `pages/Register.tsx` |
 | 20 | Low | One 1 MB JavaScript bundle (311 KB gzipped), no code splitting | build warning | `frontend` build |
-| 21 | Note | `demo_data.py` and `record_demo.py` read the database only from `.env`, so a reset always targets the demo database, even when testing elsewhere | code reading | `scripts/demo_data.py`, `scripts/record_demo.py` |
+| 21 | Note | `demo_data.py` and `record_demo.py` read the database only from `.env`, so a reset always targets the demo database, even when testing elsewhere | code reading | `scripts/demo/demo_data.py`, `scripts/demo/record_demo.py` |
 | 22 | Note | Rule R10 treats "old age" as at-risk, so a routine pension complaint gets High urgency and forced review | rules engine | `config/rules.yaml` |
 
 ### Fixes for bugs 1-5 and retest (16 Oct 2026, 09:50-10:40)

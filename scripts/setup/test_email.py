@@ -1,7 +1,7 @@
 """Send one test email with the SMTP settings in .env, to confirm real delivery
 (for example a Gmail App Password) works before the demo.
 
-Run from the project root:  python scripts/test_email.py you@example.com
+Run from the project root:  python scripts/setup/test_email.py you@example.com
 """
 from __future__ import annotations
 
@@ -13,13 +13,13 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 load_dotenv(ROOT / ".env")
 
 
 def main() -> None:
     if len(sys.argv) < 2:
-        raise SystemExit("usage: python scripts/test_email.py recipient@example.com")
+        raise SystemExit("usage: python scripts/setup/test_email.py recipient@example.com")
     to = sys.argv[1]
     host = os.getenv("SMTP_HOST", "localhost")
     port = int(os.getenv("SMTP_PORT", "1025"))

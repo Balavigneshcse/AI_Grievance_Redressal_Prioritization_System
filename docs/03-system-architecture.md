@@ -256,31 +256,40 @@ The eval runner script replays `data/eval/complaints.jsonl` through the pipeline
 
 ## 7. Repository layout
 
+The layout as built (the day-one plan placed the pipeline in its own package; it ended up as services of the API):
+
 ```
 backend/
-  app/main.py              FastAPI app, routers, startup (load models)
-  app/api/                 auth.py complaints.py review.py admin.py geo.py
-  app/services/            auth, complaints, review, notifier, metrics, rules
-  app/pipeline/            lid.py pii.py geo.py llm.py embed.py dedup.py second_opinion.py decide.py worker.py
-  app/models/              SQLAlchemy models
-  app/schemas/             Pydantic schemas incl. the LLM JSON schema
-  prompts/                 analysis_system.txt, synthetic_gen.txt
-  tests/
+  app/main.py              FastAPI app, routers, start-up (database, worker, outbox, model warm-up)
+  app/api/                 auth.py complaints.py review.py staff.py admin.py misc.py deps.py
+  app/services/            pipeline.py worker.py rules.py notifier.py sla.py translate.py pii.py ratelimit.py
+  app/models.py            SQLAlchemy models; app/schemas.py Pydantic schemas; app/db.py migrations
+  seed.py                  departments and demo accounts
 frontend/
-  src/pages/               Register, VerifyOtp, Login, Submit, Track, ReviewQueue, ComplaintDetail, Rules, Dashboard
-  src/components/          CameraCapture, LocationPicker, EvidenceView, MapPin
+  src/pages/               Register, Verify, Login, Forgot, Reset, MyComplaints, NewComplaint, Track,
+                           OfficerQueue, OfficerComplaint, Admin, AdminRules, AdminMetrics, AdminMap
+  src/components/          CameraDialog, LocationCard, NearbyCard, ComplaintDetail, DecisionBar, Timeline, ...
   src/i18n/                en.json ta.json hi.json
 config/
-  taxonomy.yaml            departments and categories
-  rules.yaml               routing rules
-  urgency.yaml             urgency scale text used in the prompt
+  taxonomy.yaml rules.yaml urgency.yaml analysis_schema.json
+  tn_mapping.json          38 districts, 20 departments, 760 offices with SLA
+  district_names.json      district names in English, Tamil and Hindi
+  places_tn.csv            offline place table for GPS (all 38 districts)
 data/
-  eval/complaints.jsonl    gold set (committed)
-  synthetic/               generated (ignored)
-  raw/                     public datasets (ignored)
+  eval/                    gold set, evaluation results, end-to-end report (committed)
+  reference/               Tamil Nadu spreadsheet (committed)
+  synthetic/  raw/         generated and downloaded data (ignored)
+prompts/                   analysis_system.txt
 scripts/
-  download_models.py  make_synthetic.py  train_second_opinion.py  run_eval.py
-docs/
+  common.py  start.ps1
+  setup/                   download_models.py download_datasets.py import_tn_mapping.py make_cert.py
+                           set_ollama_gpu.ps1 test_email.py
+  training/                make_synthetic.py clean_synthetic.py train_second_opinion.py
+  evaluation/              run_eval.py smoke_test_llm.py
+  demo/                    demo_data.py record_demo.py
+tests/
+  test_api_e2e.py          end-to-end suite against a running API and Mailpit
+docs/                      01-07 phase documents, report/, guides/, demo/, submission deck
 ```
 
 ---

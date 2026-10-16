@@ -23,26 +23,25 @@ media/
 *.db
 *.sqlite
 
-# Organiser documents, deck backups, Office lock files
+# Organiser documents, original templates and the team's earlier deck, Office lock files
 docs/*.docx
-!docs/Vindex_Project_Report.docx
-docs/sample_original.pptx
-docs/sample_v2_original.pptx
-docs/sih_template_original.pptx
+docs/*_original.pptx
+docs/Logic_Makers.pptx
 ~$*
 
-# OS / editor
+# OS / editor / assistant tooling
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
+.claude/
 
 # Local credentials workbook (never committed)
 credentials.xlsx
 credentials_update.xlsx
 
-# Self-signed demo certificates (scripts/make_cert.py)
+# Self-signed demo certificates (scripts/setup/make_cert.py)
 certs/
 
-# Demo video raw recording and generated stills (scripts/record_demo.py); the MP4s and SRT are kept
+# Demo video raw recording and generated stills (scripts/demo/record_demo.py); the MP4s and SRT are kept
 docs/demo/raw/

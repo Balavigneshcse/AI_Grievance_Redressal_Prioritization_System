@@ -1,12 +1,16 @@
 """Download the public datasets that can be fetched without a login, and list
 the ones that need a manual download. Pure Python (requests + huggingface_hub).
 
-Run:  python scripts/download_datasets.py
+Run:  python scripts/setup/download_datasets.py
 """
 from __future__ import annotations
 
 import requests
 
+import sys as _sys
+from pathlib import Path as _Path
+
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))  # scripts/, home of the shared common.py
 from common import DATA
 
 RAW = DATA / "raw"
@@ -86,6 +90,6 @@ Manual downloads (need a login or a form), save under data/raw/:
   - Citizen complaints on Twitter, India (Mendeley)
       https://data.mendeley.com/datasets/w2cp7h53s5
 
-The training set we rely on is generated locally: python scripts/make_synthetic.py
+The training set we rely on is generated locally: python scripts/training/make_synthetic.py
 """
 )

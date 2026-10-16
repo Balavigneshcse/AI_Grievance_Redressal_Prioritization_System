@@ -2,13 +2,13 @@
 and without. Every feature is driven through the real UI by Playwright in Chrome.
 
 Needs, all local: the API on :8000 pointed at Mailpit (SMTP_HOST=localhost), the Vite app on :5173,
-Mailpit on :8025, Ollama, and fresh demo data (python scripts/demo_data.py --reset --districts --staff --seed).
+Mailpit on :8025, Ollama, and fresh demo data (python scripts/demo/demo_data.py --reset --districts --staff --seed).
 Playwright for Python with Google Chrome installed; ffmpeg comes from the imageio-ffmpeg package.
 
-  python scripts/record_demo.py              record, then render docs/demo/vindex_demo.mp4,
+  python scripts/demo/record_demo.py              record, then render docs/demo/vindex_demo.mp4,
                                              vindex_demo_subtitled.mp4 and vindex_demo.srt
-  python scripts/record_demo.py --render     re-render the MP4s from the last recording only
-  python scripts/record_demo.py --headed     watch the browser while it records
+  python scripts/demo/record_demo.py --render     re-render the MP4s from the last recording only
+  python scripts/demo/record_demo.py --headed     watch the browser while it records
 """
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ from pathlib import Path
 
 import requests
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 OUT = ROOT / "docs" / "demo"
 RAW = OUT / "raw"

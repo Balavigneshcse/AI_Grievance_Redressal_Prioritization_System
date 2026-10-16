@@ -2,8 +2,8 @@
 promises (the LLM occasionally answers in the wrong language), and exact
 duplicate texts. Keeps a backup next to the file.
 
-Run:  python scripts/clean_synthetic.py
-      python scripts/clean_synthetic.py --file data/synthetic/complaints.jsonl
+Run:  python scripts/training/clean_synthetic.py
+      python scripts/training/clean_synthetic.py --file data/synthetic/complaints.jsonl
 """
 from __future__ import annotations
 
@@ -13,6 +13,10 @@ import shutil
 from collections import Counter
 from pathlib import Path
 
+import sys as _sys
+from pathlib import Path as _Path
+
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))  # scripts/, home of the shared common.py
 from common import DATA, detect_language
 
 EXPECTED_SCRIPT = {"ta": "ta", "hi": "hi", "en": "latin", "ta-en": "latin", "hi-en": "latin"}

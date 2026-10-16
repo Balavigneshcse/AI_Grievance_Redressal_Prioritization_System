@@ -3,9 +3,9 @@ Ollama). Covers every department x urgency x language combination.
 
 Resumable: rerun and it skips combinations already in the output file.
 
-Run:  python scripts/make_synthetic.py                 (3 per combo = 480 complaints)
-      python scripts/make_synthetic.py --per-combo 2   (faster first pass)
-      python scripts/make_synthetic.py --langs en,ta-en (subset of languages)
+Run:  python scripts/training/make_synthetic.py                 (3 per combo = 480 complaints)
+      python scripts/training/make_synthetic.py --per-combo 2   (faster first pass)
+      python scripts/training/make_synthetic.py --langs en,ta-en (subset of languages)
 """
 from __future__ import annotations
 
@@ -16,6 +16,10 @@ import uuid
 
 import ollama
 
+import sys as _sys
+from pathlib import Path as _Path
+
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))  # scripts/, home of the shared common.py
 from common import DATA, DEFAULT_LLM, LANGUAGES, append_jsonl, detect_language, load_taxonomy, load_urgency, read_jsonl
 
 OUT = DATA / "synthetic" / "complaints.jsonl"

@@ -1,9 +1,9 @@
 """Send one complaint (and optionally a photo) through the real analysis prompt
 and JSON schema on the local LLM. Prints the structured result and the time taken.
 
-Run:  python scripts/smoke_test_llm.py
-      python scripts/smoke_test_llm.py --text "road la periya kuzhi, bike skid aagudhu, Gandhipuram"
-      python scripts/smoke_test_llm.py --image photo.jpg --text "see this"
+Run:  python scripts/evaluation/smoke_test_llm.py
+      python scripts/evaluation/smoke_test_llm.py --text "road la periya kuzhi, bike skid aagudhu, Gandhipuram"
+      python scripts/evaluation/smoke_test_llm.py --image photo.jpg --text "see this"
 """
 from __future__ import annotations
 
@@ -13,6 +13,10 @@ import time
 
 import ollama
 
+import sys as _sys
+from pathlib import Path as _Path
+
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))  # scripts/, home of the shared common.py
 from common import DEFAULT_LLM, analysis_system_prompt, complaint_user_message, detect_language, language_hint_code, load_schema
 
 DEFAULT_TEXT = (

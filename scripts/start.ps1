@@ -25,7 +25,7 @@ $web = "npm run dev --prefix frontend -- --host 0.0.0.0 --port 5173"
 $envPrefix = ""
 
 if ($Https) {
-    if (-not (Test-Path "certs\cert.pem")) { python scripts\make_cert.py }
+    if (-not (Test-Path "certs\cert.pem")) { python scripts\setup\make_cert.py }
     $ip = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -like "192.168.*" -or $_.IPAddress -like "10.*" -or $_.IPAddress -like "172.*" } | Select-Object -First 1).IPAddress
     if (-not $ip) { $ip = "127.0.0.1" }
     $api += " --ssl-keyfile certs\key.pem --ssl-certfile certs\cert.pem"
