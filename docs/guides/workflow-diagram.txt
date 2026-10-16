@@ -1,0 +1,122 @@
+================================================================================
+              VINDEX: AI GRIEVANCE REDRESSAL PRIORITIZATION SYSTEM
+                  COMPLETE WORKFLOW, ARCHITECTURE & Q&A GUIDE
+================================================================================
+
+1. END-TO-END WORKFLOW DIAGRAM
+--------------------------------------------------------------------------------
+
+                                    CITIZEN
+                        (account verified by email OTP)
+                                       │
+                                       ▼
+              ┌─────────────────────────────────────────────────┐
+              │                SUBMIT COMPLAINT                 │
+              │  1. Text in Tamil, Hindi, English or mixed      │
+              │  2. Photos and videos as evidence (up to 6)     │
+              │  3. Location: GPS, photo EXIF or address        │
+              │  4. Name + Aadhaar last 4 from the account      │
+              └────────────────────────┬────────────────────────┘
+                                       │
+                                       │  under 1 s: tracking ID + ack email
+                                       │
+                                       ▼
+              ┌─────────────────────────────────────────────────┐
+              │            INTAKE AND PRE-PROCESSING            │
+              │  • Raw text saved once, never edited            │
+              │  • Script and language hint                     │
+              │  • PII masked before the model: phone, email,   │
+              │    Aadhaar, PAN and PIN code                    │
+              │  • Offline geocode to a district (30 km)        │
+              └────────────────────────┬────────────────────────┘
+                                       │
+                                       ▼
+              ┌─────────────────────────────────────────────────┐
+              │         LOCAL AI: GEMMA 3 4B ON OLLAMA          │
+              │  Reads the masked text and up to 3 photos       │
+              │  Answers in JSON: the four fields below,        │
+              │  a confidence score and an English summary      │
+              └────────────────────────┬────────────────────────┘
+                                       │
+         ┌───────────────────┬─────────┴─────────┬───────────────────┐
+         ▼                   ▼                   ▼                   ▼
+      Language           Department           Urgency          Evidence spans
+     (5 forms)         (8 categories)        (4 levels)        + photo check
+         │                   │                   │                   │
+         └───────────────────┴─────────┬─────────┴───────────────────┘
+                                       │
+                                       ▼
+              ┌─────────────────────────────────────────────────┐
+              │                  CROSS-CHECKS                   │
+              │  • Duplicates: bge-m3 embedding + pgvector      │
+              │    (similarity ≥ 0.85, within 2 km)             │
+              │  • Second opinion: NumPy classifier             │
+              │  • Rules: editable config/rules.yaml            │
+              └────────────────────────┬────────────────────────┘
+                                       │
+                                       ▼
+              ┌─────────────────────────────────────────────────┐
+              │          DISTRICT OFFICE AND DUE TIME           │
+              │  38 districts × 20 departments = 760 offices    │
+              │  Due time = office SLA × urgency factor         │
+              │  (critical 0.25, high 0.5, medium 1, low 3)     │
+              └────────────────────────┬────────────────────────┘
+                                       │
+                                       ▼
+   ┌───────────────────────────────────────────────────────────────────────┐
+   │                                DECISION                               │
+   │                                                                       │
+   │      ROUTE AUTOMATICALLY                     SEND TO HUMAN REVIEW     │
+   │         (all of these)                        (any one of these)      │
+   │     confidence ≥ 0.70                     critical urgency            │
+   │     no check or rule flag                 confidence below 0.70       │
+   │     urgency not critical                  second opinion disagrees    │
+   │     district known                        rule or keyword disagrees   │
+   │                                           possible duplicate          │
+   │                                           a rule forces review        │
+   │                                           district unknown            │
+   │                                           model unavailable           │
+   └───────────────┬───────────────────────────────────────┬───────────────┘
+                   ▼                                       ▼
+   ┌───────────────────────────────┐       ┌───────────────────────────────┐
+   │    DEPARTMENT ADMIN QUEUE     │       │  DISTRICT ADMIN REVIEW QUEUE  │
+   │  status: routed               │       │  status: under review         │
+   │  office admins emailed        │       │  district admin emailed       │
+   │  due time + overdue flag      │       │  due time + overdue flag      │
+   └───────────────┬───────────────┘       └───────────────┬───────────────┘
+                   │                                       │
+                   └───────────────────┬───────────────────┘
+                                       │  SLA watch: an overdue case is
+                                       │  escalated once to the district admin
+                                       ▼
+              ┌─────────────────────────────────────────────────┐
+              │                 STAFF DASHBOARD                 │
+              │  Photos, videos, evidence spans highlighted     │
+              │  AI summary, reasons and rules fired            │
+              │  Exact location (staff only), due time          │
+              │  District map, queue search, metrics            │
+              └────────────────────────┬────────────────────────┘
+                                       │
+         ┌───────────────────┬─────────┴─────────┬───────────────────┐
+         ▼                   ▼                   ▼                   ▼
+       Accept             Reassign             Merge           Request info,
+    (start work)      (dept + urgency)      (duplicate)        resolve, close
+         │                   │                   │                   │
+         └───────────────────┴─────────┬─────────┴───────────────────┘
+                                       │  each decision logged with its reason;
+                                       │  reassignments feed live accuracy;
+                                       │  accepted and reassigned cases become
+                                       │  training rows for the second opinion
+                                       ▼
+              ┌─────────────────────────────────────────────────┐
+              │                  STATUS UPDATE                  │
+              │  Email in the citizen's language (en/ta/hi)     │
+              │  Officer notes translated by the local model    │
+              │  Live tracking page with the full timeline      │
+              └────────────────────────┬────────────────────────┘
+                                       │
+                                       ▼
+                                    CITIZEN
+              replies or adds evidence, sees the resolution proof,
+             rates it or reopens it within 7 days, and can support
+                a nearby open complaint ("me too", within 2 km)
