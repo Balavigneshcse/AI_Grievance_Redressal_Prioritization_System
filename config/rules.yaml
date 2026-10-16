@@ -102,3 +102,23 @@ rules:
     action:
       urgency_floor: high
       force_review: true
+
+  - id: R11
+    name: Person or animal trapped (well, borewell, pit, lift)
+    enabled: true
+    match:
+      keywords: ["fell into the well", "fell in the well", "fell into a well", "fallen into the well", "fallen in the well", "fallen into a well", "stuck in the well", "stuck in a well", "trapped in the well", "trapped in a well", "fell into the borewell", "fell in the borewell", "fell into a borewell", "fallen into the borewell", "fallen into a borewell", "stuck in the borewell", "trapped in the borewell", "fell into the pit", "fell into a pit", "stuck in the pit", "trapped in a pit", "stuck in the lift", "trapped in the lift", "stuck in a lift", "trapped in a lift", "fell into the drain", "stuck in the drain", "needs rescue", "rescue team", "கிணற்றில் விழுந்த", "கிணற்றில் சிக்கி", "கிணற்றுக்குள் விழுந்த", "போர்வெல்லில் விழுந்த", "ஆழ்துளை கிணற்றில் விழுந்த", "குழியில் விழுந்த", "குழியில் சிக்கி", "லிப்டில் சிக்கி", "மீட்பு குழு", "kinatril vizhunthu", "kinatril vizhundhu", "kinathula vizhunthu", "kinaru la vizhunthu", "kinaru la vizhundhu", "kinatril sikki", "borewell la vizhunthu", "lift la sikki", "कुएं में गिर", "कुएँ में गिर", "कुए में गिर", "कुएं में फंस", "कुएँ में फंस", "बोरवेल में गिर", "बोरवेल में फंस", "गड्ढे में गिर", "गड्ढे में फंस", "लिफ्ट में फंस", "बचाव दल", "kuen mein gir", "kuen me gir", "kue mein gir", "kue me gir", "kuan mein gir", "kuan me gir", "kuen mein fas", "kuen me phas", "borewell mein gir", "borewell me gir", "gadde mein gir", "gaddhe mein gir", "lift mein fas", "lift me phas", "lift mein phas"]
+    action:
+      department: safety
+      urgency_floor: critical
+      force_review: true
+
+  - id: R12
+    name: Snake, bee hive or wild animal inside a home
+    enabled: true
+    match:
+      keywords: ["snake", "snakes", "cobra", "viper", "krait", "பாம்பு", "பாம்புகள்", "நாகம்", "நல்ல பாம்பு", "सांप", "साँप", "नाग", "कोबरा", "paambu", "pambu", "paamboo", "saamp", "saanp", "samp", "sanp", "bee hive", "beehive", "honeycomb", "wasp nest", "hornets", "தேனீக்கூடு", "தேனீ கூடு", "குளவி கூடு", "मधुमक्खी का छत्ता", "मधुमक्खियों का छत्ता", "madhumakkhi", "leopard", "சிறுத்தை", "तेंदुआ", "wild animal", "monkey attack"]
+    action:
+      department: safety
+      urgency_floor: high
+      force_review: true
