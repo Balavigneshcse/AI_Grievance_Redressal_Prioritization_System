@@ -326,9 +326,9 @@ class Demo:
         p.locator("tr", has_text=tid).first.click()
         p.wait_for_url(lambda u: "/officer/c/" in u, timeout=15000)
         self.wait(1.5)
-        p.get_by_role("button", name="Accept", exact=True).click()
+        p.get_by_role("button", name="Start work", exact=True).click()
         self.wait(2)
-        self.cap("Accept starts the work: status In progress.", 2.5)
+        self.cap("Start work: status In progress. The bar only offers what the status allows.", 2.5)
         self.decide("Request info", "Please share the door number and the best time for the repair team to visit.")
         self.cap("Request info: the question is emailed to the citizen in Tamil and the case waits for the reply.", 4)
         officer_url = p.url

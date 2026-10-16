@@ -199,7 +199,7 @@ export interface QueueItem {
   created_at: string
 }
 
-export type DecisionAction = "accept" | "reassign" | "merge" | "request_info" | "resolve" | "close"
+export type DecisionAction = "accept" | "reassign" | "merge" | "request_info" | "resolve" | "close" | "reopen"
 
 export interface DecisionPayload {
   action: DecisionAction

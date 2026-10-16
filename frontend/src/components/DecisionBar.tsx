@@ -7,11 +7,14 @@ import {
   Loader2,
   MessageCircleQuestionMark,
   MoreHorizontal,
+  RotateCcw,
   Shuffle,
+  Wrench,
   XCircle,
 } from "lucide-react"
 import { toast } from "sonner"
 import { api, ApiError } from "@/lib/api"
+import { useAuth } from "@/lib/auth"
 import type { Complaint, DecisionAction, DecisionPayload, Urgency } from "@/lib/types"
 import { useDepartments } from "@/lib/departments"
 import { URGENCY_ORDER } from "@/lib/labels"
@@ -49,10 +52,30 @@ const ACTION_KEY: Record<DecisionAction, string> = {
   request_info: "decision.requestInfo",
   resolve: "decision.resolve",
   close: "decision.close",
+  reopen: "decision.reopen",
+}
+
+const OPEN = new Set(["under_review", "routed", "in_progress", "awaiting_info"])
+
+/** Which decisions the API accepts in each status (mirrors review.py), so the bar never offers a 409. */
+function allowedActions(status: string): Set<DecisionAction> {
+  const open = OPEN.has(status)
+  const a = new Set<DecisionAction>()
+  if (status === "under_review" || status === "routed") a.add("accept")
+  if (open) {
+    a.add("reassign")
+    a.add("merge")
+    a.add("resolve")
+    if (status !== "awaiting_info") a.add("request_info")
+  }
+  if (status === "resolved") a.add("close")
+  if (status === "resolved" || status === "closed") a.add("reopen")
+  return a
 }
 
 export function DecisionBar({ complaint, onDecided }: Props) {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const { departments, name } = useDepartments()
   const [action, setAction] = useState<DialogAction | null>(null)
   const [busy, setBusy] = useState(false)
@@ -103,45 +126,74 @@ export function DecisionBar({ complaint, onDecided }: Props) {
   const deptItems = departments.map((d) => ({ value: d.id, label: name(d.id) }))
   const urgencyItems = URGENCY_ORDER.map((u) => ({ value: u, label: t(`urgency.${u}`) }))
 
+  const can = allowedActions(complaint.status)
+  // A department admin's accept starts the work; a reviewer's accept confirms the routing.
+  const startsWork = user?.role === "dept_admin"
+  // The main button: accept while the case waits for one, then resolve, then close or reopen.
+  const primary: DecisionAction | null = can.has("accept")
+    ? "accept"
+    : can.has("resolve")
+      ? "resolve"
+      : can.has("close")
+        ? "close"
+        : can.has("reopen")
+          ? "reopen"
+          : null
+  const more = (["resolve", "close", "reopen"] as DecisionAction[]).filter((a) => can.has(a) && a !== primary)
+  const PRIMARY_ICON = { accept: startsWork ? <Wrench /> : <Check />, resolve: <CheckCircle2 />, close: <XCircle />, reopen: <RotateCcw /> }
+  const MORE_ICON = { resolve: <CheckCircle2 />, close: <XCircle />, reopen: <RotateCcw /> }
+
   return (
     <>
       <div className="sticky bottom-0 z-30 -mx-4 border-t bg-background/95 px-4 py-3 backdrop-blur supports-backdrop-filter:bg-background/80">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-          <Button onClick={() => void submit({ action: "accept", reason: "accept" })} disabled={busy}>
-            {busy ? <Loader2 className="animate-spin" /> : <Check />}
-            {t("decision.accept")}
-          </Button>
-          <Button variant="outline" onClick={() => open("reassign")} disabled={busy}>
-            <Shuffle />
-            {t("decision.reassign")}
-          </Button>
-          <Button variant="outline" onClick={() => open("merge")} disabled={busy}>
-            <GitMerge />
-            {t("decision.merge")}
-          </Button>
-          <Button variant="outline" onClick={() => open("request_info")} disabled={busy}>
-            <MessageCircleQuestionMark />
-            {t("decision.requestInfo")}
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={<Button variant="ghost" className="col-span-2 sm:col-span-1" disabled={busy} />}
+        {primary === null ? (
+          <p className="text-center text-sm text-muted-foreground">{t("decision.none", { status: t(`status.${complaint.status}`) })}</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            <Button
+              className="min-w-36 flex-1"
+              onClick={() => (primary === "accept" ? void submit({ action: "accept", reason: "accept" }) : open(primary))}
+              disabled={busy}
             >
-              <MoreHorizontal />
-              {t("decision.more")}
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => open("resolve")}>
-                <CheckCircle2 />
-                {t("decision.resolve")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => open("close")}>
-                <XCircle />
-                {t("decision.close")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+              {busy ? <Loader2 className="animate-spin" /> : PRIMARY_ICON[primary as keyof typeof PRIMARY_ICON]}
+              {primary === "accept" && startsWork ? t("decision.startWork") : t(ACTION_KEY[primary])}
+            </Button>
+            {can.has("reassign") ? (
+              <Button variant="outline" className="min-w-36 flex-1" onClick={() => open("reassign")} disabled={busy}>
+                <Shuffle />
+                {t("decision.reassign")}
+              </Button>
+            ) : null}
+            {can.has("merge") ? (
+              <Button variant="outline" className="min-w-36 flex-1" onClick={() => open("merge")} disabled={busy}>
+                <GitMerge />
+                {t("decision.merge")}
+              </Button>
+            ) : null}
+            {can.has("request_info") ? (
+              <Button variant="outline" className="min-w-36 flex-1" onClick={() => open("request_info")} disabled={busy}>
+                <MessageCircleQuestionMark />
+                {t("decision.requestInfo")}
+              </Button>
+            ) : null}
+            {more.length > 0 ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger render={<Button variant="ghost" className="min-w-36 flex-1" disabled={busy} />}>
+                  <MoreHorizontal />
+                  {t("decision.more")}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {more.map((a) => (
+                    <DropdownMenuItem key={a} onClick={() => open(a as DialogAction)}>
+                      {MORE_ICON[a as keyof typeof MORE_ICON]}
+                      {t(ACTION_KEY[a])}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : null}
+          </div>
+        )}
       </div>
 
       <Dialog open={action !== null} onOpenChange={(o) => !o && setAction(null)}>

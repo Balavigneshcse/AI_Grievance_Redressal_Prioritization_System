@@ -134,9 +134,9 @@ def decide(complaint_id: str, body: schemas.DecisionIn, user: models.User = Depe
     if body.action == "accept":
         if c.status not in ("under_review", "routed"):
             raise HTTPException(409, f"Cannot accept from status {c.status}")
-        # A department admin accepting its own routed case starts the work; a reviewer accepting
-        # a flagged case confirms the routing.
-        target = "in_progress" if (user.role == "dept_admin" and c.status == "routed") else "routed"
+        # A department admin's accept starts the work (from routed, or straight from review); a
+        # reviewer's accept confirms the routing and hands the case to the department.
+        target = "in_progress" if user.role == "dept_admin" else "routed"
         _set_status(db, c, target, "officer", user.id, note)
     elif body.action == "reassign":
         if not body.department and not body.urgency:
