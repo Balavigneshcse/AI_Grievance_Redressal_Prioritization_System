@@ -11,6 +11,9 @@ export function Timeline({ entries, currentStatus }: { entries: TimelineEntry[];
     (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
   )
   const live = isLiveStatus(currentStatus)
+  // The newest entry is the open "current step" ring only while the case is still open; once it is
+  // resolved, closed or merged every step, the last one included, is a completed green check.
+  const finished = currentStatus === "resolved" || currentStatus === "closed" || currentStatus === "merged"
 
   if (sorted.length === 0) {
     return <p className="text-sm text-muted-foreground">{t("track.noTimeline")}</p>
@@ -19,18 +22,18 @@ export function Timeline({ entries, currentStatus }: { entries: TimelineEntry[];
   return (
     <ol className="relative ml-2.5 border-l border-border pl-5">
       {sorted.map((e, i) => {
-        const last = i === sorted.length - 1
-        const Icon = last ? Circle : CheckCircle2
+        const current = i === sorted.length - 1 && !finished
+        const Icon = current ? Circle : CheckCircle2
         const spec = statusSpec(e.to_status)
         return (
           <li key={`${e.created_at}-${i}`} className={cn("relative pb-5 last:pb-0")}>
             <span
               className={cn(
                 "absolute -left-[31px] top-0.5 flex size-5 items-center justify-center rounded-full bg-background",
-                last ? "text-primary" : "text-emerald-600",
+                current ? "text-primary" : "text-emerald-600",
               )}
             >
-              <Icon className={cn("size-5", last && live && "animate-pulse")} />
+              <Icon className={cn("size-5", current && live && "animate-pulse")} />
             </span>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
               <span className="text-sm font-medium">{t(spec.label)}</span>
